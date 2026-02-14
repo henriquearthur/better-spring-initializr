@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Developers can visually configure and preview a Spring Boot project with real-time feedback, then generate it instantly
-**Current focus:** Phase 5 - Generation & Sharing
+**Current focus:** Phase 6 - GitHub Integration
 
 ## Current Position
 
-Phase: 5 of 7 (Generation & Sharing)
-Plan: 1 of 2 in current phase
+Phase: 6 of 7 (GitHub Integration)
+Plan: 0 of 2 in current phase
 Status: In progress
-Last activity: 2026-02-14 -- Completed 05-generation-sharing-01 (generation params + ZIP client + sanitized download server function)
+Last activity: 2026-02-14 -- Completed 05-generation-sharing-02 (workspace download/share actions + URL restoration wiring)
 
-Progress: [######....] 64%
+Progress: [#######...] 71%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
+- Total plans completed: 10
 - Average duration: 3 min
-- Total execution time: 0.43 hours
+- Total execution time: 0.48 hours
 
 **By Phase:**
 
@@ -45,6 +45,7 @@ Progress: [######....] 64%
 | Phase 04-live-preview P01 | 5 min | 3 tasks | 8 files |
 | Phase 04-live-preview P02 | 6 min | 3 tasks | 7 files |
 | Phase 05-generation-sharing P01 | 3 min | 3 tasks | 6 files |
+| Phase 05-generation-sharing P02 | 3 min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Recent decisions affecting current work:
 - [Phase 04-live-preview]: Represent diff output as deterministic per-file metadata plus line additions/removals to drive both tree badges and viewer gutter highlights.
 - [Phase 05-generation-sharing]: Keep generation query output as ordered tuple entries so URLSearchParams serialization remains deterministic in tests and server calls.
 - [Phase 05-generation-sharing]: Normalize all download failures to PROJECT_DOWNLOAD_UNAVAILABLE with retryable messaging to preserve BFF error-sanitization guarantees.
+- [Phase 05-generation-sharing]: Use explicit `share` token schema versioning (`v: 1`) and null fallback for malformed/unsupported snapshots.
+- [Phase 05-generation-sharing]: Generate canonical share links through URL API with only the `share` query param.
+- [Phase 05-generation-sharing]: Keep download server-function payload encoding browser-import-safe by avoiding direct `node:buffer` imports.
 
 ### Pending Todos
 
@@ -96,5 +100,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 05-generation-sharing-01-PLAN.md
+Stopped at: Completed 05-generation-sharing-02-PLAN.md
 Resume file: None
