@@ -8,7 +8,6 @@ import {
   GitHubRepositoryClientError,
   type GitHubRepositoryVisibility,
 } from '../lib/github-repository-client'
-import * as githubOAuthSession from '../lib/github-oauth-session.server'
 import {
   unpackGeneratedProjectZip,
   UnpackGeneratedProjectError,
@@ -54,6 +53,7 @@ export const pushProjectToGitHub = createServerFn({ method: 'POST' }).handler(
 export async function pushProjectToGitHubFromBff(
   input: PushProjectToGitHubInput,
 ): Promise<PushProjectToGitHubResponse> {
+  const githubOAuthSession = await import('../lib/github-oauth-session.server')
   const session = await githubOAuthSession.getGitHubSessionCookie()
 
   if (!session) {

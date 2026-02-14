@@ -4,7 +4,7 @@ plan: 02
 type: execute
 wave: 2
 depends_on:
-  - 01-01
+  - "01"
 files_modified:
   - src/server/lib/initializr-client.ts
   - src/server/lib/metadata-cache.ts
@@ -28,6 +28,10 @@ must_haves:
       provides: "Client hook to consume proxied metadata"
       contains: "useQuery"
   key_links:
+    - from: "src/components/workspace/workspace-shell.tsx"
+      to: "src/hooks/use-initializr-metadata.ts"
+      via: "hook call in workspace shell"
+      pattern: "useInitializrMetadata"
     - from: "src/hooks/use-initializr-metadata.ts"
       to: "src/server/functions/get-initializr-metadata.ts"
       via: "server function invocation"
