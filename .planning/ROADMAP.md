@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Dependency Browser** - Searchable, categorized dependency selection with visual cards
 - [x] **Phase 4: Live Preview** - Real-time file tree, file viewer, and diff highlighting
 - [x] **Phase 5: Generation & Sharing** - ZIP download and shareable configuration URLs
-- [ ] **Phase 6: GitHub Integration** - OAuth flow and push-to-GitHub functionality
+- [x] **Phase 6: GitHub Integration** - OAuth flow and push-to-GitHub functionality
 - [ ] **Phase 7: Curated Presets** - Browse and apply pre-configured project templates
 
 ## Phase Details
@@ -109,8 +109,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 06-github-integration-01-PLAN.md - GitHub OAuth flow with secure server-side token session management and workspace connect UX
-- [ ] 06-github-integration-02-PLAN.md - Repository owner selection and create-plus-push pipeline for generated project output
+- [x] 06-github-integration-01-PLAN.md - GitHub OAuth flow with secure server-side token session management and workspace connect UX
+- [x] 06-github-integration-02-PLAN.md - Repository owner selection and create-plus-push pipeline for generated project output
 
 ### Phase 7: Curated Presets
 **Goal**: Users can jumpstart their project configuration by browsing and applying curated presets for common use cases
@@ -137,5 +137,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 3. Dependency Browser | 2/2 | Complete | 2026-02-14 |
 | 4. Live Preview | 2/2 | Complete | 2026-02-14 |
 | 5. Generation & Sharing | 2/2 | Complete | 2026-02-14 |
-| 6. GitHub Integration | 0/2 | Not started | - |
+| 6. GitHub Integration | 2/2 | Complete | 2026-02-14 |
 | 7. Curated Presets | 0/1 | Not started | - |

@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Developers can visually configure and preview a Spring Boot project with real-time feedback, then generate it instantly
-**Current focus:** Phase 6 - GitHub Integration
+**Current focus:** Phase 7 - Curated Presets
 
 ## Current Position
 
-Phase: 6 of 7 (GitHub Integration)
-Plan: 2 of 2 in current phase
-Status: Complete
-Last activity: 2026-02-14 -- Completed 06-github-integration-02 (repository create + initial commit push flow and workspace publish UI)
+Phase: 7 of 7 (Curated Presets)
+Plan: 0 of 1 in current phase
+Status: Ready to plan
+Last activity: 2026-02-14 -- Phase 6 verification approved (GitHub OAuth + create-and-push flow accepted)
 
 Progress: [#########.] 86%
 
@@ -108,5 +108,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 06-github-integration-02-PLAN.md
+Stopped at: Phase 6 complete, ready for Phase 7 planning
 Resume file: None
