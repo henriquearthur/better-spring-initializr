@@ -24,6 +24,7 @@
     "react": "^19.2.0",
     "react-arborist": "^3.4.3",
     "react-dom": "^19.2.0",
+    "shiki": "^3.13.0",
     "tailwindcss": "^4.1.18",
     "vite-tsconfig-paths": "^5.1.4"
   },
