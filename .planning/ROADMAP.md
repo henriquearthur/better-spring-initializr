@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Project Configuration** - Sidebar with all project metadata and build options
 - [x] **Phase 3: Dependency Browser** - Searchable, categorized dependency selection with visual cards
 - [x] **Phase 4: Live Preview** - Real-time file tree, file viewer, and diff highlighting
-- [ ] **Phase 5: Generation & Sharing** - ZIP download and shareable configuration URLs
+- [x] **Phase 5: Generation & Sharing** - ZIP download and shareable configuration URLs
 - [ ] **Phase 6: GitHub Integration** - OAuth flow and push-to-GitHub functionality
 - [ ] **Phase 7: Curated Presets** - Browse and apply pre-configured project templates
 
@@ -91,11 +91,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User can download the configured project as a ZIP file with one click
   2. User can copy a shareable URL that, when opened by anyone, restores the exact same configuration
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-generation-sharing-01-PLAN.md - BFF ZIP generation contract and Initializr download server function
-- [ ] 05-generation-sharing-02-PLAN.md - Workspace download/share actions with URL restore wiring
+- [x] 05-generation-sharing-01-PLAN.md - BFF ZIP generation contract and Initializr download server function
+- [x] 05-generation-sharing-02-PLAN.md - Workspace download/share actions with URL restore wiring
 
 ### Phase 6: GitHub Integration
 **Goal**: Users can push their generated project directly to a new GitHub repository without leaving the tool
@@ -136,6 +136,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 2. Project Configuration | 3/3 | Complete | 2026-02-14 |
 | 3. Dependency Browser | 2/2 | Complete | 2026-02-14 |
 | 4. Live Preview | 2/2 | Complete | 2026-02-14 |
-| 5. Generation & Sharing | 0/2 | Not started | - |
+| 5. Generation & Sharing | 2/2 | Complete | 2026-02-14 |
 | 6. GitHub Integration | 0/2 | Not started | - |
 | 7. Curated Presets | 0/1 | Not started | - |
