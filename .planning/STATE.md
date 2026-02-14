@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 6 of 7 (GitHub Integration)
-Plan: 0 of 2 in current phase
+Plan: 1 of 2 in current phase
 Status: In progress
-Last activity: 2026-02-14 -- Completed 05-generation-sharing-02 (workspace download/share actions + URL restoration wiring)
+Last activity: 2026-02-14 -- Completed 06-github-integration-01 (GitHub OAuth flow foundation + workspace auth panel wiring)
 
-Progress: [#######...] 71%
+Progress: [########..] 79%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: 3 min
-- Total execution time: 0.48 hours
+- Total execution time: 0.56 hours
 
 **By Phase:**
 
@@ -32,7 +32,7 @@ Progress: [#######...] 71%
 | 3. Dependency Browser | 2 | 4 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 2 min, 1 min, 3 min, 1 min, 3 min
+- Last 5 plans: 1 min, 3 min, 1 min, 3 min, 5 min
 - Trend: Stable delivery with low per-plan execution time
 
 *Updated after each plan completion*
@@ -46,6 +46,7 @@ Progress: [#######...] 71%
 | Phase 04-live-preview P02 | 6 min | 3 tasks | 7 files |
 | Phase 05-generation-sharing P01 | 3 min | 3 tasks | 6 files |
 | Phase 05-generation-sharing P02 | 3 min | 3 tasks | 6 files |
+| Phase 06-github-integration P01 | 5 min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,9 @@ Recent decisions affecting current work:
 - [Phase 05-generation-sharing]: Use explicit `share` token schema versioning (`v: 1`) and null fallback for malformed/unsupported snapshots.
 - [Phase 05-generation-sharing]: Generate canonical share links through URL API with only the `share` query param.
 - [Phase 05-generation-sharing]: Keep download server-function payload encoding browser-import-safe by avoiding direct `node:buffer` imports.
+- [Phase 06-github-integration]: Kept OAuth lifecycle in TanStack Start server functions with sanitized GITHUB_AUTH_* response contracts.
+- [Phase 06-github-integration]: Added /api/github/oauth/callback route to complete OAuth round-trip inside WorkspaceShell.
+- [Phase 06-github-integration]: Used github-oauth-session.server.ts bridge for server-only session runtime access.
 
 ### Pending Todos
 
@@ -95,10 +99,10 @@ None yet.
 
 ### Blockers/Concerns
 
-None yet.
+- `npm run build` currently fails with TanStack Router SSR stream bundling error (`Readable` export from `node:stream`) and needs follow-up before phase-complete verification.
 
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 05-generation-sharing-02-PLAN.md
+Stopped at: Completed 06-github-integration-01-PLAN.md
 Resume file: None
