@@ -78,8 +78,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Client-side file tree computation and virtualized tree rendering (react-arborist)
-- [ ] 04-02: File content viewer with syntax highlighting and diff display
+- [ ] 04-live-preview-01-PLAN.md - BFF preview snapshot pipeline with virtualized file tree rendering
+- [ ] 04-live-preview-02-PLAN.md - Syntax-highlighted file viewer and dependency-change diff integration
 
 ### Phase 5: Generation & Sharing
 **Goal**: Users can download their configured project and share their configuration with others
