@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto'
 import JSZip from 'jszip'
 
 import type { ProjectConfig } from '@/lib/project-config'
@@ -42,21 +41,22 @@ export async function fetchInitializrProjectPreview(
     new Set(options.selectedDependencyIds.map((dependencyId) => dependencyId.trim())),
   ).filter(Boolean)
 
-  let response: Response
+  let response = await requestPreviewArchive({
+    fetchImpl,
+    config: options.config,
+    selectedDependencyIds: dependencies,
+    signal: options.signal,
+    omitBootVersion: false,
+  })
 
-  try {
-    response = await fetchImpl(buildPreviewUrl(options.config, dependencies), {
-      method: 'GET',
-      headers: {
-        accept: 'application/zip, application/octet-stream',
-      },
+  if (!response.ok && response.status === 400) {
+    response = await requestPreviewArchive({
+      fetchImpl,
+      config: options.config,
+      selectedDependencyIds: dependencies,
       signal: options.signal,
+      omitBootVersion: true,
     })
-  } catch {
-    throw new InitializrPreviewClientError(
-      'Unable to reach Spring Initializr preview endpoint.',
-      'UPSTREAM_ERROR',
-    )
   }
 
   if (!response.ok) {
@@ -94,7 +94,7 @@ export async function fetchInitializrProjectPreview(
       path: normalizedPath,
       size: bytes.byteLength,
       binary: decodedContent === undefined,
-      hash: createHash('sha256').update(bytes).digest('hex'),
+      hash: await sha256Hex(bytes),
       content: decodedContent,
     })
   }
@@ -102,12 +102,20 @@ export async function fetchInitializrProjectPreview(
   return files.sort((left, right) => left.path.localeCompare(right.path))
 }
 
-function buildPreviewUrl(config: ProjectConfig, selectedDependencyIds: string[]): URL {
+function buildPreviewUrlWithOptions(
+  config: ProjectConfig,
+  selectedDependencyIds: string[],
+  omitBootVersion: boolean,
+): URL {
   const url = new URL(INITIALIZR_PROJECT_URL)
 
   url.searchParams.set('type', config.buildTool)
   url.searchParams.set('language', config.language)
-  url.searchParams.set('bootVersion', config.springBootVersion)
+
+  if (!omitBootVersion) {
+    url.searchParams.set('bootVersion', config.springBootVersion)
+  }
+
   url.searchParams.set('baseDir', config.name)
   url.searchParams.set('groupId', config.group)
   url.searchParams.set('artifactId', config.artifact)
@@ -122,6 +130,38 @@ function buildPreviewUrl(config: ProjectConfig, selectedDependencyIds: string[])
   }
 
   return url
+}
+
+type RequestPreviewArchiveInput = {
+  fetchImpl: typeof fetch
+  config: ProjectConfig
+  selectedDependencyIds: string[]
+  signal?: AbortSignal
+  omitBootVersion: boolean
+}
+
+async function requestPreviewArchive(input: RequestPreviewArchiveInput): Promise<Response> {
+  try {
+    return await input.fetchImpl(
+      buildPreviewUrlWithOptions(
+        input.config,
+        input.selectedDependencyIds,
+        input.omitBootVersion,
+      ),
+      {
+        method: 'GET',
+        headers: {
+          accept: 'application/zip, application/octet-stream',
+        },
+        signal: input.signal,
+      },
+    )
+  } catch {
+    throw new InitializrPreviewClientError(
+      'Unable to reach Spring Initializr preview endpoint.',
+      'UPSTREAM_ERROR',
+    )
+  }
 }
 
 function normalizeArchivePath(path: string): string {
@@ -146,4 +186,14 @@ function decodeUtf8IfText(bytes: Uint8Array): string | undefined {
   } catch {
     return undefined
   }
+}
+
+async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const digestInput = new Uint8Array(bytes.byteLength)
+  digestInput.set(bytes)
+  const digest = await crypto.subtle.digest('SHA-256', digestInput.buffer)
+
+  return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, '0')).join(
+    '',
+  )
 }

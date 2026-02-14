@@ -1,11 +1,13 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useDependencyBrowser } from '@/hooks/use-dependency-browser'
 import { useInitializrMetadata } from '@/hooks/use-initializr-metadata'
 import { useProjectConfigState } from '@/hooks/use-project-config-state'
+import { useProjectPreview } from '@/hooks/use-project-preview'
 import type { ProjectConfig } from '@/lib/project-config'
 import { ConfigurationSidebar } from './configuration-sidebar'
 import { DependencyBrowser } from './dependency-browser'
+import { PreviewFileTree } from './preview-file-tree'
 import { WorkspaceHeader } from './workspace-header'
 
 export function WorkspaceShell() {
@@ -34,6 +36,32 @@ export function WorkspaceShell() {
     return undefined
   }, [metadataQuery.data])
   const dependencyBrowser = useDependencyBrowser(availableDependencies)
+  const [selectedPreviewFilePath, setSelectedPreviewFilePath] = useState<string | null>(null)
+
+  const projectPreviewQuery = useProjectPreview({
+    config: projectConfig,
+    selectedDependencyIds: dependencyBrowser.selectedDependencyIds,
+  })
+
+  const previewResult = projectPreviewQuery.data
+  const previewFiles = previewResult?.ok ? previewResult.snapshot.files : undefined
+  const previewErrorMessage = previewResult && !previewResult.ok ? previewResult.error.message : undefined
+  const selectedPreviewFile = useMemo(
+    () => previewFiles?.find((file) => file.path === selectedPreviewFilePath) ?? null,
+    [previewFiles, selectedPreviewFilePath],
+  )
+
+  useEffect(() => {
+    if (!selectedPreviewFilePath || !previewFiles) {
+      return
+    }
+
+    const fileStillExists = previewFiles.some((file) => file.path === selectedPreviewFilePath)
+
+    if (!fileStillExists) {
+      setSelectedPreviewFilePath(null)
+    }
+  }, [previewFiles, selectedPreviewFilePath])
 
   const handleConfigChange = useCallback((nextConfig: ProjectConfig) => {
     void setConfig(nextConfig)
@@ -124,22 +152,36 @@ export function WorkspaceShell() {
             </aside>
 
             <section className="rounded-xl border bg-[var(--background)] p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
-                Main Preview
-              </p>
-              <div className="mt-4 flex h-[360px] items-center justify-center rounded-xl border border-dashed text-sm text-[var(--muted-foreground)] md:h-[520px]">
-                <div className="space-y-2 text-left">
-                  <p className="font-medium text-[var(--foreground)]">Live preview coming next phases</p>
-                  <p>Current coordinates:</p>
-                  <p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
+                    Main Preview
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--muted-foreground)]">
                     {projectConfig.group}.{projectConfig.artifact} ({projectConfig.language} /{' '}
                     {projectConfig.buildTool})
                   </p>
-                  <p>
-                    Java {projectConfig.javaVersion} · Boot {projectConfig.springBootVersion} ·{' '}
-                    {projectConfig.packaging.toUpperCase()}
-                  </p>
                 </div>
+
+                <div className="rounded-lg border bg-[var(--card)] px-3 py-2 text-xs text-[var(--muted-foreground)]">
+                  {selectedPreviewFile ? (
+                    <p>
+                      Selected: <span className="font-mono">{selectedPreviewFile.path}</span> ({selectedPreviewFile.size} bytes)
+                    </p>
+                  ) : (
+                    <p>Select a file to inspect its path and size.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4 h-[360px] md:h-[520px]">
+                <PreviewFileTree
+                  files={previewFiles}
+                  isLoading={projectPreviewQuery.isPending}
+                  errorMessage={previewErrorMessage}
+                  selectedFilePath={selectedPreviewFilePath}
+                  onSelectFile={setSelectedPreviewFilePath}
+                />
               </div>
             </section>
           </main>
