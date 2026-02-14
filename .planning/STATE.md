@@ -12,32 +12,33 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 Phase: 3 of 7 (Dependency Browser)
 Plan: 0 of 1 in current phase
 Status: In progress
-Last activity: 2026-02-14 -- Completed 02-project-configuration-02-PLAN.md
+Last activity: 2026-02-14 -- Completed 02-project-configuration-03-PLAN.md
 
-Progress: [###.......] 33%
+Progress: [####......] 42%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 3 min
-- Total execution time: 0.20 hours
+- Total plans completed: 5
+- Average duration: 2 min
+- Total execution time: 0.22 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Foundation & Workspace Shell | 2 | 8 min | 4 min |
-| 2. Project Configuration | 2 | 4 min | 2 min |
+| 2. Project Configuration | 3 | 5 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 3 min, 5 min, 2 min, 2 min
-- Trend: Stable delivery with consistent short execution cycles
+- Last 5 plans: 5 min, 2 min, 2 min, 1 min
+- Trend: Stable delivery with decreasing runtime for gap-closure plans
 
 *Updated after each plan completion*
 | Phase 01 P02 | 5 min | 3 tasks | 11 files |
 | Phase 02 P01 | 2 min | 3 tasks | 3 files |
 | Phase 02 P02 | 2 min | 3 tasks | 6 files |
+| Phase 02 P03 | 1 min | 3 tasks | 1 file |
 
 ## Accumulated Context
 
@@ -63,6 +64,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Use `useProjectConfigState` (nuqs `useQueryStates`) as the single source of truth for workspace configuration state
 - [Phase 02]: Enforce precedence `URL query params -> localStorage snapshot -> hard defaults` when hydrating project config
 - [Phase 02]: Normalize URL/storage config values in `src/lib/project-config.ts` before UI render and persistence writes
+- [Phase 02]: Mounted NuqsAdapter in root route shell so nuqs hooks run inside TanStack Router adapter context
+- [Phase 02]: Preserved existing provider ordering and retained URL->storage->defaults hydration precedence without adding fallback state branches
 
 ### Pending Todos
 
@@ -75,5 +78,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 02-project-configuration-02-PLAN.md
+Stopped at: Completed 02-project-configuration-03-PLAN.md
 Resume file: None
