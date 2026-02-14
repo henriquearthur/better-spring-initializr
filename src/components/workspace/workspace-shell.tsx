@@ -180,23 +180,16 @@ export function WorkspaceShell() {
 
   const handleApplyPreset = useCallback(
     (presetId: string) => {
-      const result = applyCuratedPreset(
-        {
-          config: projectConfig,
-          selectedDependencyIds: dependencyBrowser.selectedDependencyIds,
-        },
-        presetId,
-      )
+      const result = applyCuratedPreset(dependencyBrowser.selectedDependencyIds, presetId)
 
       if (!result.ok) {
         return
       }
 
       setSelectedPresetId(presetId)
-      dependencyBrowser.setSelectedDependencyIds(result.next.selectedDependencyIds)
-      void setConfig(result.next.config)
+      dependencyBrowser.setSelectedDependencyIds(result.nextSelectedDependencyIds)
     },
-    [dependencyBrowser, projectConfig, setConfig],
+    [dependencyBrowser],
   )
 
   const metadataUnavailable = metadataQuery.isLoading || metadataQuery.isError || !metadataReady
@@ -235,6 +228,7 @@ export function WorkspaceShell() {
                     onSelectPreset={handleSelectPreset}
                     onApplyPreset={handleApplyPreset}
                     availableDependencies={availableDependencies}
+                    metadataAvailable={metadataReady}
                     disabled={metadataUnavailable}
                   />
                 </div>

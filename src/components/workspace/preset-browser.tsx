@@ -9,17 +9,8 @@ type PresetBrowserProps = {
   onSelectPreset: (presetId: string) => void
   onApplyPreset: (presetId: string) => void
   availableDependencies: InitializrDependency[]
+  metadataAvailable: boolean
   disabled?: boolean
-}
-
-const CONFIG_LABELS: Partial<Record<keyof CuratedPreset['configOverrides'], string>> = {
-  artifact: 'Artifact',
-  buildTool: 'Build tool',
-  description: 'Description',
-  language: 'Language',
-  name: 'Name',
-  packageName: 'Package name',
-  packaging: 'Packaging',
 }
 
 export function PresetBrowser({
@@ -28,6 +19,7 @@ export function PresetBrowser({
   onSelectPreset,
   onApplyPreset,
   availableDependencies,
+  metadataAvailable,
   disabled = false,
 }: PresetBrowserProps) {
   const dependencyById = useMemo(
@@ -48,10 +40,10 @@ export function PresetBrowser({
     <div className="space-y-3">
       {presets.map((preset) => {
         const isExpanded = preset.id === selectedPresetId
-        const presetConfigEntries = Object.entries(preset.configOverrides)
-        const missingDependencyIds = preset.dependencyIds.filter(
-          (dependencyId) => !dependencyById.has(dependencyId),
-        )
+        const missingDependencyIds =
+          metadataAvailable && availableDependencies.length > 0
+            ? preset.dependencyIds.filter((dependencyId) => !dependencyById.has(dependencyId))
+            : []
 
         return (
           <article key={preset.id} className="rounded-lg border bg-[var(--card)] p-3">
@@ -88,22 +80,6 @@ export function PresetBrowser({
               <div className="mt-3 space-y-3 rounded-md border bg-[var(--background)] p-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                    Includes: Config overrides
-                  </p>
-                  <ul className="mt-2 space-y-1.5">
-                    {presetConfigEntries.map(([field, value]) => (
-                      <li key={field} className="flex items-center justify-between gap-3 text-xs">
-                        <span className="text-[var(--muted-foreground)]">
-                          {CONFIG_LABELS[field as keyof CuratedPreset['configOverrides']] ?? field}
-                        </span>
-                        <span className="font-mono text-[11px]">{String(value)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
                     Includes: Dependencies
                   </p>
                   <ul className="mt-2 space-y-1.5">
@@ -116,7 +92,7 @@ export function PresetBrowser({
                             {metadataDependency ? metadataDependency.name : dependencyId}
                             <span className="ml-1 text-[var(--muted-foreground)]">({dependencyId})</span>
                           </span>
-                          {!metadataDependency ? (
+                          {metadataAvailable && !metadataDependency ? (
                             <span className="rounded-full border border-amber-400/60 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-300">
                               Not in metadata
                             </span>

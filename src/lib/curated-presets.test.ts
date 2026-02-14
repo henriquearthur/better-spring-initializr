@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 
-import { DEFAULT_PROJECT_CONFIG } from './project-config'
 import {
   CURATED_PRESETS,
   applyCuratedPreset,
@@ -24,18 +23,8 @@ describe('curated preset catalog', () => {
 })
 
 describe('applyCuratedPreset', () => {
-  it('merges preset config overrides and de-duplicates dependencies', () => {
-    const result = applyCuratedPreset(
-      {
-        config: {
-          ...DEFAULT_PROJECT_CONFIG,
-          group: 'dev.acme',
-          artifact: 'legacy-service',
-        },
-        selectedDependencyIds: ['web', 'actuator', 'web'],
-      },
-      'rest-api-postgres',
-    )
+  it('adds preset dependencies and de-duplicates selections', () => {
+    const result = applyCuratedPreset(['web', 'actuator', 'web'], 'rest-api-postgres')
 
     expect(result.ok).toBe(true)
 
@@ -43,10 +32,7 @@ describe('applyCuratedPreset', () => {
       return
     }
 
-    expect(result.next.config.group).toBe('dev.acme')
-    expect(result.next.config.artifact).toBe('api-service')
-    expect(result.next.config.buildTool).toBe('maven-project')
-    expect(result.next.selectedDependencyIds).toEqual([
+    expect(result.nextSelectedDependencyIds).toEqual([
       'web',
       'actuator',
       'validation',
@@ -56,22 +42,13 @@ describe('applyCuratedPreset', () => {
     ])
   })
 
-  it('returns PRESET_NOT_FOUND and normalized current snapshot for unknown preset', () => {
-    const result = applyCuratedPreset(
-      {
-        config: DEFAULT_PROJECT_CONFIG,
-        selectedDependencyIds: ['  web  ', '', 'web'],
-      },
-      'unknown',
-    )
+  it('returns PRESET_NOT_FOUND and normalized current selection for unknown preset', () => {
+    const result = applyCuratedPreset(['  web  ', '', 'web'], 'unknown')
 
     expect(result).toEqual({
       ok: false,
       code: 'PRESET_NOT_FOUND',
-      next: {
-        config: DEFAULT_PROJECT_CONFIG,
-        selectedDependencyIds: ['web'],
-      },
+      nextSelectedDependencyIds: ['web'],
     })
   })
 })
