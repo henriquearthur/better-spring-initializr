@@ -4,6 +4,7 @@ import { useDependencyBrowser } from '@/hooks/use-dependency-browser'
 import { useInitializrMetadata } from '@/hooks/use-initializr-metadata'
 import { useProjectConfigState } from '@/hooks/use-project-config-state'
 import { useProjectPreview } from '@/hooks/use-project-preview'
+import { useShareableConfig } from '@/hooks/use-shareable-config'
 import { computePreviewDiff } from '@/lib/preview-diff'
 import type { ProjectConfig } from '@/lib/project-config'
 import type { PreviewSnapshotFile } from '@/lib/preview-tree'
@@ -11,6 +12,7 @@ import { ConfigurationSidebar } from './configuration-sidebar'
 import { DependencyBrowser } from './dependency-browser'
 import { FileContentViewer } from './file-content-viewer'
 import { PreviewFileTree } from './preview-file-tree'
+import { WorkspaceOutputActions } from './workspace-output-actions'
 import { WorkspaceHeader } from './workspace-header'
 
 export function WorkspaceShell() {
@@ -39,6 +41,12 @@ export function WorkspaceShell() {
     return undefined
   }, [metadataQuery.data])
   const dependencyBrowser = useDependencyBrowser(availableDependencies)
+  const {
+    restoredSnapshot,
+    hasShareToken,
+    createShareUrl,
+    clearShareTokenFromUrl,
+  } = useShareableConfig()
   const [selectedPreviewFilePath, setSelectedPreviewFilePath] = useState<string | null>(null)
   const [dependencyDiffBaseline, setDependencyDiffBaseline] = useState<{
     generatedAt: string
@@ -52,6 +60,7 @@ export function WorkspaceShell() {
     [dependencyBrowser.selectedDependencyIds],
   )
   const previousDependencySelectionKeyRef = useRef(dependencySelectionKey)
+  const hasAppliedSharedSnapshotRef = useRef(false)
 
   const projectPreviewQuery = useProjectPreview({
     config: projectConfig,
@@ -69,6 +78,34 @@ export function WorkspaceShell() {
     selectedPreviewFilePath && dependencyDiff
       ? dependencyDiff.files[selectedPreviewFilePath] ?? null
       : null
+
+  useEffect(() => {
+    if (hasAppliedSharedSnapshotRef.current || !hasShareToken) {
+      return
+    }
+
+    hasAppliedSharedSnapshotRef.current = true
+
+    if (!restoredSnapshot) {
+      clearShareTokenFromUrl()
+      return
+    }
+
+    void setConfig(restoredSnapshot.config)
+    dependencyBrowser.clearSelectedDependencies()
+
+    for (const dependencyId of restoredSnapshot.selectedDependencyIds) {
+      dependencyBrowser.toggleDependency(dependencyId)
+    }
+
+    clearShareTokenFromUrl()
+  }, [
+    clearShareTokenFromUrl,
+    dependencyBrowser,
+    hasShareToken,
+    restoredSnapshot,
+    setConfig,
+  ])
 
   useEffect(() => {
     if (previousDependencySelectionKeyRef.current === dependencySelectionKey) {
@@ -223,6 +260,14 @@ export function WorkspaceShell() {
                     <p>Select a file to inspect its path and size.</p>
                   )}
                 </div>
+              </div>
+
+              <div className="mt-4">
+                <WorkspaceOutputActions
+                  config={projectConfig}
+                  selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
+                  createShareUrl={createShareUrl}
+                />
               </div>
 
               {dependencyDiff ? (

@@ -1,5 +1,3 @@
-import { Buffer } from 'node:buffer'
-
 import { createServerFn } from '@tanstack/react-start'
 
 import {
@@ -62,20 +60,34 @@ export async function downloadInitializrProjectFromBff(
     const params = buildInitializrGenerateParams(toGenerationInput(input))
     const archive = await fetchInitializrZip({ params })
 
-    return {
-      ok: true,
-      archive: {
-        base64: Buffer.from(archive.bytes).toString('base64'),
-        contentType: archive.contentType,
-        filename: archive.suggestedFilename,
-      },
-    }
+      return {
+        ok: true,
+        archive: {
+          base64: encodeBytesToBase64(archive.bytes),
+          contentType: archive.contentType,
+          filename: archive.suggestedFilename,
+        },
+      }
   } catch (error) {
     return {
       ok: false,
       error: sanitizeDownloadError(error),
     }
   }
+}
+
+function encodeBytesToBase64(bytes: Uint8Array): string {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(bytes).toString('base64')
+  }
+
+  let binary = ''
+
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte)
+  }
+
+  return btoa(binary)
 }
 
 function toGenerationInput(input: DownloadInitializrProjectInput): InitializrGenerationInput {
