@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation & Workspace Shell** - BFF proxy, API caching, and workspace layout that opens straight to the tool
 - [x] **Phase 2: Project Configuration** - Sidebar with all project metadata and build options
 - [x] **Phase 3: Dependency Browser** - Searchable, categorized dependency selection with visual cards
-- [ ] **Phase 4: Live Preview** - Real-time file tree, file viewer, and diff highlighting
+- [x] **Phase 4: Live Preview** - Real-time file tree, file viewer, and diff highlighting
 - [ ] **Phase 5: Generation & Sharing** - ZIP download and shareable configuration URLs
 - [ ] **Phase 6: GitHub Integration** - OAuth flow and push-to-GitHub functionality
 - [ ] **Phase 7: Curated Presets** - Browse and apply pre-configured project templates
@@ -80,8 +80,9 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-live-preview-01-PLAN.md - BFF preview snapshot pipeline with virtualized file tree rendering
-- [ ] 04-live-preview-02-PLAN.md - Syntax-highlighted file viewer and dependency-change diff integration
+- [x] 04-live-preview-01-PLAN.md - BFF preview snapshot pipeline with virtualized file tree rendering
+- [x] 04-live-preview-02-PLAN.md - Syntax-highlighted file viewer and dependency-change diff integration
+
 
 ### Phase 5: Generation & Sharing
 **Goal**: Users can download their configured project and share their configuration with others
@@ -134,7 +135,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 1. Foundation & Workspace Shell | 2/2 | Complete | 2026-02-14 |
 | 2. Project Configuration | 3/3 | Complete | 2026-02-14 |
 | 3. Dependency Browser | 2/2 | Complete | 2026-02-14 |
-| 4. Live Preview | 0/2 | Not started | - |
+| 4. Live Preview | 2/2 | Complete | 2026-02-14 |
 | 5. Generation & Sharing | 0/2 | Not started | - |
 | 6. GitHub Integration | 0/2 | Not started | - |
 | 7. Curated Presets | 0/1 | Not started | - |
