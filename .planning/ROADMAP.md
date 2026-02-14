@@ -62,10 +62,11 @@ Plans:
   2. User can search dependencies by name or description with instant filtering
   3. User can toggle dependencies on/off with clear visual feedback (selected state)
   4. User can see the count of selected dependencies and clear all selections
-**Plans**: 1 plan
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-dependency-browser-01-PLAN.md - Categorized dependency browser with search, cards, toggle selection, and clear-all controls
+- [x] 03-dependency-browser-01-PLAN.md - Categorized dependency browser with search, cards, toggle selection, and clear-all controls
+- [ ] 03-dependency-browser-02-PLAN.md - Gap closure: align must-have key-link wiring to parent-owned dependency hook architecture
 
 ### Phase 4: Live Preview
 **Goal**: Users see exactly what their configured project looks like before generating it, with real-time feedback on every change
@@ -132,7 +133,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 |-------|----------------|--------|-----------|
 | 1. Foundation & Workspace Shell | 2/2 | Complete | 2026-02-14 |
 | 2. Project Configuration | 3/3 | Complete | 2026-02-14 |
-| 3. Dependency Browser | 0/1 | Not started | - |
+| 3. Dependency Browser | 1/2 | In progress | 2026-02-14 |
 | 4. Live Preview | 0/2 | Not started | - |
 | 5. Generation & Sharing | 0/2 | Not started | - |
 | 6. GitHub Integration | 0/2 | Not started | - |
