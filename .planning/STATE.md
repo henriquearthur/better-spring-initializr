@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Developers can visually configure and preview a Spring Boot project with real-time feedback, then generate it instantly
-**Current focus:** Phase 4 - Live Preview
+**Current focus:** Phase 5 - Generation & Sharing
 
 ## Current Position
 
 Phase: 4 of 7 (Live Preview)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-14 -- Completed 04-live-preview-01 (live preview snapshot + virtualized tree)
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-14 -- Completed 04-live-preview-02 (syntax-highlighted file viewer + dependency diff highlighting)
 
 Progress: [######....] 57%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: 3 min
-- Total execution time: 0.28 hours
+- Total execution time: 0.38 hours
 
 **By Phase:**
 
@@ -43,6 +43,7 @@ Progress: [######....] 57%
 | Phase 03 P01 | 3 min | 3 tasks | 4 files |
 | Phase 03 P02 | 1 min | 2 tasks | 2 files |
 | Phase 04-live-preview P01 | 5 min | 3 tasks | 8 files |
+| Phase 04-live-preview P02 | 6 min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase 04-live-preview]: Generate preview snapshots server-side from starter.zip with sanitized ok/error payloads.
 - [Phase 04-live-preview]: Use react-arborist virtualization with deterministic node IDs for stable scrolling on large trees.
 - [Phase 04-live-preview]: Debounce preview refresh by 350ms and keep previous query data to prevent request storms.
+- [Phase 04-live-preview]: Use Shiki for extension-aware syntax highlighting so generated Spring project files render with language-appropriate tokens.
+- [Phase 04-live-preview]: Compute PREV-04 diffs only when dependency selections change by snapshotting a dependency-change baseline and comparing against the refreshed preview.
+- [Phase 04-live-preview]: Represent diff output as deterministic per-file metadata plus line additions/removals to drive both tree badges and viewer gutter highlights.
 
 ### Pending Todos
 
@@ -89,5 +93,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 04-live-preview-01-PLAN.md
+Stopped at: Completed 04-live-preview-02-PLAN.md
 Resume file: None
