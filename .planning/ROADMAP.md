@@ -75,7 +75,7 @@ Plans:
   2. User can click any file in the tree to view its contents with syntax highlighting
   3. When user toggles a dependency, diff highlighting shows exactly what changed in affected files
   4. File tree renders smoothly even for projects with many files (virtualized rendering)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 04-01: Client-side file tree computation and virtualized tree rendering (react-arborist)
@@ -91,7 +91,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 05-01: ZIP generation via Spring Initializr API proxy and shareable URL encoding
+- [ ] 05-generation-sharing-01-PLAN.md - BFF ZIP generation contract and Initializr download server function
+- [ ] 05-generation-sharing-02-PLAN.md - Workspace download/share actions with URL restore wiring
 
 ### Phase 6: GitHub Integration
 **Goal**: Users can push their generated project directly to a new GitHub repository without leaving the tool
@@ -132,6 +133,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 2. Project Configuration | 0/2 | Not started | - |
 | 3. Dependency Browser | 0/1 | Not started | - |
 | 4. Live Preview | 0/2 | Not started | - |
-| 5. Generation & Sharing | 0/1 | Not started | - |
+| 5. Generation & Sharing | 0/2 | Not started | - |
 | 6. GitHub Integration | 0/2 | Not started | - |
 | 7. Curated Presets | 0/1 | Not started | - |
