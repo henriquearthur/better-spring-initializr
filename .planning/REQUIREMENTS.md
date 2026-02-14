@@ -45,7 +45,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Layout & UI
 
-- [ ] **LAYO-01**: App opens directly into workspace — no landing page
+- [ ] **LAYO-01**: App opens directly into workspace -- no landing page
 - [ ] **LAYO-02**: Left sidebar contains all configuration sections (collapsible)
 - [ ] **LAYO-03**: Main area shows live preview (file tree + file viewer)
 - [ ] **LAYO-04**: User can toggle dark/light theme
@@ -66,7 +66,7 @@ Deferred to future release. Tracked but not in current roadmap.
 - **ENHC-01**: User can save/share custom presets as community presets
 - **ENHC-02**: User can import community presets from other users
 - **ENHC-03**: User sees dependency compatibility warnings for known conflicts
-- **ENHC-04**: User sees migration path indicators (Spring Boot 2.x → 3.x breaking changes)
+- **ENHC-04**: User sees migration path indicators (Spring Boot 2.x -> 3.x breaking changes)
 - **ENHC-05**: User can navigate with keyboard shortcuts for common actions
 - **ENHC-06**: Auto-generated README based on selected dependencies
 - **ENHC-07**: Mobile-responsive workspace layout
@@ -83,7 +83,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | Custom dependency registries | Enterprise concern; focus on public Spring ecosystem |
 | Dependency graph visualization | High complexity, requires data not in Spring Initializr API |
 | Multi-project / monorepo templates | Major scope expansion beyond single project generation |
-| Landing page / marketing | Dev tool, not a product site — straight to workspace |
+| Landing page / marketing | Dev tool, not a product site -- straight to workspace |
 
 ## Traceability
 
@@ -91,13 +91,41 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated during roadmap creation) | | |
+| CONF-01 | Phase 2 | Pending |
+| CONF-02 | Phase 2 | Pending |
+| CONF-03 | Phase 2 | Pending |
+| CONF-04 | Phase 2 | Pending |
+| CONF-05 | Phase 2 | Pending |
+| CONF-06 | Phase 2 | Pending |
+| DEPS-01 | Phase 3 | Pending |
+| DEPS-02 | Phase 3 | Pending |
+| DEPS-03 | Phase 3 | Pending |
+| DEPS-04 | Phase 3 | Pending |
+| DEPS-05 | Phase 3 | Pending |
+| PREV-01 | Phase 4 | Pending |
+| PREV-02 | Phase 4 | Pending |
+| PREV-03 | Phase 4 | Pending |
+| PREV-04 | Phase 4 | Pending |
+| OUTP-01 | Phase 5 | Pending |
+| OUTP-02 | Phase 5 | Pending |
+| OUTP-03 | Phase 6 | Pending |
+| PRST-01 | Phase 7 | Pending |
+| PRST-02 | Phase 7 | Pending |
+| PRST-03 | Phase 7 | Pending |
+| LAYO-01 | Phase 1 | Pending |
+| LAYO-02 | Phase 2 | Pending |
+| LAYO-03 | Phase 4 | Pending |
+| LAYO-04 | Phase 1 | Pending |
+| LAYO-05 | Phase 2 | Pending |
+| INFR-01 | Phase 1 | Pending |
+| INFR-02 | Phase 1 | Pending |
+| INFR-03 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 26 total
-- Mapped to phases: 0
-- Unmapped: 26 (pending roadmap)
+- Mapped to phases: 26
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-14*
-*Last updated: 2026-02-14 after initial definition*
+*Last updated: 2026-02-14 after roadmap creation*
