@@ -31,7 +31,7 @@ key-decisions:
   - "Disable dependency interactions until metadata is ready to preserve existing loading/error safety guarantees"
 
 patterns-established:
-  - "Dependency browser flow: metadata dependencies -> useDependencyBrowser -> presentational card browser"
+  - "Dependency browser flow: metadata dependencies -> WorkspaceShell-owned useDependencyBrowser -> presentational DependencyBrowser props"
   - "Sidebar control pattern: section header actions (count + clear-all) paired with metadata status messaging"
 
 duration: 3 min
@@ -71,7 +71,7 @@ Each task was committed atomically:
 - `src/components/workspace/workspace-shell.tsx` - Sidebar integration, metadata gating, selected-count badge, and clear-all action wiring.
 
 ## Decisions Made
-- Kept dependency browser state local to a dedicated hook so this phase delivers interaction behavior without introducing persistence scope.
+- Kept dependency browser state local to `useDependencyBrowser` owned by `WorkspaceShell`, while `DependencyBrowser` remains presentational for this phase.
 - Reused existing metadata readiness contract in the sidebar and disabled dependency interactions when metadata is unavailable.
 
 ## Deviations from Plan
