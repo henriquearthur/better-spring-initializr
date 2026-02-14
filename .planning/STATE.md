@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Developers can visually configure and preview a Spring Boot project with real-time feedback, then generate it instantly
-**Current focus:** Planning next milestone
+**Current focus:** Defining milestone v1.0.1 requirements
 
 ## Current Position
 
-Phase: 7 of 7 (v1.0 complete)
-Plan: 1 of 1 in current phase
-Status: Milestone complete
-Last activity: 2026-02-14 -- Archived v1.0 MVP milestone and prepared for next milestone planning
+Phase: Not started (defining requirements)
+Plan: -
+Status: Defining requirements
+Last activity: 2026-02-14 -- Milestone v1.0.1 UX Refinements started
 
-Progress: [##########] 100%
+Progress: [----------] 0%
 
 ## Performance Metrics
 
