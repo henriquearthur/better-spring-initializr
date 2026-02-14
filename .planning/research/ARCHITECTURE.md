@@ -1,6 +1,6 @@
 # Architecture Research
 
-**Domain:** Modern Project Generator Tool with Live Preview
+**Domain:** UX and reliability refinements for an existing TanStack Start + React workspace app
 **Researched:** 2026-02-14
 **Confidence:** HIGH
 
@@ -9,493 +9,212 @@
 ### System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    PRESENTATION LAYER                        │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│  │ Config   │  │ Preview  │  │ Generate │  │  Auth    │    │
-│  │ Sidebar  │  │ Panel    │  │ Actions  │  │  Flow    │    │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
-│       │             │             │             │           │
-├───────┴─────────────┴─────────────┴─────────────┴───────────┤
-│                    STATE LAYER                               │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │         URL State (shareable presets)                │   │
-│  └──────────────────────────────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │         Derived State (computed file tree)           │   │
-│  └──────────────────────────────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │         Session State (OAuth tokens)                 │   │
-│  └──────────────────────────────────────────────────────┘   │
-├─────────────────────────────────────────────────────────────┤
-│                    BFF LAYER (Server Functions)              │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│  │ Metadata │  │ Preview  │  │  Archive │  │  GitHub  │    │
-│  │  Proxy   │  │ Generator│  │ Generator│  │  Pusher  │    │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
-│       │             │             │             │           │
-├───────┴─────────────┴─────────────┴─────────────┴───────────┤
-│                   EXTERNAL SERVICES                          │
-│  ┌──────────────────────────┐  ┌──────────────────────────┐ │
-│  │  Spring Initializr API   │  │      GitHub API          │ │
-│  └──────────────────────────┘  └──────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              PRESENTATION LAYER                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ WorkspaceHeader                                                             │
+│ ┌─────────────────────── Sidebar ──────────────────────┐  ┌──────────────┐ │
+│ │ ConfigurationSidebar                                  │  │ Main Preview │ │
+│ │ PresetBrowser                                         │  │ FileTree     │ │
+│ │ DependencyBrowser                                     │  │ FileViewer   │ │
+│ └───────────────────────────────────────────────────────┘  └──────────────┘ │
+│                             OutputActionHub                                  │
+│            (Download, Share, Publish; auth starts only on Publish)          │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                STATE LAYER                                   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ WorkspaceShell-owned UI state + URL/localStorage config state               │
+│ React Query preview state (debounced, placeholder previous snapshot)        │
+│ GitHub OAuth session summary (lazy-loaded only in publish path)             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                         BFF LAYER (Server Functions)                         │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ get-initializr-metadata  get-project-preview  download-initializr-project   │
+│ github-oauth (start/complete/get/disconnect)  push-project-to-github        │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                              EXTERNAL SERVICES                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Spring Initializr API                                 GitHub OAuth/API       │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
 | Component | Responsibility | Typical Implementation |
 |-----------|----------------|------------------------|
-| **Config Sidebar** | Collects user selections (deps, versions, metadata), syncs to URL | React component with form state bound to URL params |
-| **Preview Panel** | Displays computed file tree with syntax highlighting, shows diffs when config changes | React component consuming derived state, virtual scrolling for large trees |
-| **Generate Actions** | Triggers ZIP download or GitHub push based on current config | Client components calling server functions for heavy lifting |
-| **Auth Flow** | GitHub OAuth for push feature, manages tokens securely | OAuth flow with server-side token storage, client-side session |
-| **URL State** | Single source of truth for configuration, enables shareable presets | URL params as serialized config (URL-encoded JSON or base64) |
-| **Derived State** | Computes file tree from config without re-fetching | In-memory computation, memoized/cached |
-| **Metadata Proxy** | Fetches Spring Initializr metadata (deps, versions) and caches | Server function proxying to Spring Initializr API |
-| **Preview Generator** | Generates file tree structure from config without creating ZIP | Server function that simulates project generation |
-| **Archive Generator** | Proxies ZIP generation to Spring Initializr or creates locally | Server function calling Spring Initializr /starter.zip endpoint |
-| **GitHub Pusher** | Creates repo, commits generated files, pushes to user's GitHub | Server function using GitHub API with user's OAuth token |
+| `WorkspaceShell` | Owns cross-panel state and composes workspace layout | Single orchestration component with hooks and local UI state |
+| `OutputActionHub` (new) | Action-first output flow; choose Download/Share/Publish before auth prompts | Replaces split auth/push panels with a single action coordinator |
+| `PublishFlowPanel` (new) | Handles owner/repo/visibility and initiates auth only when user commits to publish | Stateful step panel inside action hub |
+| `GitHubOAuthCallbackRoute` (modified) | Completes OAuth callback independent of panel mount | Route-level completion + redirect/status handoff |
+| `PreviewFileTree` (modified) | Reliable file selection and tree rendering | Keep virtual tree, remove fixed height assumptions |
+| `FileContentViewer` (modified) | Stable formatting, indentation, and syntax render fallback | Dedicated code viewport + cached Shiki highlighter |
 
 ## Recommended Project Structure
 
 ```
 src/
-├── app/                    # TanStack Start app directory
-│   ├── routes/            # File-based routing
-│   │   ├── index.tsx      # Main generator page
-│   │   ├── auth/          # OAuth callback routes
-│   │   └── api/           # Server routes (if needed beyond server functions)
-│   ├── router.tsx         # Router configuration
-│   └── ssr.tsx            # SSR entry point
-├── components/            # React components
-│   ├── ui/               # shadcn/ui components
-│   ├── ConfigSidebar/    # Configuration form
-│   ├── PreviewPanel/     # File tree preview
-│   ├── GenerateActions/  # Download/Push buttons
-│   └── AuthButton/       # GitHub OAuth flow
-├── server/               # Server-side code (BFF)
-│   ├── functions/        # Server functions (TanStack Start)
-│   │   ├── metadata.ts   # Proxy Spring Initializr metadata
-│   │   ├── preview.ts    # Generate file tree preview
-│   │   ├── generate.ts   # Generate and return ZIP
-│   │   └── github.ts     # Push to GitHub
-│   ├── lib/              # Server-only utilities
-│   │   ├── api-client.ts # Spring Initializr API client
-│   │   ├── github-client.ts # GitHub API client
-│   │   └── auth.ts       # OAuth session management
-│   └── middleware/       # Request/response middleware
-├── lib/                  # Shared utilities (isomorphic)
-│   ├── config-schema.ts  # Config validation (Zod)
-│   ├── url-state.ts      # URL param serialization
-│   └── file-tree.ts      # File tree data structures
-├── hooks/                # React hooks
-│   ├── useConfig.ts      # URL-synced config state
-│   ├── useMetadata.ts    # Spring metadata from server
-│   └── usePreview.ts     # Derived file tree state
-├── types/                # TypeScript types
-│   ├── config.ts         # Configuration types
-│   ├── metadata.ts       # Spring Initializr metadata
-│   └── github.ts         # GitHub API types
-└── styles/               # Global styles (Tailwind)
+├── components/workspace/
+│   ├── workspace-shell.tsx                   # [MOD] remove always-on auth/push cards
+│   ├── workspace-output-actions.tsx          # [MOD] become OutputActionHub
+│   ├── publish-flow-panel.tsx                # [NEW] publish-step UX + auth gate trigger
+│   ├── github-auth-panel.tsx                 # [MOD/DEPRECATE] move logic into publish flow
+│   ├── github-push-panel.tsx                 # [MOD/DEPRECATE] move logic into publish flow
+│   ├── preview-file-tree.tsx                 # [MOD] height + selection reliability
+│   ├── file-content-viewer.tsx               # [MOD] formatting/cursor/indentation reliability
+│   └── preview-code-viewport.tsx             # [NEW] shared pre/code renderer for plain+tokenized
+├── hooks/
+│   ├── use-project-preview.ts                # [MOD] retry/cancel/fetch state tuning
+│   └── use-github-publish-flow.ts            # [NEW] session + push orchestration hook
+├── lib/
+│   └── shiki-highlighter.ts                  # [NEW] singleton highlighter cache
+├── routes/
+│   └── api.github.oauth.callback.tsx         # [MOD] callback completion decoupled from auth panel
+└── server/functions/
+    ├── github-oauth.ts                       # [MOD] optional callback status payload normalization
+    └── push-project-to-github.ts             # [MOD] no contract change; keep auth-required guard
 ```
 
 ### Structure Rationale
 
-- **app/:** TanStack Start convention for routing and SSR configuration. All routes live here.
-- **server/:** Explicit separation of server-only code. TanStack Start's compiler ensures this never ships to client.
-- **server/functions/:** Server functions are the BFF layer - type-safe RPC from client to server.
-- **lib/:** Shared code that can run in both environments (validation, data structures, utilities).
-- **hooks/:** Client-side hooks that manage state, call server functions, and compute derived state.
-- **components/:** Standard React component organization with shadcn/ui convention.
+- **`components/workspace/`:** Keep visual changes local to workspace composition, avoid spilling milestone UX logic into server/BFF code.
+- **`hooks/use-github-publish-flow.ts`:** Centralizes publish state machine so UI can simplify without duplicating OAuth/push state transitions.
+- **`lib/shiki-highlighter.ts`:** Prevent repeated highlighter initialization; aligns with Shiki guidance for long-lived instances.
+- **`routes/api.github.oauth.callback.tsx`:** Makes OAuth completion deterministic even when auth UI is no longer always mounted.
 
 ## Architectural Patterns
 
-### Pattern 1: URL-as-State for Shareable Presets
+### Pattern 1: Action-First Publish Orchestration
 
-**What:** Store all configuration (selected deps, versions, metadata) in URL query parameters, making it the single source of truth.
-
-**When to use:** When users need to share, bookmark, or restore exact configurations.
-
-**Trade-offs:**
-- ✅ **Pros:** Shareable links, browser history integration, no backend storage needed, works offline
-- ⚠️ **Cons:** URL length limits (~2000 chars), not suitable for sensitive data, visible in browser history
+**What:** User chooses output intent first; OAuth starts only when user selects Publish and confirms repository details.
+**When to use:** Multi-action output surfaces where authentication should be contextual, not global.
+**Trade-offs:** Cleaner UX and less visual noise; slightly more state orchestration in one component.
 
 **Example:**
 ```typescript
-// lib/url-state.ts
-import { useSearch, useNavigate } from '@tanstack/react-router';
-import { compress, decompress } from 'lz-string';
+type OutputIntent = 'download' | 'share' | 'publish'
 
-export function useConfigState() {
-  const search = useSearch();
-  const navigate = useNavigate();
+function OutputActionHub() {
+  const [intent, setIntent] = useState<OutputIntent>('download')
+  const publish = useGitHubPublishFlow()
 
-  // Deserialize config from URL
-  const config = useMemo(() => {
-    if (!search.preset) return defaultConfig;
-    try {
-      const json = decompress(search.preset);
-      return configSchema.parse(JSON.parse(json));
-    } catch {
-      return defaultConfig;
-    }
-  }, [search.preset]);
+  if (intent !== 'publish') return <DownloadShareActions onPublish={() => setIntent('publish')} />
 
-  // Update URL when config changes
-  const setConfig = useCallback((newConfig: Config) => {
-    const json = JSON.stringify(newConfig);
-    const compressed = compress(json);
-    navigate({ search: { preset: compressed } });
-  }, [navigate]);
-
-  return [config, setConfig] as const;
+  return <PublishFlowPanel publish={publish} />
 }
 ```
 
-### Pattern 2: BFF Layer via Server Functions
+### Pattern 2: OAuth Callback as Route Boundary (Not Panel Side Effect)
 
-**What:** Use TanStack Start's server functions to create a Backend-for-Frontend layer that proxies external APIs, handles secrets, and performs server-side logic.
-
-**When to use:** When you need to hide API keys, perform server-only operations, or add caching/transformation layers.
-
-**Trade-offs:**
-- ✅ **Pros:** Type-safe RPC, no API keys in client, can cache/transform responses, simplified error handling
-- ⚠️ **Cons:** Adds latency vs direct API calls, requires server deployment (not fully static)
+**What:** OAuth code exchange runs in callback route path and redirects back to workspace with a compact status indicator.
+**When to use:** OAuth completion must work regardless of whether a specific component is currently mounted.
+**Trade-offs:** Adds one redirect hop; removes hidden coupling and callback fragility.
 
 **Example:**
 ```typescript
-// server/functions/metadata.ts
-import { createServerFn } from '@tanstack/start';
-import { initializrClient } from '../lib/api-client';
-
-export const getMetadata = createServerFn('GET', async () => {
-  // This runs only on server, API key never exposed to client
-  const metadata = await initializrClient.getMetadata();
-
-  // Transform/cache as needed
-  return {
-    dependencies: metadata.dependencies.values,
-    javaVersions: metadata.javaVersion.values,
-    springBootVersions: metadata.bootVersion.values,
-  };
-});
-
-// client usage (components/ConfigSidebar/index.tsx)
-import { getMetadata } from '@/server/functions/metadata';
-
-export function ConfigSidebar() {
-  const metadata = await getMetadata();
-  // Type-safe, no manual fetch
-}
+// route /api/github/oauth/callback
+// parse code/state/error -> call completeGitHubOAuth -> redirect('/?publishAuth=ok|error')
 ```
 
-### Pattern 3: Derived State for Live Preview
+### Pattern 3: Two-Stage Preview Rendering Pipeline
 
-**What:** Compute file tree preview from configuration state without re-fetching or regenerating the entire project.
-
-**When to use:** For responsive UI that updates as user changes config, avoiding expensive operations on every change.
-
-**Trade-offs:**
-- ✅ **Pros:** Instant feedback, no server round-trips for simple changes, works offline
-- ⚠️ **Cons:** Client-side computation can be complex, may drift from actual generation logic
+**What:** Keep server snapshot retrieval and client code rendering separate; normalize text rendering before token styling.
+**When to use:** File preview must stay reliable under rapid config edits and mixed file types.
+**Trade-offs:** Slightly more component boundaries; clearer failure handling and better readability.
 
 **Example:**
 ```typescript
-// hooks/usePreview.ts
-import { useMemo } from 'react';
-import { computeFileTree } from '@/lib/file-tree';
-
-export function usePreview(config: Config) {
-  // Memoized computation - only recalculates when config changes
-  const fileTree = useMemo(() => {
-    return computeFileTree(config);
-  }, [config]);
-
-  // Compute diff against previous state
-  const diff = useMemo(() => {
-    if (!prevConfig) return null;
-    return computeDiff(
-      computeFileTree(prevConfig),
-      fileTree
-    );
-  }, [prevConfig, fileTree]);
-
-  return { fileTree, diff };
-}
-
-// lib/file-tree.ts - isomorphic logic
-export function computeFileTree(config: Config): FileNode[] {
-  // Simulate file structure based on config
-  // This can be simple heuristics, doesn't need to be 100% accurate
-  const baseStructure = getBaseStructure(config.language);
-
-  if (config.dependencies.includes('spring-web')) {
-    baseStructure.push(createControllerFile());
-  }
-
-  return baseStructure;
-}
-```
-
-### Pattern 4: Optimistic UI with Server Validation
-
-**What:** Update UI immediately based on user actions, then validate/finalize with server function.
-
-**When to use:** For better perceived performance while maintaining server-side correctness.
-
-**Trade-offs:**
-- ✅ **Pros:** Feels instant, better UX, reduces perceived latency
-- ⚠️ **Cons:** Must handle rollback if server rejects, can confuse users if validation fails
-
-**Example:**
-```typescript
-// components/GenerateActions/index.tsx
-import { generateZip } from '@/server/functions/generate';
-
-export function GenerateActions({ config }: Props) {
-  const [status, setStatus] = useState<'idle' | 'generating' | 'success' | 'error'>('idle');
-
-  const handleGenerate = async () => {
-    // Optimistic update
-    setStatus('generating');
-
-    try {
-      const zipBlob = await generateZip({ config });
-      setStatus('success');
-
-      // Trigger download
-      const url = URL.createObjectURL(zipBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${config.name}.zip`;
-      a.click();
-    } catch (error) {
-      // Rollback on error
-      setStatus('error');
-      toast.error('Failed to generate project');
-    }
-  };
-
-  return (
-    <Button onClick={handleGenerate} disabled={status === 'generating'}>
-      {status === 'generating' ? 'Generating...' : 'Download ZIP'}
-    </Button>
-  );
-}
+const query = useProjectPreview(input) // network + archive decode path
+const lines = toDisplayLines(selectedFile?.content ?? '') // whitespace-safe
+const tokens = useShikiTokens(lines, inferredLang) // optional enhancement
 ```
 
 ## Data Flow
 
-### Request Flow
+### Request Flow (Publish with Auth Gate)
 
 ```
-[User Edits Config]
+[User clicks Publish]
     ↓
-[ConfigSidebar] → [useConfigState hook] → [URL update]
+[OutputActionHub] → [useGitHubPublishFlow.ensureSession]
+    ↓ (if disconnected)
+[startGitHubOAuth] → redirect GitHub
     ↓
-[URL change detected]
+[/api/github/oauth/callback route handles completeGitHubOAuth]
     ↓
-[usePreview hook] → [computeFileTree] → [Derived State]
+redirect back to workspace
     ↓
-[PreviewPanel] renders updated file tree
+[PublishFlowPanel] → [pushProjectToGitHub]
+    ↓
+[GitHub repo created + initial commit]
 ```
 
-### Generation Flow
+### Request Flow (Preview Reliability)
 
 ```
-[User clicks "Generate"]
+[User edits config/dependencies]
     ↓
-[Client Component] → [generateZip server function]
+[useProjectPreview debounce]
     ↓
-[Server Function] → [Spring Initializr API] → [ZIP bytes]
+[get-project-preview server function]
     ↓
-[Response] → [Client] → [Blob download]
-```
-
-### GitHub Push Flow
-
-```
-[User clicks "Push to GitHub"]
+[initializr-preview-client fetches + unpacks archive]
     ↓
-[OAuth check] → (if not authed) → [GitHub OAuth flow]
+[WorkspaceShell selects file]
     ↓
-[Client Component] → [pushToGithub server function]
-    ↓
-[Server Function] → [GitHub API: create repo]
-    ↓
-[Server Function] → [GitHub API: push files]
-    ↓
-[Response] → [Client] → [Show success + repo URL]
+[FileContentViewer -> normalize lines -> optional tokenization]
 ```
 
 ### State Management
 
 ```
-┌──────────────────────────────────────────┐
-│            URL Parameters                │
-│  (preset=compressed-config-string)       │
-└──────────────┬───────────────────────────┘
-               ↓ (deserialize)
-         [useConfigState]
-               ↓
-         [Config Object]
-               ↓ (derive)
-         [computeFileTree]
-               ↓
-         [File Tree State]
-               ↓ (subscribe)
-┌──────────────┴───────────────────────────┐
-│           React Components               │
-│  ConfigSidebar → PreviewPanel            │
-└──────────────────────────────────────────┘
+WorkspaceShell state
+    ├── Config + dependency state (existing)
+    ├── Preview selection/diff state (existing)
+    └── Output intent/publish state (new)
+             ↓
+      useGitHubPublishFlow
+             ↓
+      OAuth session summary + push mutation state
 ```
 
 ### Key Data Flows
 
-1. **Config → Preview:** User changes config in sidebar → URL updates → usePreview recomputes file tree → PreviewPanel re-renders. All client-side, instant feedback.
-
-2. **Config → Generation:** User clicks generate → server function receives config → proxies to Spring Initializr API → returns ZIP → client downloads. Server-side, ensures correctness.
-
-3. **OAuth → GitHub Push:** User initiates push → check session → if needed, redirect to GitHub OAuth → callback stores token → server function uses token to create repo and push files.
-
-4. **Metadata Loading:** On mount → call getMetadata server function → caches response → populates dropdown options in sidebar.
+1. **Publish gating flow:** publish intent triggers session check; OAuth starts only when needed; callback route finalizes and returns to publish context.
+2. **Preview display flow:** server preview snapshot remains canonical; client viewer focuses on formatting reliability, not generation semantics.
+3. **Information hierarchy flow:** workspace shell composes fewer top-level cards by merging auth/push into output action hub.
 
 ## Scaling Considerations
 
 | Scale | Architecture Adjustments |
 |-------|--------------------------|
-| **0-1k users** | Single server deployment, no caching needed. TanStack Start on Vercel/Netlify serverless sufficient. Spring Initializr API can handle load. |
-| **1k-100k users** | Add CDN for static assets, cache Spring Initializr metadata (1hr TTL), rate-limit generation endpoints, add analytics. Consider edge functions for lower latency. |
-| **100k+ users** | Implement request queueing for generation, add rate limiting per IP/user, cache common presets, consider self-hosting Spring Initializr for reliability. Monitor API quotas. |
+| 0-1k users | Current monolith+BFF is sufficient; prioritize UX clarity and callback robustness. |
+| 1k-100k users | Add stronger preview request cancellation/backoff and transient error telemetry before adding new services. |
+| 100k+ users | Consider async preview job/cache layer only if snapshot generation latency is consistently high. |
 
 ### Scaling Priorities
 
-1. **First bottleneck:** Spring Initializr API rate limits or downtime.
-   - **Fix:** Cache metadata aggressively (serve stale if API down), implement retry logic with exponential backoff, add health check endpoint.
-
-2. **Second bottleneck:** ZIP generation on serverless functions (cold starts, timeout limits).
-   - **Fix:** Use streaming responses for large projects, implement background job queue for GitHub pushes, add progress indicators for long operations.
-
-3. **Third bottleneck:** OAuth token storage and session management.
-   - **Fix:** Use secure session storage (encrypted cookies or Redis), implement token refresh logic, add session expiry handling.
+1. **First bottleneck:** repeated preview fetches during fast edits causing stale visual states; solve with cancellation-aware query settings and stale-result guards.
+2. **Second bottleneck:** OAuth callback fragility from UI coupling; solve by route-bound callback completion and explicit status handoff.
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Calling Spring Initializr API from Client
+### Anti-Pattern 1: Always-Mounted Auth UI
 
-**What people do:** Call Spring Initializr API directly from browser to avoid building a backend.
+**What people do:** Keep GitHub auth controls visible all the time in main preview area.
+**Why it's wrong:** Adds cognitive load and leaks implementation details into primary workflow.
+**Do this instead:** Surface auth only inside Publish path in `OutputActionHub`.
 
-**Why it's wrong:**
-- CORS issues (Spring Initializr may not allow all origins)
-- Can't cache responses effectively (each user hits API)
-- Can't transform/simplify responses
-- Exposes internal API structure to clients
-- Rate limiting is per client IP, not per app
+### Anti-Pattern 2: Callback Completion Hidden in Optional Component
 
-**Do this instead:** Always proxy through server functions. Cache metadata responses, transform to your needs, handle errors gracefully.
+**What people do:** Complete OAuth only inside `GitHubAuthPanel` mount effect.
+**Why it's wrong:** Refactor to action-gated auth can silently break callback processing.
+**Do this instead:** Handle callback in route module (`api.github.oauth.callback.tsx`) so completion is independent of panel visibility.
 
-```typescript
-// ❌ DON'T: Direct API call from client
-fetch('https://start.spring.io/metadata')
-  .then(r => r.json())
+### Anti-Pattern 3: Re-Initializing Syntax Highlighter Per File Change
 
-// ✅ DO: Server function with caching
-export const getMetadata = createServerFn('GET', async () => {
-  const cached = await cache.get('metadata');
-  if (cached) return cached;
-
-  const metadata = await initializrClient.getMetadata();
-  await cache.set('metadata', metadata, { ttl: 3600 });
-  return metadata;
-});
-```
-
-### Anti-Pattern 2: Generating Full Project for Preview
-
-**What people do:** Call the full ZIP generation endpoint every time config changes to show accurate preview.
-
-**Why it's wrong:**
-- Extremely slow (generates entire project structure)
-- Wastes Spring Initializr API quota
-- Poor UX (users wait for preview to update)
-- Doesn't work offline
-- Server costs for heavy operations
-
-**Do this instead:** Compute file tree preview client-side using heuristics. Only generate full project when user explicitly requests download/push.
-
-```typescript
-// ❌ DON'T: Generate full project for preview
-useEffect(() => {
-  generateZip(config).then(zip => extractFileTree(zip));
-}, [config]);
-
-// ✅ DO: Compute preview with heuristics
-const preview = useMemo(() => computeFileTree(config), [config]);
-```
-
-### Anti-Pattern 3: Storing GitHub Tokens in Client State
-
-**What people do:** Store OAuth access tokens in React state or localStorage for convenience.
-
-**Why it's wrong:**
-- Security risk (XSS can steal tokens)
-- Tokens visible in browser DevTools
-- No way to revoke on server
-- Difficult to implement refresh logic
-- Violates OAuth best practices
-
-**Do this instead:** Store tokens server-side in encrypted session storage. Client only gets session ID in httpOnly cookie.
-
-```typescript
-// ❌ DON'T: Client-side token storage
-const [githubToken, setGithubToken] = useState(localStorage.getItem('gh_token'));
-
-// ✅ DO: Server-side session with secure cookie
-export const pushToGithub = createServerFn('POST', async (config, { request }) => {
-  const session = await getSession(request);
-  if (!session.githubToken) {
-    throw new Error('Not authenticated');
-  }
-
-  const github = new GitHubClient(session.githubToken);
-  // Use token securely on server
-});
-```
-
-### Anti-Pattern 4: Putting Entire File Contents in Preview State
-
-**What people do:** Generate and store full file contents for every file in the preview, even if not visible.
-
-**Why it's wrong:**
-- Memory intensive (hundreds of files × KB each)
-- Slow rendering (React re-renders large trees)
-- Wasted computation (user may only view 5-10 files)
-- Doesn't scale to large projects
-
-**Do this instead:** Use virtual scrolling, lazy-load file contents on demand, only store file tree structure in state.
-
-```typescript
-// ❌ DON'T: Eager full content generation
-const preview = files.map(f => ({
-  path: f.path,
-  content: generateFullContent(f) // Heavy operation for all files
-}));
-
-// ✅ DO: Lazy content loading
-const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
-
-function FileTreeNode({ file }) {
-  const content = expandedFiles.has(file.path)
-    ? generateContent(file)
-    : null;
-
-  return <TreeNode file={file} content={content} />;
-}
-```
+**What people do:** Call shorthand tokenizer repeatedly without a long-lived cache strategy.
+**Why it's wrong:** Increases latency and failure probability during rapid file switches.
+**Do this instead:** Keep singleton highlighter helper and degrade gracefully to plain text.
 
 ## Integration Points
 
@@ -503,91 +222,85 @@ function FileTreeNode({ file }) {
 
 | Service | Integration Pattern | Notes |
 |---------|---------------------|-------|
-| **Spring Initializr API** | Proxy via server functions | Cache metadata (1hr), retry with backoff, handle API downtime gracefully |
-| **GitHub API** | OAuth + server-side calls | Store tokens in session, implement refresh logic, respect rate limits (5000/hr) |
-| **GitHub OAuth** | Standard OAuth 2.0 flow | Use state parameter for CSRF, validate in callback, store tokens securely |
+| Spring Initializr | Existing server function proxy (`get-project-preview`, download function) | No contract changes required for v1.0.1 refinement goals. |
+| GitHub OAuth/API | Existing start/complete/session/push functions | Trigger auth only from publish flow, but keep server-side auth guard in `push-project-to-github.ts`. |
 
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| **Client ↔ Server Functions** | Type-safe RPC (TanStack Start) | Automatic serialization, end-to-end type safety, no manual fetch |
-| **URL State ↔ React State** | URL params as source of truth | Deserialize on mount, serialize on change, compress for length |
-| **Preview ↔ Config** | Derived state (memoized) | Recompute only when config changes, use structural sharing |
-| **Auth Flow ↔ Server Functions** | Session cookies | httpOnly, secure, SameSite=Lax, automatic in requests |
+| `WorkspaceShell` ↔ `OutputActionHub` | Props + callbacks | New boundary for action-first output intent and publish state. |
+| `OutputActionHub` ↔ OAuth/push server functions | Hook-driven async actions | Avoid direct panel coupling; unify loading/error/success states. |
+| Callback route ↔ workspace route | URL status handoff | Keeps OAuth completion deterministic after redirect. |
+| `useProjectPreview` ↔ `FileContentViewer` | Query result + selected file model | Keep preview fetch and render reliability concerns separated. |
+
+### New vs Modified Files (Explicit)
+
+| File | New/Modified | Integration Purpose |
+|------|--------------|---------------------|
+| `src/components/workspace/workspace-shell.tsx` | Modified | Remove always-on auth/publish cards; mount new output hub only once. |
+| `src/components/workspace/workspace-output-actions.tsx` | Modified | Become action-first hub (Download/Share/Publish) and primary publish entrypoint. |
+| `src/components/workspace/publish-flow-panel.tsx` | New | Encapsulate publish-only form and auth gating UX. |
+| `src/hooks/use-github-publish-flow.ts` | New | Reusable orchestration for session load, OAuth start, push mutation, callback status recovery. |
+| `src/routes/api.github.oauth.callback.tsx` | Modified | Move OAuth completion here so callback does not depend on auth panel mount. |
+| `src/components/workspace/file-content-viewer.tsx` | Modified | Preserve indentation/cursor behavior and fallback rendering stability. |
+| `src/components/workspace/preview-code-viewport.tsx` | New | Shared code rendering primitive for highlighted/plain text states. |
+| `src/lib/shiki-highlighter.ts` | New | Singleton highlighter cache for consistent preview tokenization behavior. |
+| `src/hooks/use-project-preview.ts` | Modified | Tune retry/cancel/placeholder behavior to reduce stale snapshot artifacts. |
 
 ## Build Order Dependencies
 
-### Phase 1: Foundation
-1. **Setup TanStack Start project** with TypeScript, Tailwind, shadcn/ui
-2. **Define config schema** (Zod) - needed by everything else
-3. **Implement URL state management** - foundation for shareable presets
+1. **Decouple OAuth callback first**
+   - Modify `src/routes/api.github.oauth.callback.tsx` to own callback completion and return status to workspace.
+   - Dependency reason: action-gated publish can break auth if callback remains panel-coupled.
 
-### Phase 2: BFF Layer
-4. **Create Spring Initializr API client** - server-side library
-5. **Implement metadata proxy** - server function to fetch available options
-6. **Add caching layer** - improve performance and reduce API calls
+2. **Introduce publish orchestration hook**
+   - Add `src/hooks/use-github-publish-flow.ts` and move session/push orchestration out of UI panels.
+   - Dependency reason: needed before UI consolidation to avoid regressions.
 
-### Phase 3: UI Layer
-7. **Build ConfigSidebar** - depends on metadata from BFF
-8. **Implement file tree computation** - client-side preview logic
-9. **Build PreviewPanel** - depends on file tree computation
+3. **Refactor output area to action-first hub**
+   - Modify `src/components/workspace/workspace-output-actions.tsx` and `src/components/workspace/workspace-shell.tsx`.
+   - Add `src/components/workspace/publish-flow-panel.tsx`.
 
-### Phase 4: Generation
-10. **Implement ZIP generation** - server function proxying Spring Initializr
-11. **Add download functionality** - client-side blob handling
+4. **Simplify/retire standalone GitHub panels**
+   - Remove or internally delegate `src/components/workspace/github-auth-panel.tsx` and `src/components/workspace/github-push-panel.tsx`.
+   - Rollout safety: keep old components for one iteration behind a temporary branch-level toggle if needed.
 
-### Phase 5: GitHub Integration
-12. **Setup GitHub OAuth** - required for push feature
-13. **Implement GitHub push** - server function using GitHub API
-14. **Add auth UI** - login/logout buttons, session display
+5. **Stabilize preview rendering internals**
+   - Add `src/lib/shiki-highlighter.ts` and `src/components/workspace/preview-code-viewport.tsx`.
+   - Update `src/components/workspace/file-content-viewer.tsx` and `src/components/workspace/preview-file-tree.tsx` for whitespace/height reliability.
 
-### Dependencies
-- Steps 1-3 have no dependencies (can be parallel)
-- Steps 4-6 depend on Step 2 (config schema)
-- Steps 7-9 depend on Steps 4-6 (metadata from BFF)
-- Step 10 depends on Steps 4-6 (API client)
-- Step 11 depends on Step 10 (ZIP generation)
-- Steps 12-14 depend on Step 2 (config schema) but independent of Steps 7-11
+6. **Tune preview query behavior**
+   - Update `src/hooks/use-project-preview.ts` retry/cancellation/placeholder settings after UI refactor lands.
+   - Dependency reason: do this last so tuning is based on final UI interaction patterns.
+
+### Rollout Safety
+
+- Keep server contracts backward compatible while UI migrates.
+- Ship callback-route decoupling before removing old auth panel logic.
+- Add focused tests for callback completion, unauthenticated publish, and preview whitespace formatting.
 
 ## Sources
 
-**TanStack Start Architecture:**
-- [TanStack Start Overview](https://tanstack.com/start/latest/docs/framework/react/overview)
-- [Server Functions | TanStack Start React Docs](https://tanstack.com/start/latest/docs/framework/react/guide/server-functions)
-- [Code Execution Patterns | TanStack Start React Docs](https://tanstack.com/start/latest/docs/framework/react/guide/code-execution-patterns)
-
-**BFF Pattern:**
-- [Backends for Frontends Pattern - Azure Architecture Center](https://learn.microsoft.com/en-us/azure/architecture/patterns/backends-for-frontends)
-- [Sam Newman - Backends For Frontends](https://samnewman.io/patterns/architectural/bff/)
-- [Building a Secure & Scalable BFF (Backend-for-Frontend) Architecture with Next.js API Routes](https://vishal-vishal-gupta48.medium.com/building-a-secure-scalable-bff-backend-for-frontend-architecture-with-next-js-api-routes-cbc8c101bff0)
-- [Backends for Frontends. The BFF Pattern](https://medium.com/squer-solutions/micro-frontend-architecture-patterns-backends-for-frontends-d2918927c01d)
-
-**URL State Management:**
-- [Your URL Is Your State](https://alfy.blog/2025/10/31/your-url-is-your-state.html)
-- [The URL is the ultimate global state management tool](https://www.jacobparis.com/content/url-as-state-management)
-- [Type-Safe URL State Management in React With nuqs](https://gitnation.com/contents/type-safe-url-state-management-in-react-with-nuqs)
-- [state-in-url - store state in URL like in JSON, type-safe](https://state-in-url.dev/)
-
-**File Tree & State Management:**
-- [7 Top React State Management Libraries in 2026](https://trio.dev/7-top-react-state-management-libraries/)
-- [7 Best React Tree View Components For React App (2026 Update)](https://reactscript.com/best-tree-view/)
-- [File Tree | React Components & Templates](https://magicui.design/docs/components/file-tree)
-
-**Spring Initializr & Project Generators:**
-- [GitHub - spring-io/initializr: A quickstart generator for Spring projects](https://github.com/spring-io/initializr)
-- [The Spring Initializr alternative for starting complex Spring Boot apps | Bootify.io](https://bootify.io/spring-initializr-alternative.html)
-- [How to customize the Spring Initializr](https://medium.com/digitalfrontiers/how-to-customize-the-spring-initializr-2439ecabb069)
-
-**GitHub OAuth:**
-- [Authorizing OAuth apps - GitHub Docs](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps)
-- [Best practices for creating an OAuth app - GitHub Docs](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/best-practices-for-creating-an-oauth-app)
-- [GitHub App vs. GitHub OAuth: When to Use Which?](https://nango.dev/blog/github-app-vs-github-oauth)
-
-**Monorepo + BFF:**
-- [Monorepo Architecture: The Ultimate Guide for 2025](https://feature-sliced.design/blog/frontend-monorepo-explained)
-- [Best practices for managing frontend and backend in a single monorepo](https://graphite.com/guides/monorepo-frontend-backend-best-practices)
+- Internal architecture and current integration points from repository code:
+  - `src/components/workspace/workspace-shell.tsx`
+  - `src/components/workspace/workspace-output-actions.tsx`
+  - `src/components/workspace/github-auth-panel.tsx`
+  - `src/components/workspace/github-push-panel.tsx`
+  - `src/components/workspace/file-content-viewer.tsx`
+  - `src/hooks/use-project-preview.ts`
+  - `src/routes/api.github.oauth.callback.tsx`
+  - `src/server/functions/github-oauth.ts`
+  - `src/server/functions/push-project-to-github.ts`
+- TanStack Start Server Functions docs (official):
+  - https://tanstack.com/start/latest/docs/framework/react/guide/server-functions
+- TanStack Query `useQuery` reference (official):
+  - https://tanstack.com/query/latest/docs/framework/react/reference/useQuery
+- GitHub OAuth web flow documentation (official):
+  - https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps
+- Shiki installation/usage and highlighter lifecycle guidance (official):
+  - https://shiki.style/guide/install
 
 ---
-*Architecture research for: Better Spring Initializr - Modern Project Generator Tool*
+*Architecture research for: better-spring-initializr v1.0.1 UX Refinements*
 *Researched: 2026-02-14*

@@ -1,6 +1,6 @@
 # Stack Research
 
-**Domain:** Developer Tool Web Application (Project Generator/Configurator)
+**Domain:** UX and reliability refinements for an existing project generator UI
 **Researched:** 2026-02-14
 **Confidence:** HIGH
 
@@ -10,179 +10,86 @@
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| **TanStack Start** | 1.159.5 (RC) | Full-stack React framework with SSR, server functions | Client-first philosophy with server capabilities. Built on Vite + TanStack Router. Fine-grained control over data loading and rendering. No magic, explicit patterns. Currently RC but API stable and feature-complete. Better fit than Next.js for tools requiring precise control over client/server boundaries. |
-| **React** | 19.x | UI library | Industry standard with massive ecosystem. Excellent TypeScript support. Works seamlessly with TanStack ecosystem. Required for TanStack Start. |
-| **TypeScript** | 5.5+ | Type system | Essential for maintainability. Zod integration for runtime validation. TanStack Start has first-class TS support. Reduces bugs in complex configurator logic. |
-| **Vite** | 6.x | Build tool | 20-30x faster than traditional bundlers. Powers TanStack Start. Sub-50ms HMR. esbuild for TS transpilation. Industry standard for modern React apps in 2026. |
-| **Tailwind CSS** | 4.x | Utility-first CSS framework | De facto standard for modern React apps. AI-friendly class generation. Scales without CSS bloat. Excellent with shadcn/ui. Works beautifully with component-based architecture. |
-| **shadcn/ui** | latest | Component library (copy-paste pattern) | Not a dependency, you own the code. Built on Radix UI primitives for accessibility. Tailwind-native styling. Supports Tailwind v4 and React 19. Highly customizable. Perfect for polished developer tools. Industry default in 2026. |
+| TanStack Start | keep current (`@tanstack/react-start@^1.132.0`) | App shell + server functions | No architecture change is needed for this milestone. Post-generate action flow (download/share/publish) can be refactored in existing route/component boundaries without adding framework layers. |
+| React + React DOM | keep current (`react@^19.2.0`) | UI composition and state | All requested UI refinements are component-level changes. React 19 is already sufficient; no renderer/runtime additions are needed. |
+| Tailwind CSS v4 | keep current (`tailwindcss@^4.1.18`) | Light-mode readability and layout simplification | Tailwind v4 + existing CSS variables already support token-level contrast tuning and spacing cleanup. This milestone is better solved by token updates, not a new styling system. |
+| TanStack Query | keep current (`@tanstack/react-query@^5.90.21`) | Preview fetch reliability and noise reduction | Query retries, backoff, and cancellation are built in. Use query options and `AbortSignal` in query functions instead of adding a separate fetch/retry library. |
+| Shiki | **update** to `^3.22.0` (from `^3.13.0`) | Code preview highlighting | Stay on Shiki (already integrated) but update to current v3 line to improve consistency and keep compatibility with transformer package below. |
 
 ### Supporting Libraries
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| **@tanstack/react-query** | 5.90.x | Server state management | Cache Spring Initializr API responses. Handle API fetching with built-in retry, staleTime, and cache invalidation. Essential for dependency browser and preset loading. Use for ALL server data. |
-| **Zod** | 3.x | Runtime validation + type inference | Validate user config before generating project. Type-safe URL params for presets. Validate Spring Initializr API responses. Works perfectly with TanStack Start server functions. |
-| **nuqs** | latest | URL state management | Sync config panel state with URL for shareable presets. Better than manual useSearchParams + state sync. Type-safe with Zod schemas. Essential for URL-encoded presets feature. |
-| **Octokit** | latest | GitHub API integration | Official GitHub SDK for TypeScript. Push generated project to GitHub. Create repositories, commit files. Full type safety. Only needed for GitHub integration feature. |
-| **JSZip** | 3.x | ZIP file generation | Generate downloadable project archives. Client-side ZIP creation from file tree. Use with FileSaver.js for browser downloads. |
-| **file-saver** | 2.x | Client-side file downloads | Trigger browser downloads for generated ZIPs. Works with JSZip blobs. Standard solution for file downloads. |
-| **react-arborist** | 3.x | File tree visualization | VSCode-like file tree component. Virtualization for large projects. Expand/collapse, selection. Best-in-class for file explorers. Critical for live preview feature. |
-| **@monaco-editor/react** | 4.7.x | Code editor component | Show file diffs, preview generated code. VS Code editor in browser. Syntax highlighting, TypeScript support. Use v4.7.0-rc.0 for React 19 compatibility. |
-| **Shiki** (via react-shiki) | latest | Syntax highlighting | Modern, performant syntax highlighter using TextMate grammars. No client-side JS for highlighting. Replaces legacy react-syntax-highlighter. Use for dependency cards, README previews. |
-| **Lucide React** | 0.564.x | Icon library | 1671+ icons, tree-shakable. Consistent design system. Used by shadcn/ui. Fully typed React components. Standard choice for Tailwind apps. |
-| **clsx** + **tailwind-merge** | latest | Conditional class management | Combine into `cn()` utility. Handle dynamic Tailwind classes without conflicts. Essential pattern with shadcn/ui. |
-| **Zustand** | 4.x | Client state management | Manage complex UI state (file tree selection, sidebar panels, diff view state). Simple, predictable, scales well. Use only for client-side state; TanStack Query handles server state. |
+| `@shikijs/transformers` | `^3.22.0` | Cleaner code preview rendering (indent guides, whitespace rendering, diff/focus line classes) | Use in `file-content-viewer` to improve indentation clarity and code readability without moving to a full editor dependency. |
 
 ### Development Tools
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| **Biome** | Linting + Formatting | 10-25x faster than ESLint + Prettier. One config file instead of four. Supports TypeScript, React, CSS, GraphQL. Version 2.3.15 stable. Replaces ESLint + Prettier stack. Some limitations: no HTML/Markdown support yet. |
-| **Vite TypeScript** | Type checking during dev | Vite transpiles but doesn't type-check. Configure with `tsc --noEmit` in parallel. Set `skipLibCheck: true` to avoid dependency issues. |
-| **@types/node** | Node.js types | Required for Vite path resolution in config. Standard dev dependency. |
+| Vitest + Testing Library (existing) | UX regression checks for warning visibility and post-generate flow | Add focused component tests for "status tone" logic (informational vs warning/error) instead of introducing another test framework. |
 
 ## Installation
 
 ```bash
-# Create project with TanStack Start
-npm create @tanstack/start@latest
+# Runtime additions/updates
+npm install shiki@^3.22.0 @shikijs/transformers@^3.22.0
 
-# Core dependencies (if not included in starter)
-npm install @tanstack/react-query zod nuqs
-
-# UI & Styling (shadcn/ui requires manual setup, see Installation section below)
-npm install tailwindcss @tailwindcss/vite
-npm install lucide-react clsx tailwind-merge
-
-# Feature-specific
-npm install octokit jszip file-saver
-npm install react-arborist @monaco-editor/react@next react-shiki
-
-# State management
-npm install zustand
-
-# Dev dependencies
-npm install -D @biomejs/biome @types/node
+# No other new packages needed for this milestone
 ```
 
-### shadcn/ui Installation
+## Integration Points (existing codebase)
 
-```bash
-# Initialize shadcn/ui with Vite
-npx shadcn@latest init
-
-# Add components as needed
-npx shadcn@latest add button
-npx shadcn@latest add select
-npx shadcn@latest add card
-# etc...
-```
-
-Note: shadcn/ui copies components into your `src/components/ui` directory. You own and customize the code.
+- `src/components/workspace/file-content-viewer.tsx`: keep Shiki-based renderer; integrate `@shikijs/transformers` for indentation guides/whitespace and cleaner line semantics, then simplify custom table-like rendering.
+- `src/hooks/use-project-preview.ts`: tune query options (`retry`, conditional retry by status, retryDelay) and wire query-function `signal` cancellation path to reduce stale/noisy preview states.
+- `src/server/lib/initializr-preview-client.ts`: keep existing client; ensure retry policy stays in Query layer and errors are mapped to user-facing severity levels (info/warn/error) rather than always warning-style panels.
+- `src/components/workspace/workspace-shell.tsx` and related panels: refactor composition for post-generate GitHub action placement and reduced nested card chrome; no new state library required.
 
 ## Alternatives Considered
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| **TanStack Start** | Next.js 16 | Use Next.js if you need mature ecosystem, extensive plugins, or serverless-first deployment. TanStack Start is better for explicit control, less magic, client-first architecture. |
-| **TanStack Query** | SWR, Apollo Client | Use SWR for simpler use cases. Apollo only if using GraphQL. TanStack Query is the industry standard for REST APIs with superior DevTools and ecosystem. |
-| **Biome** | ESLint + Prettier | Use ESLint + Prettier if you need HTML/Markdown linting, or have extensive existing ESLint plugin dependencies. Biome is faster and simpler but has limited language support. |
-| **nuqs** | Manual URL state | Use manual approach if you only have 1-2 URL params. nuqs essential when managing complex URL state with type safety. |
-| **react-arborist** | react-folder-tree, MUI Tree View | Use react-folder-tree for simple trees without virtualization. MUI Tree View if already using MUI. react-arborist is best for large file trees (VSCode-like). |
-| **@monaco-editor/react** | CodeMirror 6 | Use CodeMirror if you need smaller bundle size or don't need VS Code features. Monaco is heavier but provides superior DX for code diffs and TypeScript support. |
+| Shiki + `@shikijs/transformers` | Monaco (`@monaco-editor/react`) | Use Monaco only if this becomes an editable IDE surface with advanced editing needs; for read-only preview refinements it is unnecessary bundle and integration cost. |
+| TanStack Query retry/cancellation | `ky` / `axios-retry` / standalone retry libs | Use alternative clients only if the app standardizes on one HTTP client everywhere. For this milestone, Query already provides reliability primitives. |
+| Tailwind token refinement | New component/design system | Use a new system only for full redesigns. This milestone explicitly requires preserving existing visual language. |
 
 ## What NOT to Use
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| **react-syntax-highlighter** | Legacy, not actively maintained. Poor performance for larger code blocks. | **Shiki** (via react-shiki) — modern, WebAssembly-powered, renders ahead of time, no client-side JS overhead. |
-| **React Router 6** | TanStack Start bundles TanStack Router, which is more type-safe and feature-rich. Duplicating routing libraries adds bloat. | **TanStack Router** (included with TanStack Start) |
-| **Redux / Redux Toolkit** | Overkill for this app. Server state should use TanStack Query. Client state is simple enough for Zustand. | **TanStack Query** (server state) + **Zustand** (client state) |
-| **Create React App** | Deprecated, slow builds, no longer recommended by React team. | **Vite** (via TanStack Start) |
-| **Plain Tailwind without merge** | Causes class conflicts when composing components dynamically. | **tailwind-merge + clsx** wrapped in `cn()` utility |
+| Monaco Editor migration for preview-only improvements | Heavy payload and broader UX change than needed for padding/cursor/indentation refinements | Keep Shiki and add `@shikijs/transformers` + targeted CSS/layout fixes |
+| New global state machine library (e.g., XState) for post-generate action flow | Introduces modeling overhead for a small UI flow change | Keep React state/hooks in existing workspace shell boundaries |
+| Toast-heavy notification layer for all statuses | Increases noise, conflicts with "reduce warning/noise" objective | Inline contextual status messaging with stricter severity rules |
+| Tailwind plugin sprawl for contrast fixes | Adds configuration complexity with little payoff | Adjust existing CSS variables to meet contrast targets in light mode |
 
 ## Stack Patterns by Variant
 
-**If using presets heavily:**
-- Use Zod schemas for preset validation
-- Implement nuqs with Zod integration for type-safe URL params
-- Consider adding preset versioning to handle schema evolution
+**If preview stays read-only (recommended for this milestone):**
+- Keep Shiki rendering pipeline
+- Add `@shikijs/transformers` for readability/diff polish
+- Use Query retry/cancellation to stabilize fetch UX
 
-**If adding authentication later:**
-- TanStack Start works with all major auth providers (Clerk, Auth.js, WorkOS)
-- Use server functions for session validation
-- Implement proper cookie configurations (HttpOnly, SameSite)
-
-**If deploying to Cloudflare Workers:**
-- TanStack Start has first-class Cloudflare support
-- Octokit works in Workers environment
-- Be mindful of Worker size limits with Monaco Editor (consider lazy loading)
-
-**If adding database for v2+:**
-- Drizzle ORM pairs well with TanStack Start
-- TanStack Query handles cache invalidation
-- Consider SQLite (Cloudflare D1) or PostgreSQL (Neon, Supabase)
+**If a future milestone introduces in-browser editing:**
+- Re-evaluate Monaco in that future phase
+- Isolate editor bundle with lazy loading
+- Keep this milestone free of editor-platform complexity
 
 ## Version Compatibility
 
 | Package A | Compatible With | Notes |
 |-----------|-----------------|-------|
-| TanStack Start 1.x (RC) | React 19.x | Requires React 19. RC status means API stable but may have edge case bugs. |
-| @monaco-editor/react 4.7.0-rc.0 | React 19.x | Use RC version for React 19 compatibility. Stable v4.6.x only supports React 18. |
-| shadcn/ui latest | Tailwind v4, React 19 | CLI auto-configures for Tailwind v4. Requires manual setup with Vite. |
-| Biome 2.3.15 | TypeScript 5.x, React 19 | Stable version. Does NOT support HTML, Markdown, Vue, Astro (yet). |
-| TanStack Query 5.90.x | React 18/19 | No React Query v6 planned. Svelte has v6 with runes, but React stays on v5. |
-| Zod 3.x | TypeScript 5.5+ | Requires TS 5.5+ for optimal type inference. |
-
-## Confidence Assessment
-
-| Category | Level | Reason |
-|----------|-------|--------|
-| **Core Framework (TanStack Start)** | MEDIUM-HIGH | RC status (not 1.0) but API stable, actively maintained, used in production. WebSearch + official docs verified current status. No Context7 data available. |
-| **UI Layer (shadcn/ui + Tailwind)** | HIGH | Industry standard in 2026. Official docs verified Tailwind v4 and React 19 support. Widespread adoption confirmed via multiple sources. |
-| **Supporting Libraries** | HIGH | All libraries verified via official docs or WebSearch from multiple credible sources. Version numbers confirmed via npm search and GitHub releases. |
-| **Tooling (Biome)** | MEDIUM | Stable v2.3.15 but some limitations (no HTML/Markdown). WebSearch from multiple sources confirms performance claims and trade-offs. |
-| **Architecture Patterns** | HIGH | Standard TanStack ecosystem patterns. Multiple 2026 guides confirm best practices. Community consensus on state management (TanStack Query + Zustand). |
-
-### Verification Sources
-
-**Context7:** Not used (libraries not available in Context7 index)
-
-**Official Documentation:**
-- [TanStack Start](https://tanstack.com/start/latest) — RC status, React 19 support
-- [shadcn/ui Vite Installation](https://ui.shadcn.com/docs/installation/vite) — Setup with Tailwind v4
-- [Biome](https://biomejs.dev/) — v2.x stable, language support
-
-**WebSearch (2026):**
-- [TanStack Start best practices 2026](https://workos.com/blog/top-authentication-solutions-tanstack-start-2026) — Authentication, caching strategy
-- [React Stack 2026](https://www.codewithseb.com/blog/tanstack-ecosystem-complete-guide-2026) — TanStack ecosystem guide
-- [Biome vs ESLint 2026](https://medium.com/@harryespant/biome-vs-eslint-the-ultimate-2025-showdown-for-javascript-developers-speed-features-and-3e5130be4a3c) — Performance comparisons
-- [React file tree libraries](https://reactscript.com/best-tree-view/) — react-arborist recommendation
-- [Monaco Editor React integration](https://monaco-react.surenatoyan.com/) — React 19 RC version
-- [Shiki vs react-syntax-highlighter](https://npm-compare.com/highlight.js,prismjs,react-syntax-highlighter,shiki) — Maintenance status comparison
+| `shiki@^3.22.0` | `@shikijs/transformers@^3.22.0` | Same major/minor family avoids transformer/runtime drift. |
+| `@tanstack/react-query@^5.90.21` | React 19 (`react@^19.2.0`) | Current project versions already aligned; use built-in retry/cancellation APIs. |
+| `tailwindcss@^4.1.18` | Existing CSS variable token approach | Supports refinement via token updates; no migration required. |
 
 ## Sources
 
-### Official Documentation
-- [TanStack Start](https://tanstack.com/start/latest) — Core framework documentation
-- [TanStack Query](https://tanstack.com/query/latest) — Server state management
-- [shadcn/ui](https://ui.shadcn.com/) — Component library documentation
-- [Biome](https://biomejs.dev/) — Linter/formatter documentation
-- [Zod](https://zod.dev/) — Validation library documentation
-- [Lucide Icons](https://lucide.dev/) — Icon library documentation
-- [Octokit GitHub](https://github.com/octokit) — GitHub API SDK
-
-### Web Search Sources (2026)
-- [TanStack Start best practices](https://workos.com/blog/top-authentication-solutions-tanstack-start-2026) — MEDIUM confidence
-- [shadcn/ui Tailwind v4 support](https://ui.shadcn.com/docs/tailwind-v4) — HIGH confidence (official)
-- [React Stack Patterns 2026](https://www.codewithseb.com/blog/tanstack-ecosystem-complete-guide-2026) — MEDIUM confidence
-- [Biome vs ESLint comparison](https://medium.com/@harryespant/biome-vs-eslint-the-ultimate-2025-showdown-for-javascript-developers-speed-features-and-3e5130be4a3c) — MEDIUM confidence
-- [React Tree View libraries](https://reactscript.com/best-tree-view/) — MEDIUM confidence
-- [Monaco Editor React](https://monaco-react.surenatoyan.com/) — HIGH confidence (official package docs)
-- [Shiki syntax highlighting](https://shiki.matsu.io/) — HIGH confidence (official)
-- [URL state management with nuqs](https://nuqs.dev) — HIGH confidence (official)
+- TanStack Query docs (official): https://tanstack.com/query/latest/docs/framework/react/guides/query-retries - verified retry/backoff behavior (HIGH)
+- TanStack Query docs (official): https://tanstack.com/query/latest/docs/framework/react/guides/query-functions - verified `QueryFunctionContext.signal`/cancellation path (HIGH)
+- Shiki docs (official): https://shiki.style/guide/install - verified current v3 line and integration model (HIGH)
+- Shiki transformers docs (official): https://shiki.style/packages/transformers - verified transformer capabilities for diff/indent/whitespace (HIGH)
+- WCAG 2.2 Understanding SC 1.4.3 (official): https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html - contrast targets for light-mode readability (HIGH)
+- npm registry (official package metadata via `npm view`, checked 2026-02-14): `shiki` 3.22.0, `@shikijs/transformers` 3.22.0, `@tanstack/react-query` 5.90.21 (HIGH)
 
 ---
-*Stack research for: Better Spring Initializr*
+*Stack research for: better-spring-initializr v1.0.1 UX refinements*
 *Researched: 2026-02-14*

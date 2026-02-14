@@ -1,250 +1,146 @@
 # Feature Research
 
-**Domain:** Project Generator / Configurator Tools
+**Domain:** Developer Tooling UX Refinements (Spring Initializr workspace)
 **Researched:** 2026-02-14
-**Confidence:** HIGH
+**Confidence:** MEDIUM-HIGH
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Features users assume exist. Missing these = product feels incomplete.
+Features users now expect in mature tooling once core generation already exists.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Basic Project Configuration | All generators offer this (language, build tool, packaging) | LOW | Spring Initializr API provides this; UI wraps it |
-| Dependency Selection | Core purpose of generators | MEDIUM | Browse, search, select dependencies with descriptions |
-| Download ZIP | Standard output format across all generators | LOW | Spring Initializr API provides this endpoint |
-| Framework Version Selection | Users expect control over major versions | LOW | Spring Initializr API metadata includes available versions |
-| Shareable Configuration Links | start.spring.io has "Share" button; users expect to share configs | LOW | Encode config in URL query params |
-| Live Preview of Generated Structure | File tree generators show this; users want to see before download | MEDIUM | Parse Spring Initializr response or build client-side from metadata |
-| Dependency Metadata Display | Users need to understand what dependencies do | LOW | Spring Initializr API provides descriptions; display with formatting |
-| Search/Filter Dependencies | Large dependency lists require search (start.spring.io has this) | LOW | Client-side filtering of API metadata |
-| Mobile-Responsive UI | Modern web apps must work on all devices | MEDIUM | Tailwind + shadcn/ui make this easier but requires testing |
-| Keyboard Navigation | Power users expect keyboard shortcuts for efficiency | MEDIUM | Focus management, hotkeys for common actions |
+| Accessible light mode contrast baseline | Professional dev tools are expected to remain legible in both light and dark modes; unreadable text is seen as a product defect, not preference | MEDIUM | Add semantic color tokens and enforce WCAG 2.2 contrast floors (4.5:1 body text). Depends on existing workspace shell theme variables and current theme toggle |
+| Notification hygiene and severity control | Mature tools minimize interruption and avoid warning spam; users expect warnings to be actionable and sparse | MEDIUM | Introduce notification policy: dedupe repeated warnings, collapse low-severity messages, persistent dismiss for non-critical notices. Depends on metadata validation, dependency checks, and preview/generation error emitters |
+| Progressive disclosure for auth and advanced actions | Users expect "connect accounts" only when needed, not as an up-front blocker | LOW-MEDIUM | Keep GitHub publish hidden/secondary until a successful generation intent exists. Depends on existing generation/share flow and GitHub publish capability |
+| Reliable preview states (loading/success/stale/error) | If preview exists, users expect it to be trustworthy and explicit about status | MEDIUM | Add deterministic preview lifecycle: skeleton while loading, stale marker when inputs changed, retry on failure, last-good snapshot fallback. Depends on current live preview service and metadata-config state |
+| IA simplification with global header and reduced nesting | Mature dev UIs provide orientation first, then detail; too many nested cards are perceived as noise | MEDIUM | Introduce single global header (context + primary actions) and flatten card hierarchy to 1 level where possible. Depends on workspace shell layout and existing sidebar structure |
+| Mobile and narrow viewport adaptation for side panels | Even dev tools are expected to remain usable on laptop splits/small windows | LOW-MEDIUM | Convert sidebars to collapsible/filter menu behavior on narrow viewports; preserve current page context. Depends on existing responsive shell and dependency browser panel logic |
 
 ### Differentiators (Competitive Advantage)
 
-Features that set the product apart. Not required, but valuable.
+Refinement features that create a noticeably better "quality feel" than baseline tools.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Visual Dependency Cards with Rich Metadata | start.spring.io uses plain lists; cards with tags, stats, compatibility info are more discoverable | MEDIUM | Requires metadata enhancement beyond API (potentially npm stats, GitHub stars) |
-| Real-Time Configuration Diff | Show what changed when toggling options; no competitor does this | MEDIUM | Track config state, compute diffs, display with syntax highlighting |
-| Curated + Community Presets | Pre-configured templates for common use cases (REST API, microservice, etc.) | HIGH | Requires preset system, validation, potentially user-submitted presets |
-| Push to GitHub Integration | Download is standard; push directly to new repo is convenience | HIGH | OAuth flow, GitHub API integration, error handling |
-| Workspace UI (vs. Form UI) | start.spring.io is form-based; workspace with panels feels more professional | MEDIUM | Layout with sidebar config, main preview area, responsive design |
-| Dependency Compatibility Warnings | Warn about version conflicts or incompatible combinations | HIGH | Requires compatibility matrix data (not in Spring Initializr API) |
-| Migration Path Indicators | Show breaking changes between Spring Boot 2.x vs 3.x | MEDIUM | Educational content, inline warnings for version-specific issues |
-| Live File Content Preview | Show actual file contents (pom.xml, build.gradle, application.properties) not just tree | MEDIUM | Parse/generate from Spring Initializr response or build client-side |
-| Multi-Project Templates | Generate monorepo structures or related microservices | HIGH | Beyond single-project scope; requires orchestration |
-| README Generator | Auto-generate project README with setup instructions | MEDIUM | Template-based generation from selected config |
-| Dependency Graph Visualization | Visual map of dependency relationships | HIGH | Requires dependency tree data (not in Spring Initializr API) |
-| Export to Multiple Formats | ZIP + tar.gz + direct GitHub push | LOW | Spring Initializr supports zip/tgz; GitHub push is separate feature |
-| Theme Customization | Dark/light mode with shadcn/ui theming | LOW | shadcn/ui provides theme system; low effort, high perceived value |
-| Local Storage State Persistence | Save workspace state across browser sessions | LOW | localStorage for config; improves UX for returning users |
+| Signal-over-noise warning model | Distinguishes blockers vs suggestions and shows a single "quality summary" instead of many labels | MEDIUM-HIGH | Compute severity budget per screen and show one consolidated status rail. Depends on all existing warning sources (dependency browser, preview, generation, GitHub publish) |
+| Intent-aware action surfacing | UI reveals actions based on user stage (configure -> preview -> generate -> publish), reducing overwhelm | MEDIUM | Contextual CTA orchestration tied to workflow milestones. Depends on current generation/share and GitHub integration states |
+| Preview trust indicators | Explicitly communicates preview fidelity (live, stale, fallback) to improve confidence before generation | MEDIUM | Add freshness timestamp/hash badge and "preview may differ" when degraded mode is active. Depends on preview pipeline + generation request serializer |
+| Focus mode for dense configuration sessions | Lets power users collapse non-essential chrome and work with fewer distractions | LOW-MEDIUM | Optional compact mode that hides secondary cards/panels. Depends on workspace shell regions and sidebar toggles |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features that seem good but create problems.
+These sound helpful but usually degrade UX quality in this milestone.
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Full IDE in Browser | "Make it like VS Code" | Massive scope creep; competes with established tools; slow performance | Live preview of key files; download and open in real IDE |
-| User Accounts / Authentication | "Save my projects" | Adds backend complexity, privacy concerns, maintenance overhead | Local storage + shareable links covers 90% of use cases |
-| Real-Time Collaboration | "Like Figma for Spring projects" | WebSocket infrastructure, conflict resolution, expensive to build/maintain | Shareable links for async collaboration |
-| Automatic Dependency Updates | "Keep my dependencies current" | Security/compatibility minefield; requires ongoing maintenance | Show available versions; link to migration guides |
-| Custom Dependency Registry | "Add my company's internal dependencies" | Requires proxy/registry management; security concerns | Focus on public Spring ecosystem; enterprises use start.spring.io behind firewall |
-| AI Code Generation Beyond Config | "Generate full features with AI" | Scope creep; quality/reliability issues; competes with Copilot | Focus on configuration excellence; let AI tools handle code |
-| Hosting / Deployment Integration | "Deploy my project from here" | Infrastructure complexity; vendor lock-in; billing | Generate deployment configs (Dockerfile, k8s manifests) for download |
-| Version Control in Browser | "Full git integration" | Reinventing git UIs; complex conflict resolution | Push to GitHub once; users manage git locally |
-| Template Approval System | "Moderate community templates" | Moderation overhead; liability concerns; slow community growth | Community templates as "use at your own risk" with GitHub source links |
+| Show every warning inline and globally | Teams fear users missing edge cases | Creates alert fatigue; important blockers are ignored in noise | Severity tiers + capped visible warnings + expandable "all diagnostics" drawer |
+| Force GitHub auth before users can generate | Desire to simplify later publishing path | Premature friction and larger pre-generation UI footprint; increases abandonment | Defer auth until user clicks publish, keep generation path auth-free |
+| Add more nested cards to "organize" settings | Attempt to group many controls quickly | Increases scanning cost and visual overwhelm, especially in sidebars | Flatten hierarchy, use section headings + progressive disclosure for advanced options |
+| Full visual parity with IDE-level panes in v1.0.1 | "Feels professional" request | Scope explosion for a polish milestone; high maintenance burden | Keep focused generator workflow and improve clarity/reliability instead |
 
 ## Feature Dependencies
 
 ```
-[Basic Project Configuration]
-    └──requires──> [Spring Initializr API Integration]
+[Accessible light mode contrast baseline]
+    └──requires──> [Workspace shell theme tokens]
 
-[Dependency Selection]
-    └──requires──> [Spring Initializr API Metadata]
-    └──enhances──> [Visual Dependency Cards]
-    └──enhances──> [Search/Filter Dependencies]
+[Notification hygiene and severity control]
+    └──requires──> [Metadata validation events]
+    └──requires──> [Dependency browser warning events]
+    └──requires──> [Preview and generation error events]
 
-[Live Preview of Generated Structure]
-    └──requires──> [Basic Project Configuration]
-    └──enhances──> [Live File Content Preview]
+[Progressive disclosure for auth]
+    └──requires──> [Generation/share workflow state]
+    └──requires──> [Existing GitHub publish integration]
 
-[Shareable Configuration Links]
-    └──requires──> [Basic Project Configuration]
-    └──requires──> [URL State Management]
+[Reliable preview states]
+    └──requires──> [Live preview engine]
+    └──requires──> [Config state diffing]
+    └──enhances──> [Generation confidence]
 
-[Visual Dependency Cards]
-    └──requires──> [Dependency Selection]
-    └──enhances──> [Dependency Metadata Display]
+[IA simplification with global header]
+    └──requires──> [Workspace shell layout regions]
+    └──enhances──> [Dependency browser + preview readability]
 
-[Real-Time Configuration Diff]
-    └──requires──> [Live Preview of Generated Structure]
-    └──requires──> [State Management]
-
-[Curated + Community Presets]
-    └──requires──> [Basic Project Configuration]
-    └──requires──> [Preset Storage System]
-
-[Push to GitHub Integration]
-    └──requires──> [Download ZIP]
-    └──requires──> [OAuth GitHub Authentication]
-    └──requires──> [GitHub API Integration]
-
-[Workspace UI]
-    └──requires──> [Responsive Layout System]
-    └──enhances──> [All Features]
-
-[Dependency Compatibility Warnings]
-    └──requires──> [Dependency Selection]
-    └──requires──> [Compatibility Matrix Data]
-
-[Local Storage State Persistence]
-    └──enhances──> [All Configuration Features]
-    └──conflicts──> [User Accounts] (choose one approach)
+[Focus mode]
+    └──requires──> [Global header and panel visibility controls]
+    └──enhances──> [All high-density workflows]
 ```
 
 ### Dependency Notes
 
-- **Live Preview requires Basic Configuration:** Can't show structure without config selections
-- **Real-Time Diff requires State Management:** Must track previous state to compute diffs
-- **GitHub Push requires OAuth:** Can't push without authentication
-- **Workspace UI enhances all features:** Better layout improves everything
-- **Local Storage conflicts with User Accounts:** Two different state persistence strategies; local storage is simpler
+- **Notification hygiene requires unified event taxonomy:** without normalized warning/error sources, dedupe and severity ranking will be inconsistent.
+- **Deferred auth requires stable workflow checkpoints:** publish prompts should appear only after generation is valid, not on initial load.
+- **Preview trust indicators require state hashing/versioning:** otherwise stale vs live cannot be communicated reliably.
+- **Global header should ship before deeper panel tweaks:** it becomes the anchor for navigation and action placement.
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (v1.0.1)
 
-Minimum viable product — what's needed to validate "better than start.spring.io".
+Minimum refinement scope to resolve current user-reported UX pain.
 
-- [x] **Workspace UI Layout** — Core differentiator; sidebar config + main preview area
-- [x] **Basic Project Configuration** — Language, build tool, packaging, group/artifact (Spring Initializr API wrapper)
-- [x] **Framework Version Selection** — Spring Boot 2.x vs 3.x with clear labeling
-- [x] **Visual Dependency Cards** — Browse dependencies as cards (not plain list); includes descriptions, tags
-- [x] **Search/Filter Dependencies** — Quick search across dependency names/descriptions
-- [x] **Live File Tree Preview** — Show generated project structure before download
-- [x] **Download ZIP** — Standard output using Spring Initializr API
-- [x] **Shareable Configuration Links** — URL-based config sharing (like start.spring.io but better UI)
-- [x] **Theme Customization** — Dark/light mode toggle (shadcn/ui makes this easy)
-- [x] **Local Storage State Persistence** — Remember user's last configuration
-- [x] **Mobile-Responsive UI** — Works on tablets/phones (important for accessibility)
+- [ ] **Accessible light mode contrast baseline** — fixes readability defect and meets expected accessibility floor
+- [ ] **Notification hygiene + warning consolidation** — removes warning noise and clarifies blockers
+- [ ] **Deferred GitHub auth presentation** — shrinks pre-generation clutter and keeps core flow focused
+- [ ] **Preview lifecycle hardening** — makes preview trustworthy via explicit loading/stale/error states
+- [ ] **Global header + layout flattening pass** — reduces nested-card overwhelm and improves orientation
 
-### Add After Validation (v1.x)
+### Add After Validation (v1.0.x)
 
-Features to add once core is working and users are engaged.
-
-- [ ] **Real-Time Configuration Diff** — Trigger: Users request "what changed?" feedback; shows before/after when toggling options
-- [ ] **Live File Content Preview** — Trigger: Users want to see actual pom.xml/build.gradle contents before download; add tabbed preview
-- [ ] **Curated Presets (Official)** — Trigger: Common patterns emerge from usage analytics; create 5-10 official templates (REST API, GraphQL, Batch Processing, etc.)
-- [ ] **Push to GitHub Integration** — Trigger: User feedback requests direct push; OAuth + GitHub API to create repo and push
-- [ ] **Migration Path Indicators** — Trigger: Spring Boot 3.x adoption questions; show warnings/tips when selecting versions with breaking changes
-- [ ] **README Generator** — Trigger: Users manually write same README repeatedly; auto-generate based on dependencies selected
-- [ ] **Dependency Compatibility Warnings** — Trigger: Version conflict issues reported; implement warning system for known incompatibilities
-- [ ] **Export to tar.gz** — Trigger: Linux/Mac users request it; Spring Initializr API supports this already
-- [ ] **Keyboard Navigation** — Trigger: Power users request shortcuts; add hotkeys for common actions
+- [ ] **Intent-aware action surfacing** — trigger after telemetry shows remaining confusion in action discovery
+- [ ] **Preview trust indicators (freshness/fidelity badges)** — trigger after baseline preview reliability is stable
+- [ ] **Focus mode (compact workspace)** — trigger if power users request lower-chrome editing environment
 
 ### Future Consideration (v2+)
 
-Features to defer until product-market fit is established.
-
-- [ ] **Community Presets Marketplace** — Why defer: Requires moderation, quality control, storage infrastructure
-- [ ] **Dependency Graph Visualization** — Why defer: High complexity; needs dependency tree data not in API
-- [ ] **Multi-Project Templates** — Why defer: Major scope expansion; requires new mental model
-- [ ] **Custom Metadata Enhancement** — Why defer: Scraping npm/GitHub for stats requires infrastructure
-- [ ] **AI-Powered Dependency Recommendations** — Why defer: Requires ML model or API integration; quality concerns
+- [ ] **Role-based UI density profiles** — defer until persona segmentation data exists
+- [ ] **Adaptive warning prioritization via usage analytics** — defer until enough interaction data exists
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Workspace UI Layout | HIGH | MEDIUM | P1 |
-| Visual Dependency Cards | HIGH | MEDIUM | P1 |
-| Live File Tree Preview | HIGH | MEDIUM | P1 |
-| Search/Filter Dependencies | HIGH | LOW | P1 |
-| Download ZIP | HIGH | LOW | P1 |
-| Shareable Configuration Links | MEDIUM | LOW | P1 |
-| Theme Customization | MEDIUM | LOW | P1 |
-| Local Storage Persistence | MEDIUM | LOW | P1 |
-| Mobile-Responsive UI | HIGH | MEDIUM | P1 |
-| Basic Project Configuration | HIGH | LOW | P1 |
-| Framework Version Selection | HIGH | LOW | P1 |
-| Real-Time Configuration Diff | HIGH | MEDIUM | P2 |
-| Live File Content Preview | HIGH | MEDIUM | P2 |
-| Push to GitHub Integration | MEDIUM | HIGH | P2 |
-| Curated Presets | MEDIUM | HIGH | P2 |
-| Migration Path Indicators | MEDIUM | MEDIUM | P2 |
-| README Generator | MEDIUM | MEDIUM | P2 |
-| Dependency Compatibility Warnings | HIGH | HIGH | P2 |
-| Keyboard Navigation | MEDIUM | MEDIUM | P2 |
-| Export to tar.gz | LOW | LOW | P2 |
-| Community Presets Marketplace | MEDIUM | HIGH | P3 |
-| Dependency Graph Visualization | LOW | HIGH | P3 |
-| Multi-Project Templates | MEDIUM | HIGH | P3 |
+| Accessible light mode contrast baseline | HIGH | MEDIUM | P1 |
+| Notification hygiene + warning consolidation | HIGH | MEDIUM | P1 |
+| Deferred GitHub auth presentation | HIGH | LOW-MEDIUM | P1 |
+| Preview lifecycle hardening | HIGH | MEDIUM | P1 |
+| Global header + layout flattening | HIGH | MEDIUM | P1 |
+| Intent-aware action surfacing | MEDIUM-HIGH | MEDIUM | P2 |
+| Preview trust indicators | MEDIUM-HIGH | MEDIUM | P2 |
+| Focus mode | MEDIUM | LOW-MEDIUM | P2 |
 
 **Priority key:**
-- P1: Must have for launch (MVP)
-- P2: Should have, add when possible (post-validation)
-- P3: Nice to have, future consideration (v2+)
+- P1: Must have for this milestone
+- P2: Should have after P1 stabilization
+- P3: Future milestone candidate
 
 ## Competitor Feature Analysis
 
-| Feature | start.spring.io | TanStack Builder | shadcn create | Our Approach |
-|---------|-----------------|------------------|---------------|--------------|
-| Project Configuration | Form-based, simple | Visual builder, modern | CLI with visual builder (2026) | Workspace UI with sidebar config panel |
-| Dependency Selection | Searchable list with groups | Add-on selection (limited) | N/A (component library) | Visual cards with rich metadata |
-| Live Preview | None | None | Theme preview before generation | File tree + content preview |
-| Version Selection | Dropdown | Framework version choice | N/A | Prominent version selector with migration warnings |
-| Shareable Links | "Share" button generates URL | Not applicable | N/A | URL state + copy button |
-| Theming | Fixed light theme | Modern dark UI | Theme configurator | Dark/light toggle with shadcn/ui |
-| GitHub Integration | None | None | None | Direct push to new repo |
-| Presets | None | Built-in add-ons | N/A | Curated + community templates |
-| Download Formats | ZIP, tar.gz | Project files | ZIP | ZIP (v1), tar.gz (v1.x), GitHub push (v1.x) |
-| State Persistence | URL only | Unknown | Local config file | localStorage + URL |
-| Mobile Support | Basic responsive | Unknown | CLI-first | Full responsive workspace |
-| Diff Preview | None | None | None | Real-time config diffs |
+| Feature | Mature Pattern in VS Code/GitHub/Spring tooling | Current Gap (from feedback) | Recommended v1.0.1 Approach |
+|---------|---------------------------------------------------|-----------------------------|------------------------------|
+| Message density | VS Code recommends minimal notifications, one at a time, avoid repeated interruptions | Too many warnings/noise labels | Single prioritized diagnostics surface + dedupe + dismiss memory |
+| Navigation orientation | GitHub/Primer patterns emphasize clear top-level header and streamlined choices | Missing global header, nested cards/sidebar overwhelm | Add persistent global header and flatten hierarchy |
+| Progressive disclosure | Mature products reveal advanced controls/contextual actions only when needed | GitHub auth UI oversized before generation | Show publish/auth controls at publish step, not initial step |
+| Loading/preview feedback | GitHub/Primer loading guidance uses explicit state transitions and scoped loaders | Preview quality/reliability issues | Deterministic preview state machine + retry/fallback |
+| Accessibility baseline | WCAG contrast minimum treated as baseline for text legibility | Light mode text unreadable | Enforce token-level contrast checks in CI and theme definitions |
 
 ## Sources
 
-### Project Generators Analyzed
-- [start.spring.io documentation](https://github.com/spring-io/start.spring.io/blob/main/USING.adoc) - Official Spring Initializr usage guide
-- [Spring Initializr GitHub](https://github.com/spring-io/initializr) - Underlying API and metadata system
-- [TanStack Builder](https://tanstack.com/builder) - Visual project configurator
-- [shadcn/ui create](https://ui.shadcn.com/create) - 2026 visual project builder for component library
-- [Vite scaffolding](https://vite.dev/guide/) - Template-based project initialization
-
-### UX & Design Patterns
-- [Designing a Perfect Configurator UX](https://www.smashingmagazine.com/2018/02/designing-a-perfect-responsive-configurator/) - SmashingMagazine best practices
-- [10 UX Best Practices for 2026](https://uxpilot.ai/blogs/ux-best-practices) - Modern UX principles
-- [Product Configurator Planning & UX](https://www.driveworks.co.uk/articles/how-to-build-a-product-configurator-planning-design-ux/) - DriveWorks guide
-
-### Technical Implementation
-- [OAuth Browser-Based Apps Best Practices](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/best-practices-for-creating-an-oauth-app) - GitHub OAuth documentation
-- [State Persistence with Local Storage](https://medium.com/@lcs2021021/the-art-of-persistent-local-storage-a-developers-guide-to-state-persistence-29ed77816ea6) - State management patterns
-- [Advanced React State Management Using URL Parameters](https://blog.logrocket.com/advanced-react-state-management-using-url-parameters/) - URL state patterns
-- [Spring Boot 2 to 3 Migration Guide](https://www.baeldung.com/spring-boot-3-migration) - Breaking changes reference
-
-### Dependency Management
-- [npm Dependency Visualization](https://npm.anvaka.com/) - Dependency tree visualization
-- [NPMHub Browser Extension](https://github.com/npmhub/npmhub) - Dependency metadata display
-- [pnpm Peer Dependency Resolution](https://pnpm.io/how-peers-are-resolved) - Conflict handling
-
-### File Tree & Preview Tools
-- [Filegen - File Structure Generator](https://filegen.vercel.app) - Interactive file tree creation
-- [ReadmeCodeGen File Tree Generator](https://www.readmecodegen.com/file-tree) - Visual directory structure builder
-- [diff2html](https://diff2html.xyz/) - Diff visualization library
-
-### Market Research
-- [Create React App Alternatives 2026](https://www.zignuts.com/blog/create-react-app-alternatives) - Generator landscape
-- [Next.js vs React 2026 Comparison](https://designrevision.com/blog/nextjs-vs-react) - Modern framework patterns
-- [12 Scaffolding Tools to Supercharge Development](https://www.resourcely.io/post/12-scaffolding-tools) - Tool ecosystem overview
+- W3C WCAG 2.2, Contrast Minimum (updated 2025-10-31): https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html (HIGH)
+- VS Code UX Guidelines, Notifications (dated 2026-02-04): https://code.visualstudio.com/api/ux-guidelines/notifications (HIGH)
+- GitHub Docs, OAuth app best practices (2026 docs): https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/best-practices-for-creating-an-oauth-app (HIGH)
+- GitHub Primer, Navigation pattern guidance: https://primer.style/product/ui-patterns/navigation/ (MEDIUM-HIGH)
+- GitHub Primer, Loading pattern guidance: https://primer.style/product/ui-patterns/loading/ (MEDIUM-HIGH)
+- GitHub Primer, Progressive disclosure pattern guidance: https://primer.style/product/ui-patterns/progressive-disclosure/ (MEDIUM-HIGH)
+- GitHub Primer, PageHeader component guidance: https://primer.style/product/components/page-header/ (MEDIUM-HIGH)
+- Spring Initializr service behavior (root/help): https://start.spring.io (HIGH)
+- NN/g progressive disclosure and error-message guidelines (industry research, not vendor spec): https://www.nngroup.com/articles/progressive-disclosure/ and https://www.nngroup.com/articles/error-message-guidelines/ (MEDIUM)
 
 ---
-*Feature research for: Better Spring Initializr*
+*Feature research for: Better Spring Initializr v1.0.1 UX refinements*
 *Researched: 2026-02-14*
-*Confidence: HIGH - Based on official documentation, competitor analysis, and current 2026 web standards*
+*Confidence: MEDIUM-HIGH (official docs for accessibility/notification/auth patterns; some UX heuristics sourced from NN/g)*
