@@ -31,11 +31,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. BFF server functions successfully proxy Spring Initializr API metadata (dependencies, versions, boot versions)
   3. API metadata responses are cached so repeated loads do not hit the upstream API
   4. User can toggle between dark and light theme
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TanStack Start project setup with Tailwind v4, shadcn/ui, and base workspace layout
-- [ ] 01-02: BFF proxy server functions for Spring Initializr API with caching
+- [ ] 01-foundation-workspace-shell-01-PLAN.md - TanStack Start setup, direct workspace shell, and dark/light theme toggle
+- [ ] 01-foundation-workspace-shell-02-PLAN.md - Spring Initializr metadata BFF server functions with TTL caching and workspace integration
 
 ### Phase 2: Project Configuration
 **Goal**: Users can fully configure a Spring Boot project's metadata and build settings through an intuitive sidebar
