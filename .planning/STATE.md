@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 7 of 7 (Curated Presets)
-Plan: 0 of 1 in current phase
-Status: Ready to plan
-Last activity: 2026-02-14 -- Phase 6 verification approved (GitHub OAuth + create-and-push flow accepted)
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-02-14 -- Completed 07-01 curated presets execution
 
-Progress: [#########.] 86%
+Progress: [##########] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
+- Total plans completed: 13
 - Average duration: 3 min
-- Total execution time: 0.64 hours
+- Total execution time: 0.76 hours
 
 **By Phase:**
 
@@ -32,8 +32,8 @@ Progress: [#########.] 86%
 | 3. Dependency Browser | 2 | 4 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 3 min, 1 min, 3 min, 5 min, 5 min
-- Trend: Stable delivery with low per-plan execution time
+- Last 5 plans: 1 min, 3 min, 5 min, 5 min, 7 min
+- Trend: Stable delivery, slightly higher runtime on final integration plan
 
 *Updated after each plan completion*
 | Phase 01 P02 | 5 min | 3 tasks | 11 files |
@@ -48,6 +48,7 @@ Progress: [#########.] 86%
 | Phase 05-generation-sharing P02 | 3 min | 3 tasks | 6 files |
 | Phase 06-github-integration P01 | 5 min | 3 tasks | 11 files |
 | Phase 06 P02 | 5 min | 3 tasks | 8 files |
+| Phase 07 P01 | 7 min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,8 @@ Recent decisions affecting current work:
 - [Phase 06-github-integration]: Use GitHub git database APIs (blobs/tree/commit/ref) to create initial commits from generated ZIP contents.
 - [Phase 06-github-integration]: Fallback from PATCH refs/heads/main to POST /git/refs for empty repositories with no branch yet.
 - [Phase 06-github-integration]: Keep OAuth token server-only by deriving owners from session summary and pushing through server function.
+- [Phase 07]: Keep curated presets as a static in-repo catalog with pure apply helpers for deterministic state transitions.
+- [Phase 07]: Use browser-only node builtin aliasing in Vite to unblock client bundling without changing SSR behavior.
 
 ### Pending Todos
 
@@ -103,10 +106,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- `npm run build` currently fails with TanStack Router SSR stream bundling error (`Readable` export from `node:stream`) and needs follow-up before phase-complete verification.
+None currently.
 
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Phase 6 complete, ready for Phase 7 planning
+Stopped at: Completed 07-01-PLAN.md
 Resume file: None
