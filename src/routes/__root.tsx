@@ -2,6 +2,7 @@ import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TanStackDevtools } from '@tanstack/react-devtools'
+import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
 
 import { ThemeProvider } from '../components/theme/theme-provider'
 import appCss from '../styles/app.css?url'
@@ -47,7 +48,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <ThemeProvider>
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+          <QueryClientProvider client={queryClient}>
+            <NuqsAdapter>{children}</NuqsAdapter>
+          </QueryClientProvider>
         </ThemeProvider>
         <TanStackDevtools
           config={{
