@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 4 of 7 (Live Preview)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-02-14 -- Phase 3 marked complete after human verification approval
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-14 -- Completed 04-live-preview-01 (live preview snapshot + virtualized tree)
 
-Progress: [#####.....] 50%
+Progress: [######....] 57%
 
 ## Performance Metrics
 
@@ -42,6 +42,7 @@ Progress: [#####.....] 50%
 | Phase 02 P03 | 1 min | 3 tasks | 1 file |
 | Phase 03 P01 | 3 min | 3 tasks | 4 files |
 | Phase 03 P02 | 1 min | 2 tasks | 2 files |
+| Phase 04-live-preview P01 | 5 min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Disabled dependency interactions until metadata readiness to preserve loading/error safeguards
 - [Phase 03]: Treat WorkspaceShell as canonical owner of useDependencyBrowser in must_haves wiring contracts
 - [Phase 03]: Keep DependencyBrowser documented as presentational and fed by parent props
+- [Phase 04-live-preview]: Generate preview snapshots server-side from starter.zip with sanitized ok/error payloads.
+- [Phase 04-live-preview]: Use react-arborist virtualization with deterministic node IDs for stable scrolling on large trees.
+- [Phase 04-live-preview]: Debounce preview refresh by 350ms and keep previous query data to prevent request storms.
 
 ### Pending Todos
 
@@ -85,5 +89,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Phase 3 complete; ready for planning Phase 4
+Stopped at: Completed 04-live-preview-01-PLAN.md
 Resume file: None
