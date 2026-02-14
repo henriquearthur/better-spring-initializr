@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 
 ## Current Position
 
-Phase: 4 of 7 (Live Preview)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-02-14 -- Completed 04-live-preview-02 (syntax-highlighted file viewer + dependency diff highlighting)
+Phase: 5 of 7 (Generation & Sharing)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-14 -- Completed 05-generation-sharing-01 (generation params + ZIP client + sanitized download server function)
 
-Progress: [######....] 57%
+Progress: [######....] 64%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: 3 min
-- Total execution time: 0.38 hours
+- Total execution time: 0.43 hours
 
 **By Phase:**
 
@@ -32,7 +32,7 @@ Progress: [######....] 57%
 | 3. Dependency Browser | 2 | 4 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 2 min, 2 min, 1 min, 3 min, 1 min
+- Last 5 plans: 2 min, 1 min, 3 min, 1 min, 3 min
 - Trend: Stable delivery with low per-plan execution time
 
 *Updated after each plan completion*
@@ -44,6 +44,7 @@ Progress: [######....] 57%
 | Phase 03 P02 | 1 min | 2 tasks | 2 files |
 | Phase 04-live-preview P01 | 5 min | 3 tasks | 8 files |
 | Phase 04-live-preview P02 | 6 min | 3 tasks | 7 files |
+| Phase 05-generation-sharing P01 | 3 min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,8 @@ Recent decisions affecting current work:
 - [Phase 04-live-preview]: Use Shiki for extension-aware syntax highlighting so generated Spring project files render with language-appropriate tokens.
 - [Phase 04-live-preview]: Compute PREV-04 diffs only when dependency selections change by snapshotting a dependency-change baseline and comparing against the refreshed preview.
 - [Phase 04-live-preview]: Represent diff output as deterministic per-file metadata plus line additions/removals to drive both tree badges and viewer gutter highlights.
+- [Phase 05-generation-sharing]: Keep generation query output as ordered tuple entries so URLSearchParams serialization remains deterministic in tests and server calls.
+- [Phase 05-generation-sharing]: Normalize all download failures to PROJECT_DOWNLOAD_UNAVAILABLE with retryable messaging to preserve BFF error-sanitization guarantees.
 
 ### Pending Todos
 
@@ -93,5 +96,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 04-live-preview-02-PLAN.md
+Stopped at: Completed 05-generation-sharing-01-PLAN.md
 Resume file: None
