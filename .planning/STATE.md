@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 3 of 7 (Dependency Browser)
-Plan: 1 of 1 in current phase
+Plan: 2 of 2 in current phase
 Status: Complete
-Last activity: 2026-02-14 -- Completed 03-dependency-browser-01-PLAN.md
+Last activity: 2026-02-14 -- Completed 03-dependency-browser-02-PLAN.md
 
-Progress: [#####.....] 46%
+Progress: [######....] 54%
 
 ## Performance Metrics
 
@@ -41,6 +41,7 @@ Progress: [#####.....] 46%
 | Phase 02 P02 | 2 min | 3 tasks | 6 files |
 | Phase 02 P03 | 1 min | 3 tasks | 1 file |
 | Phase 03 P01 | 3 min | 3 tasks | 4 files |
+| Phase 03 P02 | 1 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Preserved existing provider ordering and retained URL->storage->defaults hydration precedence without adding fallback state branches
 - [Phase 03]: Kept dependency selection and search state local to useDependencyBrowser for Phase 3 interaction scope
 - [Phase 03]: Disabled dependency interactions until metadata readiness to preserve loading/error safeguards
+- [Phase 03]: Treat WorkspaceShell as canonical owner of useDependencyBrowser in must_haves wiring contracts
+- [Phase 03]: Keep DependencyBrowser documented as presentational and fed by parent props
 
 ### Pending Todos
 
@@ -82,5 +85,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 03-01-PLAN.md
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
