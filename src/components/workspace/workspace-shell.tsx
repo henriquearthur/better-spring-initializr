@@ -11,6 +11,7 @@ import type { PreviewSnapshotFile } from '@/lib/preview-tree'
 import { ConfigurationSidebar } from './configuration-sidebar'
 import { DependencyBrowser } from './dependency-browser'
 import { FileContentViewer } from './file-content-viewer'
+import { GitHubAuthPanel } from './github-auth-panel'
 import { PreviewFileTree } from './preview-file-tree'
 import { WorkspaceOutputActions } from './workspace-output-actions'
 import { WorkspaceHeader } from './workspace-header'
@@ -260,6 +261,10 @@ export function WorkspaceShell() {
                     <p>Select a file to inspect its path and size.</p>
                   )}
                 </div>
+              </div>
+
+              <div className="mt-4">
+                <GitHubAuthPanel />
               </div>
 
               <div className="mt-4">
