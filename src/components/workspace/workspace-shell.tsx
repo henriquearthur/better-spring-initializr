@@ -1,20 +1,28 @@
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 
-import {
-  DEFAULT_PROJECT_CONFIG,
-  type ProjectConfig,
-} from '@/lib/project-config'
+import { useProjectConfigState } from '@/hooks/use-project-config-state'
+import type { ProjectConfig } from '@/lib/project-config'
 import { ConfigurationSidebar } from './configuration-sidebar'
 import { WorkspaceHeader } from './workspace-header'
 
 export function WorkspaceShell() {
-  const [projectConfig, setProjectConfig] = useState<ProjectConfig>(
-    DEFAULT_PROJECT_CONFIG,
-  )
+  const { config: projectConfig, setConfig, setField, resetConfig } =
+    useProjectConfigState()
 
   const handleConfigChange = useCallback((nextConfig: ProjectConfig) => {
-    setProjectConfig(nextConfig)
-  }, [])
+    void setConfig(nextConfig)
+  }, [setConfig])
+
+  const handleFieldChange = useCallback(
+    (field: keyof ProjectConfig, value: string) => {
+      void setField(field, value)
+    },
+    [setField],
+  )
+
+  const handleResetConfig = useCallback(() => {
+    void resetConfig()
+  }, [resetConfig])
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -29,6 +37,8 @@ export function WorkspaceShell() {
               <ConfigurationSidebar
                 config={projectConfig}
                 onConfigChange={handleConfigChange}
+                onFieldChange={handleFieldChange}
+                onResetConfig={handleResetConfig}
               />
             </aside>
 

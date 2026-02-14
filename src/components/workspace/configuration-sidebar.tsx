@@ -16,11 +16,15 @@ import {
 type ConfigurationSidebarProps = {
   config: ProjectConfig
   onConfigChange: (nextConfig: ProjectConfig) => void
+  onFieldChange: (field: keyof ProjectConfig, value: string) => void
+  onResetConfig: () => void
 }
 
 export function ConfigurationSidebar({
   config,
   onConfigChange,
+  onFieldChange,
+  onResetConfig,
 }: ConfigurationSidebarProps) {
   const [metadataOpen, setMetadataOpen] = useState(true)
   const [buildSettingsOpen, setBuildSettingsOpen] = useState(true)
@@ -71,19 +75,13 @@ export function ConfigurationSidebar({
   const setTextField =
     (field: 'group' | 'artifact' | 'name' | 'description' | 'packageName') =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      onConfigChange({
-        ...config,
-        [field]: event.target.value,
-      })
+      onFieldChange(field, event.target.value)
     }
 
   const setSelectField =
     (field: 'javaVersion' | 'springBootVersion') =>
     (event: React.ChangeEvent<HTMLSelectElement>) => {
-      onConfigChange({
-        ...config,
-        [field]: event.target.value,
-      })
+      onFieldChange(field, event.target.value)
     }
 
   return (
@@ -92,9 +90,18 @@ export function ConfigurationSidebar({
         <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
           Configuration Panel
         </p>
-        <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-          Configure project metadata and build defaults before preview and generation.
-        </p>
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <p className="text-xs text-[var(--muted-foreground)]">
+            Configure project metadata and build defaults before preview and generation.
+          </p>
+          <button
+            type="button"
+            onClick={onResetConfig}
+            className="h-7 shrink-0 rounded-md border px-2.5 text-[11px] font-medium text-[var(--muted-foreground)] transition hover:border-emerald-500/40 hover:text-emerald-700 dark:hover:text-emerald-300"
+          >
+            Reset
+          </button>
+        </div>
       </div>
 
       <MetadataStatusBanner />
@@ -152,34 +159,19 @@ export function ConfigurationSidebar({
             label="Build Tool"
             value={config.buildTool}
             options={BUILD_TOOL_OPTIONS}
-            onChange={(value) =>
-              onConfigChange({
-                ...config,
-                buildTool: value,
-              })
-            }
+            onChange={(value) => onFieldChange('buildTool', value)}
           />
           <SidebarRadioGroup<ProjectLanguage>
             label="Language"
             value={config.language}
             options={LANGUAGE_OPTIONS}
-            onChange={(value) =>
-              onConfigChange({
-                ...config,
-                language: value,
-              })
-            }
+            onChange={(value) => onFieldChange('language', value)}
           />
           <SidebarRadioGroup<PackagingType>
             label="Packaging"
             value={config.packaging}
             options={PACKAGING_OPTIONS}
-            onChange={(value) =>
-              onConfigChange({
-                ...config,
-                packaging: value,
-              })
-            }
+            onChange={(value) => onFieldChange('packaging', value)}
           />
         </div>
       </SidebarSection>
