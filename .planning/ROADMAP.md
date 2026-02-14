@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Workspace Shell** - BFF proxy, API caching, and workspace layout that opens straight to the tool
 - [x] **Phase 2: Project Configuration** - Sidebar with all project metadata and build options
-- [ ] **Phase 3: Dependency Browser** - Searchable, categorized dependency selection with visual cards
+- [x] **Phase 3: Dependency Browser** - Searchable, categorized dependency selection with visual cards
 - [ ] **Phase 4: Live Preview** - Real-time file tree, file viewer, and diff highlighting
 - [ ] **Phase 5: Generation & Sharing** - ZIP download and shareable configuration URLs
 - [ ] **Phase 6: GitHub Integration** - OAuth flow and push-to-GitHub functionality
@@ -66,7 +66,7 @@ Plans:
 
 Plans:
 - [x] 03-dependency-browser-01-PLAN.md - Categorized dependency browser with search, cards, toggle selection, and clear-all controls
-- [ ] 03-dependency-browser-02-PLAN.md - Gap closure: align must-have key-link wiring to parent-owned dependency hook architecture
+- [x] 03-dependency-browser-02-PLAN.md - Gap closure: align must-have key-link wiring to parent-owned dependency hook architecture
 
 ### Phase 4: Live Preview
 **Goal**: Users see exactly what their configured project looks like before generating it, with real-time feedback on every change
@@ -133,7 +133,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 |-------|----------------|--------|-----------|
 | 1. Foundation & Workspace Shell | 2/2 | Complete | 2026-02-14 |
 | 2. Project Configuration | 3/3 | Complete | 2026-02-14 |
-| 3. Dependency Browser | 1/2 | In progress | 2026-02-14 |
+| 3. Dependency Browser | 2/2 | Complete | 2026-02-14 |
 | 4. Live Preview | 0/2 | Not started | - |
 | 5. Generation & Sharing | 0/2 | Not started | - |
 | 6. GitHub Integration | 0/2 | Not started | - |
