@@ -5,38 +5,39 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Developers can visually configure and preview a Spring Boot project with real-time feedback, then generate it instantly
-**Current focus:** Phase 2 - Project Configuration
+**Current focus:** Phase 3 - Dependency Browser
 
 ## Current Position
 
-Phase: 2 of 7 (Project Configuration)
-Plan: 1 of 2 in current phase
+Phase: 3 of 7 (Dependency Browser)
+Plan: 0 of 1 in current phase
 Status: In progress
-Last activity: 2026-02-14 -- Completed 02-project-configuration-01-PLAN.md
+Last activity: 2026-02-14 -- Completed 02-project-configuration-02-PLAN.md
 
-Progress: [##........] 25%
+Progress: [###.......] 33%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 3 min
-- Total execution time: 0.17 hours
+- Total execution time: 0.20 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Foundation & Workspace Shell | 2 | 8 min | 4 min |
-| 2. Project Configuration | 1 | 2 min | 2 min |
+| 2. Project Configuration | 2 | 4 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 3 min, 5 min, 2 min
-- Trend: Stable delivery with faster execution on focused UI delivery
+- Last 5 plans: 3 min, 5 min, 2 min, 2 min
+- Trend: Stable delivery with consistent short execution cycles
 
 *Updated after each plan completion*
 | Phase 01 P02 | 5 min | 3 tasks | 11 files |
 | Phase 02 P01 | 2 min | 3 tasks | 3 files |
+| Phase 02 P02 | 2 min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -59,6 +60,9 @@ Recent decisions affecting current work:
 - [Phase 02]: Keep project configuration model in `src/lib/project-config.ts` as React-free helpers for upcoming URL/localStorage persistence
 - [Phase 02]: Derive Java and Spring Boot options from BFF metadata with fallback defaults when metadata is unavailable
 - [Phase 02]: Keep `WorkspaceShell` as owner of `ProjectConfig` state and pass controlled props to `ConfigurationSidebar`
+- [Phase 02]: Use `useProjectConfigState` (nuqs `useQueryStates`) as the single source of truth for workspace configuration state
+- [Phase 02]: Enforce precedence `URL query params -> localStorage snapshot -> hard defaults` when hydrating project config
+- [Phase 02]: Normalize URL/storage config values in `src/lib/project-config.ts` before UI render and persistence writes
 
 ### Pending Todos
 
@@ -71,5 +75,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 02-project-configuration-01-PLAN.md
+Stopped at: Completed 02-project-configuration-02-PLAN.md
 Resume file: None
