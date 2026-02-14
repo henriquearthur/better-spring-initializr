@@ -12,7 +12,7 @@ This roadmap delivers a modern Spring Boot project generator with workspace UI, 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation & Workspace Shell** - BFF proxy, API caching, and workspace layout that opens straight to the tool
+- [x] **Phase 1: Foundation & Workspace Shell** - BFF proxy, API caching, and workspace layout that opens straight to the tool
 - [ ] **Phase 2: Project Configuration** - Sidebar with all project metadata and build options
 - [ ] **Phase 3: Dependency Browser** - Searchable, categorized dependency selection with visual cards
 - [ ] **Phase 4: Live Preview** - Real-time file tree, file viewer, and diff highlighting
@@ -34,8 +34,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-foundation-workspace-shell-01-PLAN.md - TanStack Start setup, direct workspace shell, and dark/light theme toggle
-- [ ] 01-foundation-workspace-shell-02-PLAN.md - Spring Initializr metadata BFF server functions with TTL caching and workspace integration
+- [x] 01-foundation-workspace-shell-01-PLAN.md - TanStack Start setup, direct workspace shell, and dark/light theme toggle
+- [x] 01-foundation-workspace-shell-02-PLAN.md - Spring Initializr metadata BFF server functions with TTL caching and workspace integration
 
 ### Phase 2: Project Configuration
 **Goal**: Users can fully configure a Spring Boot project's metadata and build settings through an intuitive sidebar
@@ -128,7 +128,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Workspace Shell | 0/2 | Not started | - |
+| 1. Foundation & Workspace Shell | 2/2 | Complete | 2026-02-14 |
 | 2. Project Configuration | 0/2 | Not started | - |
 | 3. Dependency Browser | 0/1 | Not started | - |
 | 4. Live Preview | 0/2 | Not started | - |

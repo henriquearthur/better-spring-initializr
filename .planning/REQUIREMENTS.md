@@ -45,16 +45,16 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Layout & UI
 
-- [ ] **LAYO-01**: App opens directly into workspace -- no landing page
+- [x] **LAYO-01**: App opens directly into workspace -- no landing page
 - [ ] **LAYO-02**: Left sidebar contains all configuration sections (collapsible)
 - [ ] **LAYO-03**: Main area shows live preview (file tree + file viewer)
-- [ ] **LAYO-04**: User can toggle dark/light theme
+- [x] **LAYO-04**: User can toggle dark/light theme
 - [ ] **LAYO-05**: User's last configuration persists across browser sessions via local storage
 
 ### Infrastructure
 
-- [ ] **INFR-01**: BFF proxy via TanStack Start server functions wrapping Spring Initializr API
-- [ ] **INFR-02**: API metadata (dependencies, versions) cached to avoid excessive upstream calls
+- [x] **INFR-01**: BFF proxy via TanStack Start server functions wrapping Spring Initializr API
+- [x] **INFR-02**: API metadata (dependencies, versions) cached to avoid excessive upstream calls
 - [ ] **INFR-03**: GitHub OAuth flow handled securely via server functions
 
 ## v2 Requirements
@@ -112,13 +112,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRST-01 | Phase 7 | Pending |
 | PRST-02 | Phase 7 | Pending |
 | PRST-03 | Phase 7 | Pending |
-| LAYO-01 | Phase 1 | Pending |
+| LAYO-01 | Phase 1 | Complete |
 | LAYO-02 | Phase 2 | Pending |
 | LAYO-03 | Phase 4 | Pending |
-| LAYO-04 | Phase 1 | Pending |
+| LAYO-04 | Phase 1 | Complete |
 | LAYO-05 | Phase 2 | Pending |
-| INFR-01 | Phase 1 | Pending |
-| INFR-02 | Phase 1 | Pending |
+| INFR-01 | Phase 1 | Complete |
+| INFR-02 | Phase 1 | Complete |
 | INFR-03 | Phase 6 | Pending |
 
 **Coverage:**
