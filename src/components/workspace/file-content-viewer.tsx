@@ -1,6 +1,7 @@
-import { codeToHtml } from 'shiki'
+import { codeToTokens, type BuiltinLanguage, type ThemedToken } from 'shiki'
 import { useEffect, useMemo, useState } from 'react'
 
+import type { PreviewFileDiff, PreviewRemovedLine } from '@/lib/preview-diff'
 import type { PreviewSnapshotFile } from '@/lib/preview-tree'
 
 const SHIKI_LIGHT_THEME = 'github-light-default'
@@ -9,10 +10,15 @@ const SHIKI_DARK_THEME = 'github-dark-default'
 type FileContentViewerProps = {
   file: PreviewSnapshotFile | null
   isLoading: boolean
+  diff: PreviewFileDiff | null
 }
 
-export function FileContentViewer({ file, isLoading }: FileContentViewerProps) {
-  const [highlightedHtml, setHighlightedHtml] = useState<string>('')
+type ViewerLine =
+  | { kind: 'removed'; line: PreviewRemovedLine }
+  | { kind: 'current'; lineNumber: number; added: boolean; tokens: ThemedToken[] }
+
+export function FileContentViewer({ file, isLoading, diff }: FileContentViewerProps) {
+  const [tokenLines, setTokenLines] = useState<ThemedToken[][]>([])
   const [isHighlighting, setIsHighlighting] = useState(false)
   const [highlightError, setHighlightError] = useState<string | null>(null)
   const isDarkMode = useIsDarkMode()
@@ -21,7 +27,7 @@ export function FileContentViewer({ file, isLoading }: FileContentViewerProps) {
 
   useEffect(() => {
     if (!file || file.binary || file.content === undefined) {
-      setHighlightedHtml('')
+      setTokenLines([])
       setHighlightError(null)
       setIsHighlighting(false)
       return
@@ -31,19 +37,19 @@ export function FileContentViewer({ file, isLoading }: FileContentViewerProps) {
     setIsHighlighting(true)
     setHighlightError(null)
 
-    void codeToHtml(file.content, {
-      lang: language,
+    void codeToTokens(file.content, {
+      lang: language as BuiltinLanguage,
       theme: isDarkMode ? SHIKI_DARK_THEME : SHIKI_LIGHT_THEME,
     })
-      .then((html) => {
+      .then((result) => {
         if (!cancelled) {
-          setHighlightedHtml(html)
+          setTokenLines(result.tokens)
         }
       })
       .catch(() => {
         if (!cancelled) {
           setHighlightError('Unable to highlight this file. Showing plain text instead.')
-          setHighlightedHtml('')
+          setTokenLines([])
         }
       })
       .finally(() => {
@@ -69,6 +75,8 @@ export function FileContentViewer({ file, isLoading }: FileContentViewerProps) {
     return <ViewerState message="This file is binary or unreadable in text mode." tone="warning" />
   }
 
+  const viewerLines = buildViewerLines(tokenLines, diff)
+
   return (
     <article className="flex h-full min-h-[420px] flex-col overflow-hidden rounded-xl border bg-[var(--card)]">
       <header className="flex items-center justify-between border-b px-3 py-2 text-xs">
@@ -81,17 +89,70 @@ export function FileContentViewer({ file, isLoading }: FileContentViewerProps) {
       </header>
 
       <div className="relative flex-1 overflow-auto">
-        {isHighlighting && highlightedHtml.length === 0 ? (
+        {isHighlighting && tokenLines.length === 0 ? (
           <ViewerState message="Applying syntax highlighting..." tone="muted" />
-        ) : highlightedHtml ? (
-          <div
-            className="text-sm [&_.shiki]:m-0 [&_.shiki]:min-h-full [&_.shiki]:!bg-transparent [&_.shiki]:p-4 [&_.shiki]:font-mono [&_.shiki]:leading-6"
-            dangerouslySetInnerHTML={{ __html: highlightedHtml }}
-          />
         ) : (
-          <pre className="min-h-full overflow-auto p-4 font-mono text-sm leading-6 text-[var(--foreground)]">
-            {file.content}
-          </pre>
+          <table className="w-full border-separate border-spacing-0 font-mono text-sm leading-6">
+            <tbody>
+              {viewerLines.map((line, index) => {
+                if (line.kind === 'removed') {
+                  return (
+                    <tr key={`removed-${line.line.lineNumber}-${index}`} className="bg-red-500/10">
+                      <td className="w-12 border-r px-2 text-right text-xs text-red-700 dark:text-red-300">
+                        -{line.line.lineNumber}
+                      </td>
+                      <td className="px-3 text-red-800 dark:text-red-100">{line.line.content || ' '}</td>
+                    </tr>
+                  )
+                }
+
+                return (
+                  <tr
+                    key={`line-${line.lineNumber}`}
+                    className={line.added ? 'bg-emerald-500/10' : undefined}
+                  >
+                    <td
+                      className={`w-12 border-r px-2 text-right text-xs ${
+                        line.added
+                          ? 'text-emerald-700 dark:text-emerald-300'
+                          : 'text-[var(--muted-foreground)]'
+                      }`}
+                    >
+                      {line.added ? '+' : ''}
+                      {line.lineNumber}
+                    </td>
+                    <td className="px-3">
+                      {line.tokens.length > 0 ? (
+                        line.tokens.map((token, tokenIndex) => (
+                          <span
+                            key={`${line.lineNumber}-${token.offset}-${tokenIndex}`}
+                            style={{
+                              color: token.color,
+                              backgroundColor: token.bgColor,
+                              fontWeight:
+                                token.fontStyle !== undefined && token.fontStyle & 2 ? '700' : undefined,
+                              fontStyle:
+                                token.fontStyle !== undefined && token.fontStyle & 1
+                                  ? 'italic'
+                                  : undefined,
+                              textDecoration:
+                                token.fontStyle !== undefined && token.fontStyle & 4
+                                  ? 'underline'
+                                  : undefined,
+                            }}
+                          >
+                            {token.content}
+                          </span>
+                        ))
+                      ) : (
+                        <span>&nbsp;</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         )}
       </div>
 
@@ -102,6 +163,67 @@ export function FileContentViewer({ file, isLoading }: FileContentViewerProps) {
       ) : null}
     </article>
   )
+}
+
+function buildViewerLines(tokenLines: ThemedToken[][], diff: PreviewFileDiff | null): ViewerLine[] {
+  const lineDiff = diff?.lineDiff
+
+  if (!lineDiff) {
+    return tokenLines.map((tokens, index) => ({
+      kind: 'current',
+      lineNumber: index + 1,
+      added: false,
+      tokens,
+    }))
+  }
+
+  const removedByAfterLine = new Map<number, PreviewRemovedLine[]>()
+
+  for (const removedLine of lineDiff.removed) {
+    const lines = removedByAfterLine.get(removedLine.afterLine)
+
+    if (lines) {
+      lines.push(removedLine)
+    } else {
+      removedByAfterLine.set(removedLine.afterLine, [removedLine])
+    }
+  }
+
+  const addedSet = new Set(lineDiff.added)
+  const output: ViewerLine[] = []
+
+  for (let lineNumber = 1; lineNumber <= tokenLines.length; lineNumber += 1) {
+    const removedBeforeLine = removedByAfterLine.get(lineNumber - 1)
+
+    if (removedBeforeLine) {
+      for (const removedLine of removedBeforeLine) {
+        output.push({
+          kind: 'removed',
+          line: removedLine,
+        })
+      }
+    }
+
+    output.push({
+      kind: 'current',
+      lineNumber,
+      added: addedSet.has(lineNumber),
+      tokens: tokenLines[lineNumber - 1] ?? [],
+    })
+  }
+
+  const removedAtEnd = removedByAfterLine.get(tokenLines.length)
+
+  if (removedAtEnd) {
+    for (const removedLine of removedAtEnd) {
+      output.push({
+        kind: 'removed',
+        line: removedLine,
+      })
+    }
+  }
+
+  return output
 }
 
 type ViewerStateProps = {

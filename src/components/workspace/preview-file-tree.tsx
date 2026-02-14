@@ -2,6 +2,7 @@ import { File, FolderClosed, FolderOpen } from 'lucide-react'
 import { useMemo } from 'react'
 import { Tree as Arborist, type NodeRendererProps } from 'react-arborist'
 
+import type { PreviewFileDiff } from '@/lib/preview-diff'
 import {
   buildPreviewTree,
   type PreviewSnapshotFile,
@@ -14,6 +15,7 @@ type PreviewFileTreeProps = {
   errorMessage?: string
   selectedFilePath: string | null
   onSelectFile: (path: string | null) => void
+  fileDiffByPath?: Record<string, PreviewFileDiff>
 }
 
 export function PreviewFileTree({
@@ -22,6 +24,7 @@ export function PreviewFileTree({
   errorMessage,
   selectedFilePath,
   onSelectFile,
+  fileDiffByPath,
 }: PreviewFileTreeProps) {
   const treeData = useMemo(() => buildPreviewTree(files ?? []), [files])
 
@@ -62,14 +65,27 @@ export function PreviewFileTree({
           }
         }}
       >
-        {PreviewTreeRow}
+        {(props) => <PreviewTreeRow {...props} fileDiffByPath={fileDiffByPath} />}
       </Arborist>
     </div>
   )
 }
 
-function PreviewTreeRow({ node, style }: NodeRendererProps<PreviewTreeNode>) {
+type PreviewTreeRowProps = NodeRendererProps<PreviewTreeNode> & {
+  fileDiffByPath?: Record<string, PreviewFileDiff>
+}
+
+function PreviewTreeRow({ node, style, fileDiffByPath }: PreviewTreeRowProps) {
   const isDirectory = node.data.kind === 'directory'
+  const changeType =
+    node.data.kind === 'file' ? fileDiffByPath?.[node.data.path]?.changeType ?? 'unchanged' : 'unchanged'
+  const rowBadgeClass =
+    changeType === 'added'
+      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+      : changeType === 'modified'
+        ? 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+        : 'border-transparent text-transparent'
+  const rowBadgeLabel = changeType === 'added' ? 'A' : changeType === 'modified' ? 'M' : ''
 
   return (
     <div
@@ -104,6 +120,13 @@ function PreviewTreeRow({ node, style }: NodeRendererProps<PreviewTreeNode>) {
       >
         {node.data.name}
       </span>
+      {node.data.kind === 'file' ? (
+        <span
+          className={`ml-auto min-w-5 rounded border px-1 text-center text-[10px] font-semibold ${rowBadgeClass}`}
+        >
+          {rowBadgeLabel}
+        </span>
+      ) : null}
     </div>
   )
 }

@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useDependencyBrowser } from '@/hooks/use-dependency-browser'
 import { useInitializrMetadata } from '@/hooks/use-initializr-metadata'
 import { useProjectConfigState } from '@/hooks/use-project-config-state'
 import { useProjectPreview } from '@/hooks/use-project-preview'
+import { computePreviewDiff } from '@/lib/preview-diff'
 import type { ProjectConfig } from '@/lib/project-config'
+import type { PreviewSnapshotFile } from '@/lib/preview-tree'
 import { ConfigurationSidebar } from './configuration-sidebar'
 import { DependencyBrowser } from './dependency-browser'
+import { FileContentViewer } from './file-content-viewer'
 import { PreviewFileTree } from './preview-file-tree'
 import { WorkspaceHeader } from './workspace-header'
 
@@ -37,6 +40,18 @@ export function WorkspaceShell() {
   }, [metadataQuery.data])
   const dependencyBrowser = useDependencyBrowser(availableDependencies)
   const [selectedPreviewFilePath, setSelectedPreviewFilePath] = useState<string | null>(null)
+  const [dependencyDiffBaseline, setDependencyDiffBaseline] = useState<{
+    generatedAt: string
+    files: PreviewSnapshotFile[]
+  } | null>(null)
+  const [dependencyDiff, setDependencyDiff] = useState<ReturnType<typeof computePreviewDiff> | null>(
+    null,
+  )
+  const dependencySelectionKey = useMemo(
+    () => dependencyBrowser.selectedDependencyIds.join(','),
+    [dependencyBrowser.selectedDependencyIds],
+  )
+  const previousDependencySelectionKeyRef = useRef(dependencySelectionKey)
 
   const projectPreviewQuery = useProjectPreview({
     config: projectConfig,
@@ -50,6 +65,42 @@ export function WorkspaceShell() {
     () => previewFiles?.find((file) => file.path === selectedPreviewFilePath) ?? null,
     [previewFiles, selectedPreviewFilePath],
   )
+  const selectedFileDiff =
+    selectedPreviewFilePath && dependencyDiff
+      ? dependencyDiff.files[selectedPreviewFilePath] ?? null
+      : null
+
+  useEffect(() => {
+    if (previousDependencySelectionKeyRef.current === dependencySelectionKey) {
+      return
+    }
+
+    previousDependencySelectionKeyRef.current = dependencySelectionKey
+
+    if (previewResult?.ok) {
+      setDependencyDiffBaseline({
+        generatedAt: previewResult.snapshot.generatedAt,
+        files: previewResult.snapshot.files,
+      })
+    } else {
+      setDependencyDiffBaseline(null)
+    }
+
+    setDependencyDiff(null)
+  }, [dependencySelectionKey, previewResult])
+
+  useEffect(() => {
+    if (!previewResult?.ok || !dependencyDiffBaseline) {
+      return
+    }
+
+    if (previewResult.snapshot.generatedAt === dependencyDiffBaseline.generatedAt) {
+      return
+    }
+
+    setDependencyDiff(computePreviewDiff(dependencyDiffBaseline.files, previewResult.snapshot.files))
+    setDependencyDiffBaseline(null)
+  }, [dependencyDiffBaseline, previewResult])
 
   useEffect(() => {
     if (!selectedPreviewFilePath || !previewFiles) {
@@ -174,13 +225,29 @@ export function WorkspaceShell() {
                 </div>
               </div>
 
-              <div className="mt-4 h-[360px] md:h-[520px]">
+              {dependencyDiff ? (
+                <div className="mt-3 rounded-lg border bg-[var(--card)] px-3 py-2 text-xs text-[var(--muted-foreground)]">
+                  <p>
+                    Dependency diff: {dependencyDiff.modified.length} modified, {dependencyDiff.added.length} added,{' '}
+                    {dependencyDiff.removed.length} removed files.
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="mt-4 grid h-[360px] grid-cols-1 gap-4 md:h-[520px] xl:grid-cols-[320px_minmax(0,1fr)]">
                 <PreviewFileTree
                   files={previewFiles}
                   isLoading={projectPreviewQuery.isPending}
                   errorMessage={previewErrorMessage}
                   selectedFilePath={selectedPreviewFilePath}
                   onSelectFile={setSelectedPreviewFilePath}
+                  fileDiffByPath={dependencyDiff?.files}
+                />
+
+                <FileContentViewer
+                  file={selectedPreviewFile}
+                  isLoading={projectPreviewQuery.isPending}
+                  diff={selectedFileDiff}
                 />
               </div>
             </section>
