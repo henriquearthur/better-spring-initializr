@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --background: oklch(0.985 0.002 250);
+  --foreground: oklch(0.19 0.01 255);
+  --muted: oklch(0.95 0.008 250);
+  --muted-foreground: oklch(0.45 0.01 255);
+  --border: oklch(0.9 0.006 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.19 0.01 255);
+}
+
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.15 0.015 255);
+  --foreground: oklch(0.97 0.005 250);
+  --muted: oklch(0.23 0.012 255);
+  --muted-foreground: oklch(0.72 0.008 250);
+  --border: oklch(0.3 0.015 255);
+  --card: oklch(0.2 0.012 255);
+  --card-foreground: oklch(0.97 0.005 250);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Sora", "Avenir Next", "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
