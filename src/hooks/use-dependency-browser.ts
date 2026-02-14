@@ -15,6 +15,7 @@ export type UseDependencyBrowserResult = {
   selectedDependencyIds: string[]
   selectedDependencyCount: number
   toggleDependency: (dependencyId: string) => void
+  setSelectedDependencyIds: (dependencyIds: string[]) => void
   clearSelectedDependencies: () => void
   isDependencySelected: (dependencyId: string) => boolean
 }
@@ -81,6 +82,10 @@ export function toggleDependencySelection(
   return [...selectedDependencyIds, dependencyId]
 }
 
+export function replaceDependencySelection(dependencyIds: string[]): string[] {
+  return Array.from(new Set(dependencyIds.map((dependencyId) => dependencyId.trim()).filter(Boolean)))
+}
+
 export function useDependencyBrowser(
   dependencies: InitializrDependency[],
 ): UseDependencyBrowserResult {
@@ -103,6 +108,10 @@ export function useDependencyBrowser(
     )
   }, [])
 
+  const setSelectedDependencies = useCallback((dependencyIds: string[]) => {
+    setSelectedDependencyIds(replaceDependencySelection(dependencyIds))
+  }, [])
+
   const clearSelectedDependencies = useCallback(() => {
     setSelectedDependencyIds([])
   }, [])
@@ -120,6 +129,7 @@ export function useDependencyBrowser(
     selectedDependencyIds,
     selectedDependencyCount: selectedDependencyIds.length,
     toggleDependency,
+    setSelectedDependencyIds: setSelectedDependencies,
     clearSelectedDependencies,
     isDependencySelected,
   }

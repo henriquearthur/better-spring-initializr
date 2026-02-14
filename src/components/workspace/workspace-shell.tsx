@@ -5,6 +5,7 @@ import { useInitializrMetadata } from '@/hooks/use-initializr-metadata'
 import { useProjectConfigState } from '@/hooks/use-project-config-state'
 import { useProjectPreview } from '@/hooks/use-project-preview'
 import { useShareableConfig } from '@/hooks/use-shareable-config'
+import { CURATED_PRESETS, applyCuratedPreset } from '@/lib/curated-presets'
 import { computePreviewDiff } from '@/lib/preview-diff'
 import type { ProjectConfig } from '@/lib/project-config'
 import type { PreviewSnapshotFile } from '@/lib/preview-tree'
@@ -13,6 +14,7 @@ import { DependencyBrowser } from './dependency-browser'
 import { FileContentViewer } from './file-content-viewer'
 import { GitHubAuthPanel } from './github-auth-panel'
 import { GitHubPushPanel } from './github-push-panel'
+import { PresetBrowser } from './preset-browser'
 import { PreviewFileTree } from './preview-file-tree'
 import { WorkspaceOutputActions } from './workspace-output-actions'
 import { WorkspaceHeader } from './workspace-header'
@@ -50,6 +52,7 @@ export function WorkspaceShell() {
     clearShareTokenFromUrl,
   } = useShareableConfig()
   const [selectedPreviewFilePath, setSelectedPreviewFilePath] = useState<string | null>(null)
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(CURATED_PRESETS[0]?.id ?? null)
   const [dependencyDiffBaseline, setDependencyDiffBaseline] = useState<{
     generatedAt: string
     files: PreviewSnapshotFile[]
@@ -94,11 +97,7 @@ export function WorkspaceShell() {
     }
 
     void setConfig(restoredSnapshot.config)
-    dependencyBrowser.clearSelectedDependencies()
-
-    for (const dependencyId of restoredSnapshot.selectedDependencyIds) {
-      dependencyBrowser.toggleDependency(dependencyId)
-    }
+    dependencyBrowser.setSelectedDependencyIds(restoredSnapshot.selectedDependencyIds)
 
     clearShareTokenFromUrl()
   }, [
@@ -175,6 +174,31 @@ export function WorkspaceShell() {
     [dependencyBrowser],
   )
 
+  const handleSelectPreset = useCallback((presetId: string) => {
+    setSelectedPresetId(presetId)
+  }, [])
+
+  const handleApplyPreset = useCallback(
+    (presetId: string) => {
+      const result = applyCuratedPreset(
+        {
+          config: projectConfig,
+          selectedDependencyIds: dependencyBrowser.selectedDependencyIds,
+        },
+        presetId,
+      )
+
+      if (!result.ok) {
+        return
+      }
+
+      setSelectedPresetId(presetId)
+      dependencyBrowser.setSelectedDependencyIds(result.next.selectedDependencyIds)
+      void setConfig(result.next.config)
+    },
+    [dependencyBrowser, projectConfig, setConfig],
+  )
+
   const metadataUnavailable = metadataQuery.isLoading || metadataQuery.isError || !metadataReady
 
   return (
@@ -193,6 +217,28 @@ export function WorkspaceShell() {
                 onFieldChange={handleFieldChange}
                 onResetConfig={handleResetConfig}
               />
+
+              <section className="rounded-xl border bg-[var(--card)] p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold">Curated Presets</p>
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      Inspect what each starter includes, then apply in one click.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <PresetBrowser
+                    presets={CURATED_PRESETS}
+                    selectedPresetId={selectedPresetId}
+                    onSelectPreset={handleSelectPreset}
+                    onApplyPreset={handleApplyPreset}
+                    availableDependencies={availableDependencies}
+                    disabled={metadataUnavailable}
+                  />
+                </div>
+              </section>
 
               <section className="rounded-xl border bg-[var(--card)] p-3">
                 <div className="flex items-start justify-between gap-3">

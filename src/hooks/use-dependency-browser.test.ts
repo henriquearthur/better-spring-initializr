@@ -4,6 +4,7 @@ import type { InitializrDependency } from '@/server/lib/initializr-client'
 import {
   filterDependencyGroups,
   groupDependenciesByCategory,
+  replaceDependencySelection,
   toggleDependencySelection,
 } from './use-dependency-browser'
 
@@ -85,5 +86,15 @@ describe('toggleDependencySelection', () => {
     expect(selectedTwice).toEqual(['web', 'graphql'])
     expect(unselected).toEqual(['graphql'])
     expect(cleared).toEqual([])
+  })
+})
+
+describe('replaceDependencySelection', () => {
+  it('normalizes and de-duplicates dependency ids while preserving first-seen order', () => {
+    expect(replaceDependencySelection([' web ', '', 'actuator', 'web', 'data-jpa'])).toEqual([
+      'web',
+      'actuator',
+      'data-jpa',
+    ])
   })
 })
