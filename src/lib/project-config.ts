@@ -22,8 +22,14 @@ export type ConfigOption<TValue extends string = string> = {
   label: string
 }
 
+export const PROJECT_CONFIG_STORAGE_KEY = 'better-spring-initializr:config:v1'
+
 const FALLBACK_JAVA_VERSION = '21'
 const FALLBACK_SPRING_BOOT_VERSION = '3.4.0'
+
+const BUILD_TOOLS: readonly BuildTool[] = ['maven-project', 'gradle-project']
+const PROJECT_LANGUAGES: readonly ProjectLanguage[] = ['java', 'kotlin']
+const PACKAGING_TYPES: readonly PackagingType[] = ['jar', 'war']
 
 export const BUILD_TOOL_OPTIONS: ConfigOption<BuildTool>[] = [
   { value: 'maven-project', label: 'Maven' },
@@ -97,6 +103,47 @@ export function getProjectConfigWithMetadataDefaults(
   }
 }
 
+export function normalizeProjectConfig(
+  config: Partial<ProjectConfig> | null | undefined,
+): ProjectConfig {
+  return {
+    group: normalizeTextValue(config?.group, DEFAULT_PROJECT_CONFIG.group),
+    artifact: normalizeTextValue(config?.artifact, DEFAULT_PROJECT_CONFIG.artifact),
+    name: normalizeTextValue(config?.name, DEFAULT_PROJECT_CONFIG.name),
+    description: normalizeTextValue(
+      config?.description,
+      DEFAULT_PROJECT_CONFIG.description,
+    ),
+    packageName: normalizeTextValue(
+      config?.packageName,
+      DEFAULT_PROJECT_CONFIG.packageName,
+    ),
+    javaVersion: normalizeTextValue(
+      config?.javaVersion,
+      DEFAULT_PROJECT_CONFIG.javaVersion,
+    ),
+    springBootVersion: normalizeTextValue(
+      config?.springBootVersion,
+      DEFAULT_PROJECT_CONFIG.springBootVersion,
+    ),
+    buildTool: normalizeStringUnion(
+      config?.buildTool,
+      BUILD_TOOLS,
+      DEFAULT_PROJECT_CONFIG.buildTool,
+    ),
+    language: normalizeStringUnion(
+      config?.language,
+      PROJECT_LANGUAGES,
+      DEFAULT_PROJECT_CONFIG.language,
+    ),
+    packaging: normalizeStringUnion(
+      config?.packaging,
+      PACKAGING_TYPES,
+      DEFAULT_PROJECT_CONFIG.packaging,
+    ),
+  }
+}
+
 type MappedMetadataOption = ConfigOption & {
   default: boolean
 }
@@ -143,4 +190,28 @@ function pickDefaultOptionId(
   }
 
   return options[0].value
+}
+
+function normalizeTextValue(value: string | undefined, fallback: string): string {
+  if (typeof value !== 'string') {
+    return fallback
+  }
+
+  return value
+}
+
+function normalizeStringUnion<TValue extends string>(
+  value: string | undefined,
+  allowedValues: readonly TValue[],
+  fallback: TValue,
+): TValue {
+  if (!value) {
+    return fallback
+  }
+
+  if (!allowedValues.includes(value as TValue)) {
+    return fallback
+  }
+
+  return value as TValue
 }
