@@ -1,5 +1,7 @@
 import { FlaskConical, WandSparkles } from 'lucide-react'
 
+import { ThemeToggle } from '../theme/theme-toggle'
+
 export function WorkspaceHeader() {
   return (
     <header className="flex items-center justify-between border-b bg-[var(--card)] px-5 py-3">
@@ -14,9 +16,12 @@ export function WorkspaceHeader() {
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-[var(--muted-foreground)]">
-        <WandSparkles className="h-3.5 w-3.5" />
-        Phase 1 shell
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-[var(--muted-foreground)]">
+          <WandSparkles className="h-3.5 w-3.5" />
+          Phase 1 shell
+        </div>
+        <ThemeToggle />
       </div>
     </header>
   )
