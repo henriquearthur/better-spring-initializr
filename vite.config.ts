@@ -11,6 +11,9 @@ const config = defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'node:async_hooks': fileURLToPath(new URL('./src/lib/polyfills/async-hooks.ts', import.meta.url)),
+      'node:stream/web': 'web-streams-polyfill/dist/ponyfill.js',
+      'node:stream': 'stream-browserify',
     },
   },
   plugins: [
