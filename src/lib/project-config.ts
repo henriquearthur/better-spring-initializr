@@ -24,6 +24,19 @@ export type ConfigOption<TValue extends string = string> = {
 
 export const PROJECT_CONFIG_STORAGE_KEY = 'better-spring-initializr:config:v1'
 
+export const PROJECT_CONFIG_QUERY_KEYS = [
+  'group',
+  'artifact',
+  'name',
+  'description',
+  'packageName',
+  'javaVersion',
+  'springBootVersion',
+  'buildTool',
+  'language',
+  'packaging',
+] as const
+
 const FALLBACK_JAVA_VERSION = '21'
 const FALLBACK_SPRING_BOOT_VERSION = '3.4.0'
 
@@ -142,6 +155,37 @@ export function normalizeProjectConfig(
       DEFAULT_PROJECT_CONFIG.packaging,
     ),
   }
+}
+
+export function hasProjectConfigQueryParams(search: string): boolean {
+  const searchParams = new URLSearchParams(search)
+
+  return PROJECT_CONFIG_QUERY_KEYS.some((key) => searchParams.has(key))
+}
+
+export function readProjectConfigFromStorage(
+  storage: Pick<Storage, 'getItem'>,
+): ProjectConfig | null {
+  const rawValue = storage.getItem(PROJECT_CONFIG_STORAGE_KEY)
+
+  if (!rawValue) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue) as Partial<ProjectConfig>
+
+    return normalizeProjectConfig(parsed)
+  } catch {
+    return null
+  }
+}
+
+export function writeProjectConfigToStorage(
+  storage: Pick<Storage, 'setItem'>,
+  config: ProjectConfig,
+) {
+  storage.setItem(PROJECT_CONFIG_STORAGE_KEY, JSON.stringify(config))
 }
 
 type MappedMetadataOption = ConfigOption & {
