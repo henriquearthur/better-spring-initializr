@@ -13,7 +13,7 @@ This roadmap delivers a modern Spring Boot project generator with workspace UI, 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Workspace Shell** - BFF proxy, API caching, and workspace layout that opens straight to the tool
-- [ ] **Phase 2: Project Configuration** - Sidebar with all project metadata and build options
+- [x] **Phase 2: Project Configuration** - Sidebar with all project metadata and build options
 - [ ] **Phase 3: Dependency Browser** - Searchable, categorized dependency selection with visual cards
 - [ ] **Phase 4: Live Preview** - Real-time file tree, file viewer, and diff highlighting
 - [ ] **Phase 5: Generation & Sharing** - ZIP download and shareable configuration URLs
@@ -46,11 +46,12 @@ Plans:
   2. User can select Java version, Spring Boot version, build tool (Maven/Gradle), language (Java/Kotlin), and packaging (JAR/WAR) from available options fetched from the API
   3. Sidebar sections are collapsible and organized logically
   4. User's last configuration persists across browser sessions via local storage
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-project-configuration-01-PLAN.md - Build collapsible configuration sidebar with all metadata/build controls
-- [ ] 02-project-configuration-02-PLAN.md - Add nuqs URL state sync and localStorage persistence for project config
+- [x] 02-project-configuration-01-PLAN.md - Build collapsible configuration sidebar with all metadata/build controls
+- [x] 02-project-configuration-02-PLAN.md - Add nuqs URL state sync and localStorage persistence for project config
+- [x] 02-project-configuration-03-PLAN.md - Gap closure: mount nuqs adapter and re-verify URL/localStorage runtime behavior
 
 ### Phase 3: Dependency Browser
 **Goal**: Users can discover, search, and select dependencies through an intuitive visual interface
@@ -103,11 +104,11 @@ Plans:
   2. User can specify organization and repository name for the new repo
   3. User can push the generated project to GitHub and see a link to the created repository
   4. OAuth tokens are handled securely (server-side, httpOnly cookies, not exposed to client)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: GitHub OAuth flow with secure token management
-- [ ] 06-02: Repository creation and project push server function
+- [ ] 06-github-integration-01-PLAN.md - GitHub OAuth flow with secure server-side token session management and workspace connect UX
+- [ ] 06-github-integration-02-PLAN.md - Repository owner selection and create-plus-push pipeline for generated project output
 
 ### Phase 7: Curated Presets
 **Goal**: Users can jumpstart their project configuration by browsing and applying curated presets for common use cases
@@ -117,10 +118,10 @@ Plans:
   1. User can browse a list of curated presets (e.g., "REST API + Postgres + Docker", "Reactive Microservice")
   2. User can see what a preset includes (dependencies, config) before applying it
   3. User can apply a preset and see the sidebar and preview update with the preset's configuration
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 07-01: Preset data structure, browsing UI, and apply functionality
+- [ ] 07-curated-presets-01-PLAN.md - Curated preset catalog, includes preview, and apply-to-workspace wiring
 
 ## Progress
 
@@ -130,7 +131,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Workspace Shell | 2/2 | Complete | 2026-02-14 |
-| 2. Project Configuration | 0/2 | Not started | - |
+| 2. Project Configuration | 3/3 | Complete | 2026-02-14 |
 | 3. Dependency Browser | 0/1 | Not started | - |
 | 4. Live Preview | 0/2 | Not started | - |
 | 5. Generation & Sharing | 0/2 | Not started | - |
