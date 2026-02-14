@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Live Preview** - Real-time file tree, file viewer, and diff highlighting
 - [x] **Phase 5: Generation & Sharing** - ZIP download and shareable configuration URLs
 - [x] **Phase 6: GitHub Integration** - OAuth flow and push-to-GitHub functionality
-- [ ] **Phase 7: Curated Presets** - Browse and apply pre-configured project templates
+- [x] **Phase 7: Curated Presets** - Browse and apply pre-configured project templates
 
 ## Phase Details
 
@@ -118,12 +118,12 @@ Plans:
 **Requirements**: PRST-01, PRST-02, PRST-03
 **Success Criteria** (what must be TRUE):
   1. User can browse a list of curated presets (e.g., "REST API + Postgres + Docker", "Reactive Microservice")
-  2. User can see what a preset includes (dependencies, config) before applying it
-  3. User can apply a preset and see the sidebar and preview update with the preset's configuration
+  2. User can see what a preset includes (dependencies) before applying it
+  3. User can apply a preset and see dependency selection and preview update without overwriting metadata/build fields
 **Plans**: 1 plan
 
 Plans:
-- [ ] 07-curated-presets-01-PLAN.md - Curated preset catalog, includes preview, and apply-to-workspace wiring
+- [x] 07-curated-presets-01-PLAN.md - Curated preset catalog, includes preview, and apply-to-workspace wiring
 
 ## Progress
 
@@ -138,4 +138,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 4. Live Preview | 2/2 | Complete | 2026-02-14 |
 | 5. Generation & Sharing | 2/2 | Complete | 2026-02-14 |
 | 6. GitHub Integration | 2/2 | Complete | 2026-02-14 |
-| 7. Curated Presets | 0/1 | Not started | - |
+| 7. Curated Presets | 1/1 | Complete | 2026-02-14 |

@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 Phase: 7 of 7 (Curated Presets)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-02-14 -- Completed 07-01 curated presets execution
+Last activity: 2026-02-14 -- Phase 7 human verification approved (preset apply is dependency-only)
 
 Progress: [##########] 100%
 
@@ -99,6 +99,7 @@ Recent decisions affecting current work:
 - [Phase 06-github-integration]: Keep OAuth token server-only by deriving owners from session summary and pushing through server function.
 - [Phase 07]: Keep curated presets as a static in-repo catalog with pure apply helpers for deterministic state transitions.
 - [Phase 07]: Use browser-only node builtin aliasing in Vite to unblock client bundling without changing SSR behavior.
+- [Phase 07]: Preset apply updates dependency selection only and must not override project metadata/build fields.
 
 ### Pending Todos
 
