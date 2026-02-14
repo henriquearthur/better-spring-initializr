@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 6 of 7 (GitHub Integration)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-14 -- Completed 06-github-integration-01 (GitHub OAuth flow foundation + workspace auth panel wiring)
+Plan: 2 of 2 in current phase
+Status: Complete
+Last activity: 2026-02-14 -- Completed 06-github-integration-02 (repository create + initial commit push flow and workspace publish UI)
 
-Progress: [########..] 79%
+Progress: [#########.] 86%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
+- Total plans completed: 12
 - Average duration: 3 min
-- Total execution time: 0.56 hours
+- Total execution time: 0.64 hours
 
 **By Phase:**
 
@@ -32,7 +32,7 @@ Progress: [########..] 79%
 | 3. Dependency Browser | 2 | 4 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 1 min, 3 min, 1 min, 3 min, 5 min
+- Last 5 plans: 3 min, 1 min, 3 min, 5 min, 5 min
 - Trend: Stable delivery with low per-plan execution time
 
 *Updated after each plan completion*
@@ -47,6 +47,7 @@ Progress: [########..] 79%
 | Phase 05-generation-sharing P01 | 3 min | 3 tasks | 6 files |
 | Phase 05-generation-sharing P02 | 3 min | 3 tasks | 6 files |
 | Phase 06-github-integration P01 | 5 min | 3 tasks | 11 files |
+| Phase 06 P02 | 5 min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,9 @@ Recent decisions affecting current work:
 - [Phase 06-github-integration]: Kept OAuth lifecycle in TanStack Start server functions with sanitized GITHUB_AUTH_* response contracts.
 - [Phase 06-github-integration]: Added /api/github/oauth/callback route to complete OAuth round-trip inside WorkspaceShell.
 - [Phase 06-github-integration]: Used github-oauth-session.server.ts bridge for server-only session runtime access.
+- [Phase 06-github-integration]: Use GitHub git database APIs (blobs/tree/commit/ref) to create initial commits from generated ZIP contents.
+- [Phase 06-github-integration]: Fallback from PATCH refs/heads/main to POST /git/refs for empty repositories with no branch yet.
+- [Phase 06-github-integration]: Keep OAuth token server-only by deriving owners from session summary and pushing through server function.
 
 ### Pending Todos
 
@@ -104,5 +108,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 06-github-integration-01-PLAN.md
+Stopped at: Completed 06-github-integration-02-PLAN.md
 Resume file: None
