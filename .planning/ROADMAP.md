@@ -46,11 +46,11 @@ Plans:
   2. User can select Java version, Spring Boot version, build tool (Maven/Gradle), language (Java/Kotlin), and packaging (JAR/WAR) from available options fetched from the API
   3. Sidebar sections are collapsible and organized logically
   4. User's last configuration persists across browser sessions via local storage
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Configuration sidebar with collapsible sections and all form fields
-- [ ] 02-02: URL state sync (nuqs) and local storage persistence
+- [ ] 02-project-configuration-01-PLAN.md - Build collapsible configuration sidebar with all metadata/build controls
+- [ ] 02-project-configuration-02-PLAN.md - Add nuqs URL state sync and localStorage persistence for project config
 
 ### Phase 3: Dependency Browser
 **Goal**: Users can discover, search, and select dependencies through an intuitive visual interface
@@ -61,10 +61,10 @@ Plans:
   2. User can search dependencies by name or description with instant filtering
   3. User can toggle dependencies on/off with clear visual feedback (selected state)
   4. User can see the count of selected dependencies and clear all selections
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 03-01: Categorized dependency browser with search, cards, and toggle selection
+- [ ] 03-dependency-browser-01-PLAN.md - Categorized dependency browser with search, cards, toggle selection, and clear-all controls
 
 ### Phase 4: Live Preview
 **Goal**: Users see exactly what their configured project looks like before generating it, with real-time feedback on every change
