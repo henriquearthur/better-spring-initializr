@@ -63,25 +63,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LAYO-06 | TBD (roadmap pending) | Pending |
-| LAYO-07 | TBD (roadmap pending) | Pending |
-| LAYO-08 | TBD (roadmap pending) | Pending |
-| LAYO-09 | TBD (roadmap pending) | Pending |
-| LAYO-10 | TBD (roadmap pending) | Pending |
-| WARN-01 | TBD (roadmap pending) | Pending |
-| WARN-02 | TBD (roadmap pending) | Pending |
-| OUTP-04 | TBD (roadmap pending) | Pending |
-| OUTP-05 | TBD (roadmap pending) | Pending |
-| OUTP-06 | TBD (roadmap pending) | Pending |
-| PREV-05 | TBD (roadmap pending) | Pending |
-| PREV-06 | TBD (roadmap pending) | Pending |
-| PREV-07 | TBD (roadmap pending) | Pending |
+| LAYO-06 | Phase 8 - Readability and Orientation | Pending |
+| LAYO-07 | Phase 8 - Readability and Orientation | Pending |
+| LAYO-08 | Phase 9 - Workspace Density Controls | Pending |
+| LAYO-09 | Phase 9 - Workspace Density Controls | Pending |
+| LAYO-10 | Phase 9 - Workspace Density Controls | Pending |
+| WARN-01 | Phase 10 - Actionable Messaging | Pending |
+| WARN-02 | Phase 10 - Actionable Messaging | Pending |
+| OUTP-04 | Phase 11 - Action-First Output Flow | Pending |
+| OUTP-05 | Phase 11 - Action-First Output Flow | Pending |
+| OUTP-06 | Phase 11 - Action-First Output Flow | Pending |
+| PREV-05 | Phase 12 - Preview Quality and Reliability | Pending |
+| PREV-06 | Phase 12 - Preview Quality and Reliability | Pending |
+| PREV-07 | Phase 12 - Preview Quality and Reliability | Pending |
 
 **Coverage:**
 - v1 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13 (roadmap pending)
+- Mapped to phases: 13
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-14*
-*Last updated: 2026-02-14 after milestone v1.0.1 requirement definition*
+*Last updated: 2026-02-14 after v1.0.1 roadmap creation*
