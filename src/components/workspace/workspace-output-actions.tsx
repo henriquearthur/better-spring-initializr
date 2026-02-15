@@ -1,4 +1,4 @@
-import { Check, Copy, Download, LoaderCircle, TriangleAlert } from 'lucide-react'
+import { Check, Copy, Download, Github, LoaderCircle, TriangleAlert } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 
 import type { ProjectConfig } from '@/lib/project-config'
@@ -13,6 +13,7 @@ type WorkspaceOutputActionsProps = {
   config: ProjectConfig
   selectedDependencyIds: string[]
   createShareUrl: (snapshot: ShareConfigSnapshot) => string
+  onPublish?: () => void
 }
 
 type FeedbackState =
@@ -26,6 +27,7 @@ export function WorkspaceOutputActions({
   config,
   selectedDependencyIds,
   createShareUrl,
+  onPublish,
 }: WorkspaceOutputActionsProps) {
   const [isDownloading, setIsDownloading] = useState(false)
   const [isCopying, setIsCopying] = useState(false)
@@ -110,9 +112,6 @@ export function WorkspaceOutputActions({
           </p>
         </div>
 
-        <span className="rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-          Phase 5
-        </span>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -143,6 +142,18 @@ export function WorkspaceOutputActions({
           )}
           {isCopying ? 'Copying...' : 'Copy Share Link'}
         </button>
+
+        {onPublish ? (
+          <button
+            type="button"
+            onClick={onPublish}
+            disabled={isDownloading || isCopying}
+            className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-medium text-[var(--foreground)] transition hover:border-emerald-500/40 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:text-emerald-300"
+          >
+            <Github className="h-4 w-4" />
+            Publish to GitHub
+          </button>
+        ) : null}
       </div>
 
       {feedback ? (

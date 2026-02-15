@@ -1,4 +1,4 @@
-import { Check, Github, LoaderCircle, LogOut, ShieldCheck, TriangleAlert } from 'lucide-react'
+import { Check, Github, LoaderCircle, LogOut, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import {
@@ -201,15 +201,6 @@ export function GitHubAuthPanel() {
         {connectionBadge}
       </div>
 
-      <div className="mt-3 rounded-lg border border-sky-300/60 bg-sky-50/70 px-3 py-2 text-xs text-sky-900 dark:border-sky-400/30 dark:bg-sky-500/10 dark:text-sky-100">
-        <p className="font-medium">Why these permissions?</p>
-        <p className="mt-1">
-          We request <span className="font-mono">repo</span> to create/push a new repository and{' '}
-          <span className="font-mono">read:org</span> to let you pick a personal or organization owner.
-          OAuth tokens stay in secure httpOnly server cookies and are never exposed to client JavaScript.
-        </p>
-      </div>
-
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
@@ -245,16 +236,6 @@ export function GitHubAuthPanel() {
         </div>
       ) : null}
 
-      <div className="mt-3 rounded-lg border border-emerald-300/60 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100">
-        <p className="flex items-center gap-2 font-medium">
-          <ShieldCheck className="h-3.5 w-3.5" />
-          Security posture
-        </p>
-        <p className="mt-1">
-          Session cookie is httpOnly, SameSite=Lax, and secure in production. Token stays server-side for
-          BFF GitHub API calls.
-        </p>
-      </div>
     </section>
   )
 }

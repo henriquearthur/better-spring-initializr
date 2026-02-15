@@ -5,8 +5,8 @@
   --background: oklch(0.985 0.002 250);
   --foreground: oklch(0.19 0.01 255);
   --muted: oklch(0.95 0.008 250);
-  --muted-foreground: oklch(0.45 0.01 255);
-  --border: oklch(0.9 0.006 250);
+  --muted-foreground: oklch(0.38 0.012 255);
+  --border: oklch(0.87 0.008 250);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.19 0.01 255);
 }

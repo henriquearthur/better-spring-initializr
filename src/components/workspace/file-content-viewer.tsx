@@ -1,3 +1,4 @@
+import { RotateCcw } from 'lucide-react'
 import { codeToTokens, type BuiltinLanguage, type ThemedToken } from 'shiki'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -11,13 +12,14 @@ type FileContentViewerProps = {
   file: PreviewSnapshotFile | null
   isLoading: boolean
   diff: PreviewFileDiff | null
+  onRetry?: () => void
 }
 
 type ViewerLine =
   | { kind: 'removed'; line: PreviewRemovedLine }
   | { kind: 'current'; lineNumber: number; added: boolean; tokens: ThemedToken[] }
 
-export function FileContentViewer({ file, isLoading, diff }: FileContentViewerProps) {
+export function FileContentViewer({ file, isLoading, diff, onRetry }: FileContentViewerProps) {
   const [tokenLines, setTokenLines] = useState<ThemedToken[][]>([])
   const [isHighlighting, setIsHighlighting] = useState(false)
   const [highlightError, setHighlightError] = useState<string | null>(null)
@@ -88,11 +90,11 @@ export function FileContentViewer({ file, isLoading, diff }: FileContentViewerPr
         </span>
       </header>
 
-      <div className="relative flex-1 overflow-auto">
+      <div className="relative flex-1 overflow-auto py-2">
         {isHighlighting && tokenLines.length === 0 ? (
           <ViewerState message="Applying syntax highlighting..." tone="muted" />
         ) : (
-          <table className="w-full border-separate border-spacing-0 font-mono text-sm leading-6">
+          <table className="w-full border-separate border-spacing-0 cursor-default select-none font-mono text-sm leading-6">
             <tbody>
               {viewerLines.map((line, index) => {
                 if (line.kind === 'removed') {
@@ -101,7 +103,7 @@ export function FileContentViewer({ file, isLoading, diff }: FileContentViewerPr
                       <td className="w-12 border-r px-2 text-right text-xs text-red-700 dark:text-red-300">
                         -{line.line.lineNumber}
                       </td>
-                      <td className="px-3 text-red-800 dark:text-red-100">{line.line.content || ' '}</td>
+                      <td className="select-text whitespace-pre px-3 text-red-800 dark:text-red-100">{line.line.content || ' '}</td>
                     </tr>
                   )
                 }
@@ -121,7 +123,7 @@ export function FileContentViewer({ file, isLoading, diff }: FileContentViewerPr
                       {line.added ? '+' : ''}
                       {line.lineNumber}
                     </td>
-                    <td className="px-3">
+                    <td className="select-text whitespace-pre px-3">
                       {line.tokens.length > 0 ? (
                         line.tokens.map((token, tokenIndex) => (
                           <span
@@ -228,20 +230,33 @@ function buildViewerLines(tokenLines: ThemedToken[][], diff: PreviewFileDiff | n
 
 type ViewerStateProps = {
   message: string
-  tone: 'muted' | 'warning'
+  tone: 'muted' | 'warning' | 'error'
+  onRetry?: () => void
 }
 
-function ViewerState({ message, tone }: ViewerStateProps) {
+function ViewerState({ message, tone, onRetry }: ViewerStateProps) {
   const palette =
     tone === 'warning'
       ? 'border-amber-300/70 bg-amber-50/70 text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100'
-      : 'border-dashed text-[var(--muted-foreground)]'
+      : tone === 'error'
+        ? 'border-red-300/70 bg-red-50/70 text-red-900 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'
+        : 'border-dashed text-[var(--muted-foreground)]'
 
   return (
     <div
-      className={`flex h-full min-h-[420px] items-center justify-center rounded-xl border px-4 text-sm ${palette}`}
+      className={`flex h-full min-h-[420px] flex-col items-center justify-center gap-3 rounded-xl border px-4 text-sm ${palette}`}
     >
-      {message}
+      <p>{message}</p>
+      {onRetry ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="inline-flex h-8 items-center gap-2 rounded-md border px-3 text-xs font-medium transition hover:bg-[var(--muted)]"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          Retry
+        </button>
+      ) : null}
     </div>
   )
 }

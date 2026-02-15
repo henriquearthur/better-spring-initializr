@@ -176,9 +176,6 @@ export function GitHubPushPanel({ config, selectedDependencyIds }: GitHubPushPan
           </p>
         </div>
 
-        <span className="rounded-full border border-sky-400/60 bg-sky-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-700 dark:text-sky-200">
-          Phase 6
-        </span>
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">

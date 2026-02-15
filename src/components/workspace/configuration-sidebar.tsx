@@ -27,7 +27,7 @@ export function ConfigurationSidebar({
   onResetConfig,
 }: ConfigurationSidebarProps) {
   const [metadataOpen, setMetadataOpen] = useState(true)
-  const [buildSettingsOpen, setBuildSettingsOpen] = useState(true)
+  const [buildSettingsOpen, setBuildSettingsOpen] = useState(false)
   const metadataQuery = useInitializrMetadata()
 
   const metadataDrivenOptions = useMemo(
@@ -208,11 +208,7 @@ function MetadataStatusBanner() {
     )
   }
 
-  return (
-    <div className="rounded-lg border border-emerald-300/70 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100">
-      Java and Spring Boot options are synced from Spring Initializr metadata.
-    </div>
-  )
+  return null
 }
 
 type SidebarSectionProps = {

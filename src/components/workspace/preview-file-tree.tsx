@@ -1,4 +1,4 @@
-import { File, FolderClosed, FolderOpen } from 'lucide-react'
+import { File, FolderClosed, FolderOpen, RotateCcw } from 'lucide-react'
 import { useMemo } from 'react'
 import { Tree as Arborist, type NodeRendererProps } from 'react-arborist'
 
@@ -16,6 +16,7 @@ type PreviewFileTreeProps = {
   selectedFilePath: string | null
   onSelectFile: (path: string | null) => void
   fileDiffByPath?: Record<string, PreviewFileDiff>
+  onRetry?: () => void
 }
 
 export function PreviewFileTree({
@@ -25,6 +26,7 @@ export function PreviewFileTree({
   selectedFilePath,
   onSelectFile,
   fileDiffByPath,
+  onRetry,
 }: PreviewFileTreeProps) {
   const treeData = useMemo(() => buildPreviewTree(files ?? []), [files])
 
@@ -33,7 +35,7 @@ export function PreviewFileTree({
   }
 
   if (errorMessage) {
-    return <StatusPanel message={errorMessage} tone="error" />
+    return <StatusPanel message={errorMessage} tone="error" onRetry={onRetry} />
   }
 
   if (treeData.length === 0) {
@@ -134,9 +136,10 @@ function PreviewTreeRow({ node, style, fileDiffByPath }: PreviewTreeRowProps) {
 type StatusPanelProps = {
   message: string
   tone: 'muted' | 'error'
+  onRetry?: () => void
 }
 
-function StatusPanel({ message, tone }: StatusPanelProps) {
+function StatusPanel({ message, tone, onRetry }: StatusPanelProps) {
   const palette =
     tone === 'error'
       ? 'border-red-300/70 bg-red-50/70 text-red-900 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'
@@ -144,9 +147,19 @@ function StatusPanel({ message, tone }: StatusPanelProps) {
 
   return (
     <div
-      className={`flex h-full min-h-[420px] items-center justify-center rounded-xl border px-4 text-sm ${palette}`}
+      className={`flex h-full min-h-[420px] flex-col items-center justify-center gap-3 rounded-xl border px-4 text-sm ${palette}`}
     >
-      {message}
+      <p>{message}</p>
+      {onRetry ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="inline-flex h-8 items-center gap-2 rounded-md border px-3 text-xs font-medium transition hover:bg-[var(--muted)]"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          Retry
+        </button>
+      ) : null}
     </div>
   )
 }

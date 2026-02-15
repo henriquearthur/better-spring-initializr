@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useDependencyBrowser } from '@/hooks/use-dependency-browser'
@@ -12,8 +13,7 @@ import type { PreviewSnapshotFile } from '@/lib/preview-tree'
 import { ConfigurationSidebar } from './configuration-sidebar'
 import { DependencyBrowser } from './dependency-browser'
 import { FileContentViewer } from './file-content-viewer'
-import { GitHubAuthPanel } from './github-auth-panel'
-import { GitHubPushPanel } from './github-push-panel'
+import { GitHubPublishDialog } from './github-publish-dialog'
 import { PresetBrowser } from './preset-browser'
 import { PreviewFileTree } from './preview-file-tree'
 import { WorkspaceOutputActions } from './workspace-output-actions'
@@ -74,7 +74,12 @@ export function WorkspaceShell() {
 
   const previewResult = projectPreviewQuery.data
   const previewFiles = previewResult?.ok ? previewResult.snapshot.files : undefined
-  const previewErrorMessage = previewResult && !previewResult.ok ? previewResult.error.message : undefined
+  const previewErrorMessage =
+    previewResult && !previewResult.ok
+      ? previewResult.error.message
+      : projectPreviewQuery.error
+        ? projectPreviewQuery.error.message
+        : undefined
   const selectedPreviewFile = useMemo(
     () => previewFiles?.find((file) => file.path === selectedPreviewFilePath) ?? null,
     [previewFiles, selectedPreviewFilePath],
@@ -194,16 +199,33 @@ export function WorkspaceShell() {
 
   const metadataUnavailable = metadataQuery.isLoading || metadataQuery.isError || !metadataReady
 
+  const [presetsOpen, setPresetsOpen] = useState(false)
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('github') === 'connected') {
+      setPublishDialogOpen(true)
+      window.history.replaceState({}, '', window.location.pathname)
+    } else if (params.has('github')) {
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
+  const handleRetryPreview = useCallback(() => {
+    void projectPreviewQuery.refetch()
+  }, [projectPreviewQuery])
+
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/12 to-transparent" />
 
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col px-4 py-4 sm:px-6">
-        <div className="overflow-hidden rounded-2xl border bg-[var(--card)] shadow-[0_12px_40px_-20px_rgba(16,24,40,0.55)]">
-          <WorkspaceHeader />
+        <WorkspaceHeader />
 
+        <div className="overflow-hidden rounded-2xl border bg-[var(--card)] shadow-[0_12px_40px_-20px_rgba(16,24,40,0.55)]">
           <main className="grid min-h-[calc(100vh-8rem)] grid-cols-1 gap-4 p-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-            <aside className="space-y-4 rounded-xl border bg-[var(--background)] p-4">
+            <aside className="space-y-4">
               <ConfigurationSidebar
                 config={projectConfig}
                 onConfigChange={handleConfigChange}
@@ -212,26 +234,35 @@ export function WorkspaceShell() {
               />
 
               <section className="rounded-xl border bg-[var(--card)] p-3">
-                <div className="flex items-start justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPresetsOpen((current) => !current)}
+                  className="flex w-full items-center justify-between text-left"
+                >
                   <div>
                     <p className="text-sm font-semibold">Curated Presets</p>
                     <p className="text-xs text-[var(--muted-foreground)]">
                       Inspect what each starter includes, then apply in one click.
                     </p>
                   </div>
-                </div>
-
-                <div className="mt-3">
-                  <PresetBrowser
-                    presets={CURATED_PRESETS}
-                    selectedPresetId={selectedPresetId}
-                    onSelectPreset={handleSelectPreset}
-                    onApplyPreset={handleApplyPreset}
-                    availableDependencies={availableDependencies}
-                    metadataAvailable={metadataReady}
-                    disabled={metadataUnavailable}
+                  <ChevronDown
+                    className={`h-4 w-4 text-[var(--muted-foreground)] transition-transform ${presetsOpen ? '' : '-rotate-90'}`}
                   />
-                </div>
+                </button>
+
+                {presetsOpen ? (
+                  <div className="mt-3">
+                    <PresetBrowser
+                      presets={CURATED_PRESETS}
+                      selectedPresetId={selectedPresetId}
+                      onSelectPreset={handleSelectPreset}
+                      onApplyPreset={handleApplyPreset}
+                      availableDependencies={availableDependencies}
+                      metadataAvailable={metadataReady}
+                      disabled={metadataUnavailable}
+                    />
+                  </div>
+                ) : null}
               </section>
 
               <section className="rounded-xl border bg-[var(--card)] p-3">
@@ -281,7 +312,7 @@ export function WorkspaceShell() {
               </section>
             </aside>
 
-            <section className="rounded-xl border bg-[var(--background)] p-4">
+            <section className="space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
@@ -304,27 +335,15 @@ export function WorkspaceShell() {
                 </div>
               </div>
 
-              <div className="mt-4">
-                <GitHubAuthPanel />
-              </div>
-
-              <div className="mt-4">
-                <GitHubPushPanel
-                  config={projectConfig}
-                  selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
-                />
-              </div>
-
-              <div className="mt-4">
-                <WorkspaceOutputActions
-                  config={projectConfig}
-                  selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
-                  createShareUrl={createShareUrl}
-                />
-              </div>
+              <WorkspaceOutputActions
+                config={projectConfig}
+                selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
+                createShareUrl={createShareUrl}
+                onPublish={() => setPublishDialogOpen(true)}
+              />
 
               {dependencyDiff ? (
-                <div className="mt-3 rounded-lg border bg-[var(--card)] px-3 py-2 text-xs text-[var(--muted-foreground)]">
+                <div className="rounded-lg border bg-[var(--card)] px-3 py-2 text-xs text-[var(--muted-foreground)]">
                   <p>
                     Dependency diff: {dependencyDiff.modified.length} modified, {dependencyDiff.added.length} added,{' '}
                     {dependencyDiff.removed.length} removed files.
@@ -332,7 +351,7 @@ export function WorkspaceShell() {
                 </div>
               ) : null}
 
-              <div className="mt-4 grid h-[360px] grid-cols-1 gap-4 md:h-[520px] xl:grid-cols-[320px_minmax(0,1fr)]">
+              <div className="grid h-[360px] grid-cols-1 gap-4 md:h-[520px] xl:grid-cols-[320px_minmax(0,1fr)]">
                 <PreviewFileTree
                   files={previewFiles}
                   isLoading={projectPreviewQuery.isPending}
@@ -340,17 +359,26 @@ export function WorkspaceShell() {
                   selectedFilePath={selectedPreviewFilePath}
                   onSelectFile={setSelectedPreviewFilePath}
                   fileDiffByPath={dependencyDiff?.files}
+                  onRetry={handleRetryPreview}
                 />
 
                 <FileContentViewer
                   file={selectedPreviewFile}
                   isLoading={projectPreviewQuery.isPending}
                   diff={selectedFileDiff}
+                  onRetry={handleRetryPreview}
                 />
               </div>
             </section>
           </main>
         </div>
+
+        <GitHubPublishDialog
+          open={publishDialogOpen}
+          onClose={() => setPublishDialogOpen(false)}
+          config={projectConfig}
+          selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
+        />
       </div>
     </div>
   )
@@ -385,9 +413,5 @@ function DependencyBrowserStatus({
     )
   }
 
-  return (
-    <div className="mt-3 rounded-lg border border-emerald-300/70 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100">
-      Dependency metadata loaded. Search and toggle dependencies below.
-    </div>
-  )
+  return null
 }

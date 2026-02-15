@@ -38,7 +38,7 @@ export const PROJECT_CONFIG_QUERY_KEYS = [
 ] as const
 
 const FALLBACK_JAVA_VERSION = '21'
-const FALLBACK_SPRING_BOOT_VERSION = '3.4.0'
+const FALLBACK_SPRING_BOOT_VERSION = '3.5.10'
 
 const BUILD_TOOLS: readonly BuildTool[] = ['maven-project', 'gradle-project']
 const PROJECT_LANGUAGES: readonly ProjectLanguage[] = ['java', 'kotlin']

@@ -77,7 +77,7 @@ export function PresetBrowser({
             </button>
 
             {isExpanded ? (
-              <div className="mt-3 space-y-3 rounded-md border bg-[var(--background)] p-3">
+              <div className="mt-3 space-y-3 border-t pt-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
                     Includes: Dependencies
