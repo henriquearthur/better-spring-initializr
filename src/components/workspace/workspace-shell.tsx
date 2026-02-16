@@ -7,8 +7,9 @@ import { useProjectConfigState } from '@/hooks/use-project-config-state'
 import { useProjectPreview } from '@/hooks/use-project-preview'
 import { useShareableConfig } from '@/hooks/use-shareable-config'
 import { CURATED_PRESETS, applyCuratedPreset } from '@/lib/curated-presets'
-import { computePreviewDiff, type PreviewFileDiff } from '@/lib/preview-diff'
-import type { ProjectConfig } from '@/lib/project-config'
+import { type PreviewFileDiff } from '@/lib/preview-diff'
+import { DEFAULT_PROJECT_CONFIG, type ProjectConfig } from '@/lib/project-config'
+import { resolveDependencyPreviewDiff } from '@/lib/dependency-preview-diff'
 import type { PreviewSnapshotFile } from '@/lib/preview-tree'
 import { ConfigurationSidebar } from './configuration-sidebar'
 import { DependencyBrowser } from './dependency-browser'
@@ -53,25 +54,25 @@ export function WorkspaceShell() {
   } = useShareableConfig()
   const [selectedPreviewFilePath, setSelectedPreviewFilePath] = useState<string | null>(null)
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(CURATED_PRESETS[0]?.id ?? null)
-  const [dependencyDiffBaseline, setDependencyDiffBaseline] = useState<{
-    generatedAt: string
-    files: PreviewSnapshotFile[]
-  } | null>(null)
-  const [dependencyDiff, setDependencyDiff] = useState<ReturnType<typeof computePreviewDiff> | null>(
-    null,
-  )
-  const dependencySelectionKey = useMemo(
-    () => dependencyBrowser.selectedDependencyIds.join(','),
-    [dependencyBrowser.selectedDependencyIds],
-  )
-  const previousDependencySelectionKeyRef = useRef(dependencySelectionKey)
   const hasAppliedSharedSnapshotRef = useRef(false)
 
+  const dependencyDiffBaselinePreviewQuery = useProjectPreview({
+    config: DEFAULT_PROJECT_CONFIG,
+    selectedDependencyIds: [],
+  })
   const projectPreviewQuery = useProjectPreview({
     config: projectConfig,
     selectedDependencyIds: dependencyBrowser.selectedDependencyIds,
   })
 
+  const dependencyDiff = useMemo(
+    () =>
+      resolveDependencyPreviewDiff(
+        dependencyDiffBaselinePreviewQuery.data,
+        projectPreviewQuery.data,
+      ),
+    [dependencyDiffBaselinePreviewQuery.data, projectPreviewQuery.data],
+  )
   const previewResult = projectPreviewQuery.data
   const previewFiles = previewResult?.ok ? previewResult.snapshot.files : undefined
   const previewFileMap = useMemo(() => {
@@ -125,38 +126,6 @@ export function WorkspaceShell() {
     restoredSnapshot,
     setConfig,
   ])
-
-  useEffect(() => {
-    if (previousDependencySelectionKeyRef.current === dependencySelectionKey) {
-      return
-    }
-
-    previousDependencySelectionKeyRef.current = dependencySelectionKey
-
-    if (previewResult?.ok) {
-      setDependencyDiffBaseline({
-        generatedAt: previewResult.snapshot.generatedAt,
-        files: previewResult.snapshot.files,
-      })
-    } else {
-      setDependencyDiffBaseline(null)
-    }
-
-    setDependencyDiff(null)
-  }, [dependencySelectionKey, previewResult])
-
-  useEffect(() => {
-    if (!previewResult?.ok || !dependencyDiffBaseline) {
-      return
-    }
-
-    if (previewResult.snapshot.generatedAt === dependencyDiffBaseline.generatedAt) {
-      return
-    }
-
-    setDependencyDiff(computePreviewDiff(dependencyDiffBaseline.files, previewResult.snapshot.files))
-    setDependencyDiffBaseline(null)
-  }, [dependencyDiffBaseline, previewResult])
 
   useEffect(() => {
     if (!selectedPreviewFilePath || !previewFiles) {
