@@ -1,6 +1,10 @@
-import { File, FolderClosed, FolderOpen, RotateCcw } from 'lucide-react'
-import { useMemo } from 'react'
-import { Tree as Arborist, type NodeRendererProps } from 'react-arborist'
+import { File, FolderClosed, FolderOpen, RotateCcw, Search, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  Tree as Arborist,
+  type NodeApi,
+  type NodeRendererProps,
+} from 'react-arborist'
 
 import type { PreviewFileDiff } from '@/lib/preview-diff'
 import {
@@ -19,6 +23,8 @@ type PreviewFileTreeProps = {
   onRetry?: () => void
 }
 
+const FALLBACK_TREE_HEIGHT = 0
+
 export function PreviewFileTree({
   files,
   isLoading,
@@ -28,7 +34,56 @@ export function PreviewFileTree({
   fileDiffByPath,
   onRetry,
 }: PreviewFileTreeProps) {
+  const [searchTerm, setSearchTerm] = useState('')
+  const [viewportElement, setViewportElement] = useState<HTMLDivElement | null>(null)
+  const [treeHeight, setTreeHeight] = useState(FALLBACK_TREE_HEIGHT)
   const treeData = useMemo(() => buildPreviewTree(files ?? []), [files])
+  const normalizedSearch = searchTerm.trim().toLocaleLowerCase()
+  const hasSearchTerm = normalizedSearch.length > 0
+  const setViewportRef = useCallback((element: HTMLDivElement | null) => {
+    setViewportElement(element)
+  }, [])
+  const hasMatchingNodes = useMemo(
+    () => (hasSearchTerm ? countSearchMatches(treeData, normalizedSearch) > 0 : true),
+    [hasSearchTerm, normalizedSearch, treeData],
+  )
+
+  useEffect(() => {
+    if (!viewportElement) {
+      return
+    }
+
+    const syncTreeHeight = () => {
+      const measuredHeight = Math.floor(viewportElement.getBoundingClientRect().height)
+      setTreeHeight((previousHeight) => {
+        if (measuredHeight > 0) {
+          return measuredHeight
+        }
+
+        return previousHeight > 0 ? previousHeight : FALLBACK_TREE_HEIGHT
+      })
+    }
+
+    syncTreeHeight()
+    const rafId = window.requestAnimationFrame(syncTreeHeight)
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', syncTreeHeight)
+
+      return () => {
+        window.cancelAnimationFrame(rafId)
+        window.removeEventListener('resize', syncTreeHeight)
+      }
+    }
+
+    const observer = new ResizeObserver(syncTreeHeight)
+    observer.observe(viewportElement)
+
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      observer.disconnect()
+    }
+  }, [viewportElement])
 
   if (isLoading) {
     return <StatusPanel message="Generating project snapshot..." tone="muted" />
@@ -43,32 +98,70 @@ export function PreviewFileTree({
   }
 
   return (
-    <div className="h-full rounded-xl border bg-[var(--card)]">
-      <Arborist<PreviewTreeNode>
-        data={treeData}
-        width="100%"
-        height={520}
-        rowHeight={30}
-        paddingTop={8}
-        paddingBottom={8}
-        indent={20}
-        openByDefault={false}
-        selection={selectedFilePath ? `file:${selectedFilePath}` : undefined}
-        onSelect={(nodes) => {
-          const firstNode = nodes[0]
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border bg-[var(--card)]">
+      <div className="border-b p-3">
+        <label className="grid gap-1.5">
+          <span className="text-xs font-medium text-[var(--muted-foreground)]">Find files</span>
+          <div className="flex h-9 items-center rounded-md border bg-[var(--background)] px-2.5 text-sm focus-within:border-[var(--accent)]/50 focus-within:ring-2 focus-within:ring-[var(--accent)]/20">
+            <Search className="h-3.5 w-3.5 text-[var(--muted-foreground)]" />
+            <input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search by name or path"
+              className="h-full w-full border-0 bg-transparent px-2 text-sm outline-none placeholder:text-[var(--muted-foreground)]"
+            />
+            {searchTerm ? (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="btn btn-ghost btn-sm h-7 px-2"
+                aria-label="Clear file search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
+          </div>
+        </label>
+      </div>
 
-          if (!firstNode) {
-            onSelectFile(null)
-            return
-          }
+      {!hasMatchingNodes ? (
+        <div className="m-3 rounded-lg border border-dashed bg-[var(--card)] px-3 py-4 text-center">
+          <p className="text-sm font-medium">No files match this search</p>
+          <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+            Try a shorter file name, package segment, or extension.
+          </p>
+        </div>
+      ) : null}
 
-          if (firstNode.data.kind === 'file') {
-            onSelectFile(firstNode.data.path)
-          }
-        }}
-      >
-        {(props) => <PreviewTreeRow {...props} fileDiffByPath={fileDiffByPath} />}
-      </Arborist>
+      <div ref={setViewportRef} className="min-h-0 flex-1 overflow-hidden">
+        <Arborist<PreviewTreeNode>
+          data={treeData}
+          width="100%"
+          height={Math.max(treeHeight, 1)}
+          rowHeight={28}
+          paddingTop={0}
+          paddingBottom={0}
+          indent={16}
+          className="preview-tree-scroll"
+          selection={selectedFilePath ? `file:${selectedFilePath}` : undefined}
+          searchTerm={normalizedSearch.length > 0 ? normalizedSearch : undefined}
+          searchMatch={searchTreeNode}
+          onSelect={(nodes) => {
+            const firstNode = nodes[0]
+
+            if (!firstNode) {
+              onSelectFile(null)
+              return
+            }
+
+            if (firstNode.data.kind === 'file') {
+              onSelectFile(firstNode.data.path)
+            }
+          }}
+        >
+          {(props) => <PreviewTreeRow {...props} fileDiffByPath={fileDiffByPath} />}
+        </Arborist>
+      </div>
     </div>
   )
 }
@@ -81,54 +174,50 @@ function PreviewTreeRow({ node, style, fileDiffByPath }: PreviewTreeRowProps) {
   const isDirectory = node.data.kind === 'directory'
   const changeType =
     node.data.kind === 'file' ? fileDiffByPath?.[node.data.path]?.changeType ?? 'unchanged' : 'unchanged'
-  const rowBadgeClass =
+  const changeDotClass =
     changeType === 'added'
-      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+      ? 'preview-tree-change-dot preview-tree-change-dot-added'
       : changeType === 'modified'
-        ? 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300'
-        : 'border-transparent text-transparent'
-  const rowBadgeLabel = changeType === 'added' ? 'A' : changeType === 'modified' ? 'M' : ''
+        ? 'preview-tree-change-dot preview-tree-change-dot-modified'
+        : null
 
   return (
-    <div
-      style={style}
-      className="group flex items-center gap-2 px-2 text-sm"
-      onClick={() => {
-        if (isDirectory) {
-          node.toggle()
-          return
-        }
+    <div style={style} className="min-w-0 overflow-hidden" data-node-id={node.id}>
+      <button
+        type="button"
+        data-change-type={changeType}
+        className={`preview-tree-row ${node.isSelected ? 'preview-tree-row-active' : ''}`}
+        onClick={() => {
+          if (isDirectory) {
+            node.toggle()
+            return
+          }
 
-        node.select()
-      }}
-    >
-      <span className="text-[var(--muted-foreground)]">
-        {isDirectory ? (
-          node.isOpen ? (
-            <FolderOpen className="h-4 w-4" />
-          ) : (
-            <FolderClosed className="h-4 w-4" />
-          )
-        ) : (
-          <File className="h-4 w-4" />
-        )}
-      </span>
-      <span
-        className={
-          node.isSelected
-            ? 'font-medium text-emerald-700 dark:text-emerald-300'
-            : 'text-[var(--foreground)]'
+          node.select()
+        }}
+        title={node.data.path}
+        aria-label={
+          isDirectory
+            ? `${node.isOpen ? 'Collapse' : 'Expand'} ${node.data.path}`
+            : `Open ${node.data.path}`
         }
       >
-        {node.data.name}
-      </span>
-      {node.data.kind === 'file' ? (
-        <span
-          className={`ml-auto min-w-5 rounded border px-1 text-center text-[10px] font-semibold ${rowBadgeClass}`}
-        >
-          {rowBadgeLabel}
+        <span className="shrink-0 text-[var(--muted-foreground)]">
+          {isDirectory ? (
+            node.isOpen ? (
+              <FolderOpen className="h-4 w-4" />
+            ) : (
+              <FolderClosed className="h-4 w-4" />
+            )
+          ) : (
+            <File className="h-4 w-4" />
+          )}
         </span>
-      ) : null}
+
+        <span className="min-w-0 flex-1 truncate">{node.data.name}</span>
+
+        {node.data.kind === 'file' && changeDotClass ? <span className={changeDotClass} aria-hidden="true" /> : null}
+      </button>
     </div>
   )
 }
@@ -154,7 +243,7 @@ function StatusPanel({ message, tone, onRetry }: StatusPanelProps) {
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex h-8 items-center gap-2 rounded-md border px-3 text-xs font-medium transition hover:bg-[var(--muted)]"
+          className="btn btn-secondary btn-sm"
         >
           <RotateCcw className="h-3.5 w-3.5" />
           Retry
@@ -162,4 +251,24 @@ function StatusPanel({ message, tone, onRetry }: StatusPanelProps) {
       ) : null}
     </div>
   )
+}
+
+function searchTreeNode(node: NodeApi<PreviewTreeNode>, normalizedSearch: string): boolean {
+  return node.data.path.toLocaleLowerCase().includes(normalizedSearch)
+}
+
+function countSearchMatches(nodes: PreviewTreeNode[], normalizedSearch: string): number {
+  let totalMatches = 0
+
+  for (const node of nodes) {
+    if (node.path.toLocaleLowerCase().includes(normalizedSearch)) {
+      totalMatches += 1
+    }
+
+    if (node.kind === 'directory' && node.children) {
+      totalMatches += countSearchMatches(node.children, normalizedSearch)
+    }
+  }
+
+  return totalMatches
 }

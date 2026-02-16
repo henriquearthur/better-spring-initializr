@@ -216,7 +216,7 @@ export function GitHubPushPanel({ config, selectedDependencyIds }: GitHubPushPan
           type="button"
           onClick={() => setVisibility('private')}
           disabled={isPushing}
-          className={`h-8 rounded-md border px-3 text-xs font-medium transition ${visibility === 'private' ? 'border-sky-400/60 bg-sky-500/10 text-sky-700 dark:text-sky-200' : 'text-[var(--muted-foreground)] hover:border-sky-400/40 hover:text-sky-700 dark:hover:text-sky-200'}`}
+          className={`h-8 rounded-md border px-3 text-xs font-medium transition ${visibility === 'private' ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)] shadow-sm' : 'text-[var(--muted-foreground)] hover:border-[var(--accent)]/40 hover:bg-[var(--muted)]'}`}
         >
           Private
         </button>
@@ -224,7 +224,7 @@ export function GitHubPushPanel({ config, selectedDependencyIds }: GitHubPushPan
           type="button"
           onClick={() => setVisibility('public')}
           disabled={isPushing}
-          className={`h-8 rounded-md border px-3 text-xs font-medium transition ${visibility === 'public' ? 'border-sky-400/60 bg-sky-500/10 text-sky-700 dark:text-sky-200' : 'text-[var(--muted-foreground)] hover:border-sky-400/40 hover:text-sky-700 dark:hover:text-sky-200'}`}
+          className={`h-8 rounded-md border px-3 text-xs font-medium transition ${visibility === 'public' ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)] shadow-sm' : 'text-[var(--muted-foreground)] hover:border-[var(--accent)]/40 hover:bg-[var(--muted)]'}`}
         >
           Public
         </button>
@@ -235,7 +235,7 @@ export function GitHubPushPanel({ config, selectedDependencyIds }: GitHubPushPan
           type="button"
           onClick={handlePush}
           disabled={isPushing || !owner || repositoryNameError !== null}
-          className="inline-flex h-9 items-center gap-2 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-60 dark:text-emerald-200"
+          className="btn btn-primary"
         >
           {isPushing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Github className="h-4 w-4" />}
           {isPushing ? 'Pushing...' : 'Push to GitHub'}
@@ -270,7 +270,7 @@ export function GitHubPushPanel({ config, selectedDependencyIds }: GitHubPushPan
               <button
                 type="button"
                 onClick={() => window.open(feedback.repositoryUrl, '_blank', 'noopener,noreferrer')}
-                className="inline-flex h-7 items-center rounded-md border px-2 text-[11px] font-medium"
+                className="btn btn-secondary h-7 px-2 text-[11px]"
               >
                 Open Repo
               </button>

@@ -119,7 +119,7 @@ export function WorkspaceOutputActions({
           type="button"
           onClick={handleDownload}
           disabled={isDownloading || isCopying}
-          className="inline-flex h-9 items-center gap-2 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-60 dark:text-emerald-200"
+          className="btn btn-primary"
         >
           {isDownloading ? (
             <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -133,7 +133,7 @@ export function WorkspaceOutputActions({
           type="button"
           onClick={handleCopyShareLink}
           disabled={isDownloading || isCopying || !shareUrl}
-          className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-medium text-[var(--foreground)] transition hover:border-emerald-500/40 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:text-emerald-300"
+          className="btn btn-secondary"
         >
           {isCopying ? (
             <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -148,7 +148,7 @@ export function WorkspaceOutputActions({
             type="button"
             onClick={onPublish}
             disabled={isDownloading || isCopying}
-            className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-medium text-[var(--foreground)] transition hover:border-emerald-500/40 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:text-emerald-300"
+            className="btn btn-secondary"
           >
             <Github className="h-4 w-4" />
             Publish to GitHub

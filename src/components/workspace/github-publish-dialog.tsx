@@ -260,7 +260,7 @@ export function GitHubPublishDialog({
             <button
               type="button"
               onClick={handleConnect}
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-500/15 dark:text-emerald-200"
+              className="btn btn-primary"
             >
               <Github className="h-4 w-4" />
               Connect GitHub
@@ -277,7 +277,7 @@ export function GitHubPublishDialog({
               <button
                 type="button"
                 onClick={handleDisconnect}
-                className="inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-[11px] font-medium text-[var(--muted-foreground)] transition hover:border-rose-500/40 hover:text-rose-700 dark:hover:text-rose-300"
+                className="btn btn-secondary h-7 gap-1.5 px-2 text-[11px] text-[var(--muted-foreground)]"
               >
                 <LogOut className="h-3 w-3" />
                 Disconnect
@@ -319,14 +319,14 @@ export function GitHubPublishDialog({
               <button
                 type="button"
                 onClick={() => setVisibility('private')}
-                className={`h-8 rounded-md border px-3 text-xs font-medium transition ${visibility === 'private' ? 'border-emerald-400/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200' : 'text-[var(--muted-foreground)] hover:border-emerald-400/40 hover:text-emerald-700 dark:hover:text-emerald-200'}`}
+                className={`h-8 rounded-md border px-3 text-xs font-medium transition ${visibility === 'private' ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)] shadow-sm' : 'text-[var(--muted-foreground)] hover:border-[var(--accent)]/40 hover:bg-[var(--muted)]'}`}
               >
                 Private
               </button>
               <button
                 type="button"
                 onClick={() => setVisibility('public')}
-                className={`h-8 rounded-md border px-3 text-xs font-medium transition ${visibility === 'public' ? 'border-emerald-400/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200' : 'text-[var(--muted-foreground)] hover:border-emerald-400/40 hover:text-emerald-700 dark:hover:text-emerald-200'}`}
+                className={`h-8 rounded-md border px-3 text-xs font-medium transition ${visibility === 'public' ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)] shadow-sm' : 'text-[var(--muted-foreground)] hover:border-[var(--accent)]/40 hover:bg-[var(--muted)]'}`}
               >
                 Public
               </button>
@@ -336,7 +336,7 @@ export function GitHubPublishDialog({
               type="button"
               onClick={handlePush}
               disabled={!owner || repositoryNameError !== null}
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-60 dark:text-emerald-200"
+              className="btn btn-primary"
             >
               <Github className="h-4 w-4" />
               Push to GitHub
@@ -373,7 +373,7 @@ export function GitHubPublishDialog({
                 <button
                   type="button"
                   onClick={() => window.open(resultUrl, '_blank', 'noopener,noreferrer')}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-3 text-xs font-medium text-emerald-700 transition hover:bg-emerald-500/15 dark:text-emerald-200"
+                  className="btn btn-primary btn-sm h-8 gap-1.5 text-xs"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   Open Repo
@@ -384,7 +384,7 @@ export function GitHubPublishDialog({
             <button
               type="button"
               onClick={onClose}
-              className="h-9 rounded-md border px-3 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--muted)]"
+              className="btn btn-secondary"
             >
               Close
             </button>

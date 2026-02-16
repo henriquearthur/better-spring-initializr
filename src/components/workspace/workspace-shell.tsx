@@ -1,5 +1,5 @@
 import { ChevronDown } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useDependencyBrowser } from '@/hooks/use-dependency-browser'
 import { useInitializrMetadata } from '@/hooks/use-initializr-metadata'
@@ -7,7 +7,7 @@ import { useProjectConfigState } from '@/hooks/use-project-config-state'
 import { useProjectPreview } from '@/hooks/use-project-preview'
 import { useShareableConfig } from '@/hooks/use-shareable-config'
 import { CURATED_PRESETS, applyCuratedPreset } from '@/lib/curated-presets'
-import { computePreviewDiff } from '@/lib/preview-diff'
+import { computePreviewDiff, type PreviewFileDiff } from '@/lib/preview-diff'
 import type { ProjectConfig } from '@/lib/project-config'
 import type { PreviewSnapshotFile } from '@/lib/preview-tree'
 import { ConfigurationSidebar } from './configuration-sidebar'
@@ -74,6 +74,15 @@ export function WorkspaceShell() {
 
   const previewResult = projectPreviewQuery.data
   const previewFiles = previewResult?.ok ? previewResult.snapshot.files : undefined
+  const previewFileMap = useMemo(() => {
+    const map = new Map<string, PreviewSnapshotFile>()
+
+    for (const file of previewFiles ?? []) {
+      map.set(file.path, file)
+    }
+
+    return map
+  }, [previewFiles])
   const previewErrorMessage =
     previewResult && !previewResult.ok
       ? previewResult.error.message
@@ -81,9 +90,13 @@ export function WorkspaceShell() {
         ? projectPreviewQuery.error.message
         : undefined
   const selectedPreviewFile = useMemo(
-    () => previewFiles?.find((file) => file.path === selectedPreviewFilePath) ?? null,
-    [previewFiles, selectedPreviewFilePath],
+    () =>
+      selectedPreviewFilePath
+        ? previewFileMap.get(selectedPreviewFilePath) ?? null
+        : null,
+    [previewFileMap, selectedPreviewFilePath],
   )
+  const previewFileDiffByPath = useMemo(() => dependencyDiff?.files, [dependencyDiff])
   const selectedFileDiff =
     selectedPreviewFilePath && dependencyDiff
       ? dependencyDiff.files[selectedPreviewFilePath] ?? null
@@ -200,6 +213,7 @@ export function WorkspaceShell() {
   const metadataUnavailable = metadataQuery.isLoading || metadataQuery.isError || !metadataReady
 
   const [presetsOpen, setPresetsOpen] = useState(false)
+  const [dependenciesOpen, setDependenciesOpen] = useState(true)
   const [publishDialogOpen, setPublishDialogOpen] = useState(false)
 
   useEffect(() => {
@@ -214,7 +228,14 @@ export function WorkspaceShell() {
 
   const handleRetryPreview = useCallback(() => {
     void projectPreviewQuery.refetch()
-  }, [projectPreviewQuery])
+  }, [projectPreviewQuery.refetch])
+  const handleSelectPreviewFile = useCallback((path: string | null) => {
+    setSelectedPreviewFilePath(path)
+  }, [])
+  const previewPathSegments = useMemo(
+    () => selectedPreviewFile?.path.split('/') ?? [],
+    [selectedPreviewFile],
+  )
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -237,7 +258,7 @@ export function WorkspaceShell() {
                 <button
                   type="button"
                   onClick={() => setPresetsOpen((current) => !current)}
-                  className="flex w-full items-center justify-between text-left"
+                  className="flex w-full items-center justify-between rounded-md px-1 py-1 text-left transition hover:bg-[var(--muted)]"
                 >
                   <div>
                     <p className="text-sm font-semibold">Curated Presets</p>
@@ -266,49 +287,62 @@ export function WorkspaceShell() {
               </section>
 
               <section className="rounded-xl border bg-[var(--card)] p-3">
-                <div className="flex items-start justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDependenciesOpen((current) => !current)}
+                  className="flex w-full items-center justify-between rounded-md px-1 py-1 text-left transition hover:bg-[var(--muted)]"
+                >
                   <div>
                     <p className="text-sm font-semibold">Dependency Browser</p>
                     <p className="text-xs text-[var(--muted-foreground)]">
                       Search and pick Spring dependencies for this project.
                     </p>
                   </div>
-
                   <div className="flex items-center gap-2">
                     <span className="rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
                       {dependencyBrowser.selectedDependencyCount} selected
                     </span>
-                    <button
-                      type="button"
-                      onClick={dependencyBrowser.clearSelectedDependencies}
-                      disabled={
-                        metadataUnavailable || dependencyBrowser.selectedDependencyCount === 0
-                      }
-                      className="h-7 rounded-md border px-2.5 text-[11px] font-medium text-[var(--muted-foreground)] transition hover:border-emerald-500/40 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:text-emerald-300"
-                    >
-                      Clear all
-                    </button>
+                    <ChevronDown
+                      className={`h-4 w-4 text-[var(--muted-foreground)] transition-transform ${dependenciesOpen ? '' : '-rotate-90'}`}
+                    />
                   </div>
-                </div>
+                </button>
 
-                <DependencyBrowserStatus
-                  isLoading={metadataQuery.isLoading}
-                  isError={metadataQuery.isError}
-                  metadataReady={metadataReady}
-                  message={metadataErrorMessage}
-                />
+                {dependenciesOpen ? (
+                  <>
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={dependencyBrowser.clearSelectedDependencies}
+                        disabled={
+                          metadataUnavailable || dependencyBrowser.selectedDependencyCount === 0
+                        }
+                        className="btn btn-secondary btn-sm h-7 text-[11px] text-[var(--muted-foreground)]"
+                      >
+                        Clear all
+                      </button>
+                    </div>
 
-                <div className="mt-3">
-                  <DependencyBrowser
-                    dependencyGroups={dependencyBrowser.filteredDependencyCategories}
-                    searchTerm={dependencyBrowser.searchTerm}
-                    onSearchTermChange={handleSearchTermChange}
-                    selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
-                    onToggleDependency={dependencyBrowser.toggleDependency}
-                    hasMetadata={metadataReady}
-                    disabled={metadataUnavailable}
-                  />
-                </div>
+                    <DependencyBrowserStatus
+                      isLoading={metadataQuery.isLoading}
+                      isError={metadataQuery.isError}
+                      metadataReady={metadataReady}
+                      message={metadataErrorMessage}
+                    />
+
+                    <div className="mt-3">
+                      <DependencyBrowser
+                        dependencyGroups={dependencyBrowser.filteredDependencyCategories}
+                        searchTerm={dependencyBrowser.searchTerm}
+                        onSearchTermChange={handleSearchTermChange}
+                        selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
+                        onToggleDependency={dependencyBrowser.toggleDependency}
+                        hasMetadata={metadataReady}
+                        disabled={metadataUnavailable}
+                      />
+                    </div>
+                  </>
+                ) : null}
               </section>
             </aside>
 
@@ -326,9 +360,21 @@ export function WorkspaceShell() {
 
                 <div className="rounded-lg border bg-[var(--card)] px-3 py-2 text-xs text-[var(--muted-foreground)]">
                   {selectedPreviewFile ? (
-                    <p>
-                      Selected: <span className="font-mono">{selectedPreviewFile.path}</span> ({selectedPreviewFile.size} bytes)
-                    </p>
+                    <div className="space-y-1">
+                      <p>
+                        Selected: <span className="font-mono">{selectedPreviewFile.path}</span> ({selectedPreviewFile.size} bytes)
+                      </p>
+                      <p className="flex flex-wrap items-center gap-1 font-mono text-[11px]">
+                        {previewPathSegments.map((segment, index) => (
+                          <span key={`${segment}-${index}`} className="inline-flex items-center gap-1">
+                            {index > 0 ? (
+                              <span className="text-[var(--muted-foreground)]/60">/</span>
+                            ) : null}
+                            <span>{segment}</span>
+                          </span>
+                        ))}
+                      </p>
+                    </div>
                   ) : (
                     <p>Select a file to inspect its path and size.</p>
                   )}
@@ -351,18 +397,18 @@ export function WorkspaceShell() {
                 </div>
               ) : null}
 
-              <div className="grid h-[360px] grid-cols-1 gap-4 md:h-[520px] xl:grid-cols-[320px_minmax(0,1fr)]">
-                <PreviewFileTree
+              <div className="grid h-[420px] grid-cols-1 gap-4 md:h-[560px] xl:grid-cols-[320px_minmax(0,1fr)]">
+                <PreviewExplorerPanel
                   files={previewFiles}
                   isLoading={projectPreviewQuery.isPending}
                   errorMessage={previewErrorMessage}
                   selectedFilePath={selectedPreviewFilePath}
-                  onSelectFile={setSelectedPreviewFilePath}
-                  fileDiffByPath={dependencyDiff?.files}
+                  onSelectFile={handleSelectPreviewFile}
+                  fileDiffByPath={previewFileDiffByPath}
                   onRetry={handleRetryPreview}
                 />
 
-                <FileContentViewer
+                <PreviewContentPanel
                   file={selectedPreviewFile}
                   isLoading={projectPreviewQuery.isPending}
                   diff={selectedFileDiff}
@@ -383,6 +429,61 @@ export function WorkspaceShell() {
     </div>
   )
 }
+
+type PreviewExplorerPanelProps = {
+  files: PreviewSnapshotFile[] | undefined
+  isLoading: boolean
+  errorMessage?: string
+  selectedFilePath: string | null
+  onSelectFile: (path: string | null) => void
+  fileDiffByPath?: Record<string, PreviewFileDiff>
+  onRetry: () => void
+}
+
+const PreviewExplorerPanel = memo(function PreviewExplorerPanel({
+  files,
+  isLoading,
+  errorMessage,
+  selectedFilePath,
+  onSelectFile,
+  fileDiffByPath,
+  onRetry,
+}: PreviewExplorerPanelProps) {
+  return (
+    <PreviewFileTree
+      files={files}
+      isLoading={isLoading}
+      errorMessage={errorMessage}
+      selectedFilePath={selectedFilePath}
+      onSelectFile={onSelectFile}
+      fileDiffByPath={fileDiffByPath}
+      onRetry={onRetry}
+    />
+  )
+})
+
+type PreviewContentPanelProps = {
+  file: PreviewSnapshotFile | null
+  isLoading: boolean
+  diff: PreviewFileDiff | null
+  onRetry: () => void
+}
+
+const PreviewContentPanel = memo(function PreviewContentPanel({
+  file,
+  isLoading,
+  diff,
+  onRetry,
+}: PreviewContentPanelProps) {
+  return (
+    <FileContentViewer
+      file={file}
+      isLoading={isLoading}
+      diff={diff}
+      onRetry={onRetry}
+    />
+  )
+})
 
 type DependencyBrowserStatusProps = {
   isLoading: boolean

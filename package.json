@@ -6,7 +6,8 @@
     "dev": "vite dev --port 3000",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
@@ -16,6 +17,7 @@
     "@tanstack/react-router-devtools": "^1.132.0",
     "@tanstack/react-router-ssr-query": "^1.131.7",
     "@tanstack/react-start": "^1.132.0",
+    "@tanstack/react-virtual": "^3.13.18",
     "@tanstack/router-plugin": "^1.132.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.545.0",
@@ -29,6 +31,7 @@
     "vite-tsconfig-paths": "^5.1.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tanstack/devtools-vite": "^0.3.11",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",

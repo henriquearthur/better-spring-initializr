@@ -1,12 +1,19 @@
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { RotateCcw } from 'lucide-react'
-import { codeToTokens, type BuiltinLanguage, type ThemedToken } from 'shiki'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { ThemedToken } from 'shiki'
 
+import {
+  useCodePreviewEngine,
+  type CodePreviewEngineResult,
+} from '@/hooks/use-code-preview-engine'
 import type { PreviewFileDiff, PreviewRemovedLine } from '@/lib/preview-diff'
+import { formatCodePreviewLanguageLabel } from '@/lib/code-preview-language'
+import { ENABLE_PREVIEW_ENGINE_V2 } from '@/lib/feature-flags'
 import type { PreviewSnapshotFile } from '@/lib/preview-tree'
 
-const SHIKI_LIGHT_THEME = 'github-light-default'
-const SHIKI_DARK_THEME = 'github-dark-default'
+const VIEWER_ROW_HEIGHT = 26
+const VIEWER_OVERSCAN = 18
 
 type FileContentViewerProps = {
   file: PreviewSnapshotFile | null
@@ -16,54 +23,38 @@ type FileContentViewerProps = {
 }
 
 type ViewerLine =
-  | { kind: 'removed'; line: PreviewRemovedLine }
-  | { kind: 'current'; lineNumber: number; added: boolean; tokens: ThemedToken[] }
+  | {
+      id: string
+      kind: 'removed'
+      line: PreviewRemovedLine
+    }
+  | {
+      id: string
+      kind: 'current'
+      lineNumber: number
+      added: boolean
+      plainText: string
+      tokens: ThemedToken[] | null
+    }
 
-export function FileContentViewer({ file, isLoading, diff, onRetry }: FileContentViewerProps) {
-  const [tokenLines, setTokenLines] = useState<ThemedToken[][]>([])
-  const [isHighlighting, setIsHighlighting] = useState(false)
-  const [highlightError, setHighlightError] = useState<string | null>(null)
+export function FileContentViewer(props: FileContentViewerProps) {
+  if (!ENABLE_PREVIEW_ENGINE_V2) {
+    return <FileContentViewerLegacy {...props} />
+  }
+
+  return <FileContentViewerV2 {...props} />
+}
+
+function FileContentViewerLegacy(props: FileContentViewerProps) {
+  return <FileContentViewerV2 {...props} />
+}
+
+function FileContentViewerV2({ file, isLoading, diff, onRetry }: FileContentViewerProps) {
   const isDarkMode = useIsDarkMode()
-
-  const language = useMemo(() => inferLanguageFromPath(file?.path), [file?.path])
-
-  useEffect(() => {
-    if (!file || file.binary || file.content === undefined) {
-      setTokenLines([])
-      setHighlightError(null)
-      setIsHighlighting(false)
-      return
-    }
-
-    let cancelled = false
-    setIsHighlighting(true)
-    setHighlightError(null)
-
-    void codeToTokens(file.content, {
-      lang: language as BuiltinLanguage,
-      theme: isDarkMode ? SHIKI_DARK_THEME : SHIKI_LIGHT_THEME,
-    })
-      .then((result) => {
-        if (!cancelled) {
-          setTokenLines(result.tokens)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setHighlightError('Unable to highlight this file. Showing plain text instead.')
-          setTokenLines([])
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsHighlighting(false)
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [file, isDarkMode, language])
+  const preview = useCodePreviewEngine({
+    file,
+    isDarkMode,
+  })
 
   if (isLoading) {
     return <ViewerState message="Generating latest preview snapshot..." tone="muted" />
@@ -77,105 +68,233 @@ export function FileContentViewer({ file, isLoading, diff, onRetry }: FileConten
     return <ViewerState message="This file is binary or unreadable in text mode." tone="warning" />
   }
 
-  const viewerLines = buildViewerLines(tokenLines, diff)
+  return (
+    <ContentPanel
+      file={file}
+      diff={diff}
+      preview={preview}
+      onRetry={onRetry}
+    />
+  )
+}
+
+type ContentPanelProps = {
+  file: PreviewSnapshotFile
+  diff: PreviewFileDiff | null
+  preview: CodePreviewEngineResult
+  onRetry?: () => void
+}
+
+function ContentPanel({ file, diff, preview, onRetry }: ContentPanelProps) {
+  const viewerLines = useMemo(
+    () =>
+      buildViewerLines({
+        plainTextLines: preview.lines,
+        tokenLines: preview.tokenLines,
+        diff,
+      }),
+    [diff, preview.lines, preview.tokenLines],
+  )
+
+  const languageLabel = formatCodePreviewLanguageLabel(preview.language)
+  const footerTone = preview.status === 'failed' ? 'warning' : 'muted'
+  const showStatusPill = preview.status === 'running'
 
   return (
     <article className="flex h-full min-h-[420px] flex-col overflow-hidden rounded-xl border bg-[var(--card)]">
-      <header className="flex items-center justify-between border-b px-3 py-2 text-xs">
+      <header className="flex items-center justify-between gap-2 border-b px-3 py-2 text-xs">
         <p className="truncate font-mono text-[var(--foreground)]" title={file.path}>
           {file.path}
         </p>
-        <span className="rounded-md border px-2 py-0.5 uppercase tracking-[0.08em] text-[10px] text-[var(--muted-foreground)]">
-          {language}
-        </span>
+
+        <div className="flex items-center gap-2">
+          {showStatusPill ? (
+            <span
+              className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted-foreground)]"
+              data-testid="preview-highlighting-pill"
+            >
+              Highlighting...
+            </span>
+          ) : null}
+
+          <span className="rounded-md border px-2 py-0.5 uppercase tracking-[0.08em] text-[10px] text-[var(--muted-foreground)]">
+            {languageLabel}
+          </span>
+        </div>
       </header>
 
-      <div className="relative flex-1 overflow-auto py-2">
-        {isHighlighting && tokenLines.length === 0 ? (
-          <ViewerState message="Applying syntax highlighting..." tone="muted" />
-        ) : (
-          <table className="w-full border-separate border-spacing-0 cursor-default select-none font-mono text-sm leading-6">
-            <tbody>
-              {viewerLines.map((line, index) => {
-                if (line.kind === 'removed') {
-                  return (
-                    <tr key={`removed-${line.line.lineNumber}-${index}`} className="bg-red-500/10">
-                      <td className="w-12 border-r px-2 text-right text-xs text-red-700 dark:text-red-300">
-                        -{line.line.lineNumber}
-                      </td>
-                      <td className="select-text whitespace-pre px-3 text-red-800 dark:text-red-100">{line.line.content || ' '}</td>
-                    </tr>
-                  )
-                }
+      <VirtualizedCodeView viewerLines={viewerLines} />
 
-                return (
-                  <tr
-                    key={`line-${line.lineNumber}`}
-                    className={line.added ? 'bg-emerald-500/10' : undefined}
-                  >
-                    <td
-                      className={`w-12 border-r px-2 text-right text-xs ${
-                        line.added
-                          ? 'text-emerald-700 dark:text-emerald-300'
-                          : 'text-[var(--muted-foreground)]'
-                      }`}
-                    >
-                      {line.added ? '+' : ''}
-                      {line.lineNumber}
-                    </td>
-                    <td className="select-text whitespace-pre px-3">
-                      {line.tokens.length > 0 ? (
-                        line.tokens.map((token, tokenIndex) => (
-                          <span
-                            key={`${line.lineNumber}-${token.offset}-${tokenIndex}`}
-                            style={{
-                              color: token.color,
-                              backgroundColor: token.bgColor,
-                              fontWeight:
-                                token.fontStyle !== undefined && token.fontStyle & 2 ? '700' : undefined,
-                              fontStyle:
-                                token.fontStyle !== undefined && token.fontStyle & 1
-                                  ? 'italic'
-                                  : undefined,
-                              textDecoration:
-                                token.fontStyle !== undefined && token.fontStyle & 4
-                                  ? 'underline'
-                                  : undefined,
-                            }}
-                          >
-                            {token.content}
-                          </span>
-                        ))
-                      ) : (
-                        <span>&nbsp;</span>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {highlightError ? (
-        <footer className="border-t bg-amber-50/80 px-3 py-2 text-xs text-amber-900 dark:bg-amber-400/10 dark:text-amber-100">
-          {highlightError}
+      {preview.message ? (
+        <footer
+          className={`border-t px-3 py-2 text-xs ${
+            footerTone === 'warning'
+              ? 'bg-amber-50/80 text-amber-900 dark:bg-amber-400/10 dark:text-amber-100'
+              : 'bg-[var(--muted)]/60 text-[var(--muted-foreground)]'
+          }`}
+        >
+          {preview.message}
         </footer>
+      ) : null}
+
+      {preview.status === 'failed' && onRetry ? (
+        <div className="border-t px-3 py-2">
+          <button
+            type="button"
+            onClick={onRetry}
+            className="btn btn-secondary btn-sm"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Retry
+          </button>
+        </div>
       ) : null}
     </article>
   )
 }
 
-function buildViewerLines(tokenLines: ThemedToken[][], diff: PreviewFileDiff | null): ViewerLine[] {
+function VirtualizedCodeView({ viewerLines }: { viewerLines: ViewerLine[] }) {
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+
+  const rowVirtualizer = useVirtualizer({
+    count: viewerLines.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => VIEWER_ROW_HEIGHT,
+    overscan: VIEWER_OVERSCAN,
+  })
+
+  return (
+    <div
+      ref={scrollRef}
+      data-testid="preview-code-pane"
+      className="preview-code-pane relative min-h-0 flex-1 overflow-auto"
+    >
+      <div
+        style={{
+          height: `${rowVirtualizer.getTotalSize()}px`,
+          minWidth: '100%',
+          position: 'relative',
+          width: 'max-content',
+        }}
+      >
+        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+          const line = viewerLines[virtualRow.index]
+
+          if (!line) {
+            return null
+          }
+
+          return (
+            <div
+              key={line.id}
+              className="absolute inset-x-0"
+              style={{
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              {line.kind === 'removed' ? (
+                <RemovedLineRow line={line.line} />
+              ) : (
+                <CurrentLineRow
+                  lineNumber={line.lineNumber}
+                  added={line.added}
+                  plainText={line.plainText}
+                  tokens={line.tokens}
+                />
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function RemovedLineRow({ line }: { line: PreviewRemovedLine }) {
+  return (
+    <div className="grid h-[26px] min-w-full grid-cols-[4.5rem_minmax(0,1fr)] items-center bg-red-500/10 font-mono text-sm leading-6 [tab-size:2]">
+      <span className="sticky left-0 z-10 h-full border-r bg-red-500/10 px-2 text-right text-xs text-red-700 dark:text-red-300">
+        -{line.lineNumber}
+      </span>
+      <span className="whitespace-pre px-4 text-red-800 dark:text-red-100">
+        {line.content || ' '}
+      </span>
+    </div>
+  )
+}
+
+type CurrentLineRowProps = {
+  lineNumber: number
+  added: boolean
+  plainText: string
+  tokens: ThemedToken[] | null
+}
+
+function CurrentLineRow({ lineNumber, added, plainText, tokens }: CurrentLineRowProps) {
+  return (
+    <div
+      className={`grid h-[26px] min-w-full grid-cols-[4.5rem_minmax(0,1fr)] items-center font-mono text-sm leading-6 [tab-size:2] ${
+        added ? 'bg-emerald-500/10' : ''
+      }`}
+    >
+      <span
+        className={`sticky left-0 z-10 h-full border-r px-2 text-right text-xs ${
+          added
+            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+            : 'bg-[var(--card)] text-[var(--muted-foreground)]'
+        }`}
+      >
+        {added ? '+' : ''}
+        {lineNumber}
+      </span>
+      <span className="whitespace-pre px-4">
+        {tokens && tokens.length > 0 ? (
+          tokens.map((token, tokenIndex) => (
+            <span
+              key={`${lineNumber}-${token.offset}-${tokenIndex}`}
+              style={{
+                backgroundColor: token.bgColor,
+                color: token.color,
+                fontStyle: token.fontStyle !== undefined && token.fontStyle & 1 ? 'italic' : undefined,
+                fontWeight: token.fontStyle !== undefined && token.fontStyle & 2 ? '700' : undefined,
+                textDecoration:
+                  token.fontStyle !== undefined && token.fontStyle & 4 ? 'underline' : undefined,
+              }}
+            >
+              {token.content}
+            </span>
+          ))
+        ) : plainText.length > 0 ? (
+          <span>{plainText}</span>
+        ) : (
+          <span>&nbsp;</span>
+        )}
+      </span>
+    </div>
+  )
+}
+
+function buildViewerLines({
+  plainTextLines,
+  tokenLines,
+  diff,
+}: {
+  plainTextLines: string[]
+  tokenLines: ThemedToken[][] | null
+  diff: PreviewFileDiff | null
+}): ViewerLine[] {
   const lineDiff = diff?.lineDiff
+  const currentLineCount = Math.max(plainTextLines.length, tokenLines?.length ?? 0)
 
   if (!lineDiff) {
-    return tokenLines.map((tokens, index) => ({
+    return Array.from({ length: currentLineCount }, (_, index) => ({
+      id: `line-${index + 1}`,
       kind: 'current',
       lineNumber: index + 1,
       added: false,
-      tokens,
+      plainText: plainTextLines[index] ?? '',
+      tokens: tokenLines?.[index] ?? null,
     }))
   }
 
@@ -194,12 +313,13 @@ function buildViewerLines(tokenLines: ThemedToken[][], diff: PreviewFileDiff | n
   const addedSet = new Set(lineDiff.added)
   const output: ViewerLine[] = []
 
-  for (let lineNumber = 1; lineNumber <= tokenLines.length; lineNumber += 1) {
+  for (let lineNumber = 1; lineNumber <= currentLineCount; lineNumber += 1) {
     const removedBeforeLine = removedByAfterLine.get(lineNumber - 1)
 
     if (removedBeforeLine) {
-      for (const removedLine of removedBeforeLine) {
+      for (const [index, removedLine] of removedBeforeLine.entries()) {
         output.push({
+          id: `removed-${removedLine.afterLine}-${removedLine.lineNumber}-${index}`,
           kind: 'removed',
           line: removedLine,
         })
@@ -207,18 +327,21 @@ function buildViewerLines(tokenLines: ThemedToken[][], diff: PreviewFileDiff | n
     }
 
     output.push({
+      id: `line-${lineNumber}`,
       kind: 'current',
       lineNumber,
       added: addedSet.has(lineNumber),
-      tokens: tokenLines[lineNumber - 1] ?? [],
+      plainText: plainTextLines[lineNumber - 1] ?? '',
+      tokens: tokenLines?.[lineNumber - 1] ?? null,
     })
   }
 
-  const removedAtEnd = removedByAfterLine.get(tokenLines.length)
+  const removedAtEnd = removedByAfterLine.get(currentLineCount)
 
   if (removedAtEnd) {
-    for (const removedLine of removedAtEnd) {
+    for (const [index, removedLine] of removedAtEnd.entries()) {
       output.push({
+        id: `removed-${removedLine.afterLine}-${removedLine.lineNumber}-${index}`,
         kind: 'removed',
         line: removedLine,
       })
@@ -251,7 +374,7 @@ function ViewerState({ message, tone, onRetry }: ViewerStateProps) {
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex h-8 items-center gap-2 rounded-md border px-3 text-xs font-medium transition hover:bg-[var(--muted)]"
+          className="btn btn-secondary btn-sm"
         >
           <RotateCcw className="h-3.5 w-3.5" />
           Retry
@@ -280,66 +403,4 @@ function useIsDarkMode() {
   }, [])
 
   return isDarkMode
-}
-
-function inferLanguageFromPath(path: string | undefined): string {
-  if (!path) {
-    return 'text'
-  }
-
-  const normalizedPath = path.toLowerCase()
-
-  if (normalizedPath.endsWith('.xml') || normalizedPath.endsWith('.pom')) {
-    return 'xml'
-  }
-
-  if (normalizedPath.endsWith('.gradle') || normalizedPath.endsWith('.kts')) {
-    return 'kotlin'
-  }
-
-  if (normalizedPath.endsWith('.yaml') || normalizedPath.endsWith('.yml')) {
-    return 'yaml'
-  }
-
-  if (normalizedPath.endsWith('.java')) {
-    return 'java'
-  }
-
-  if (normalizedPath.endsWith('.md')) {
-    return 'markdown'
-  }
-
-  if (normalizedPath.endsWith('.properties')) {
-    return 'properties'
-  }
-
-  if (normalizedPath.endsWith('.json')) {
-    return 'json'
-  }
-
-  if (normalizedPath.endsWith('.kt')) {
-    return 'kotlin'
-  }
-
-  if (normalizedPath.endsWith('.groovy')) {
-    return 'groovy'
-  }
-
-  if (normalizedPath.endsWith('.sh')) {
-    return 'bash'
-  }
-
-  if (normalizedPath.endsWith('.toml')) {
-    return 'toml'
-  }
-
-  if (normalizedPath.endsWith('.gitignore')) {
-    return 'gitignore'
-  }
-
-  if (normalizedPath.endsWith('dockerfile')) {
-    return 'dockerfile'
-  }
-
-  return 'text'
 }

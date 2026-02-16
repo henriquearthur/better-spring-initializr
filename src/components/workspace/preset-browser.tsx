@@ -51,7 +51,7 @@ export function PresetBrowser({
               type="button"
               onClick={() => onSelectPreset(preset.id)}
               disabled={disabled}
-              className={`w-full rounded-md border px-3 py-2 text-left transition ${isExpanded ? 'border-emerald-400 bg-emerald-500/10' : 'border-transparent hover:border-emerald-500/40'} disabled:cursor-not-allowed disabled:opacity-60`}
+              className={`w-full rounded-md border px-3 py-2 text-left transition ${isExpanded ? 'border-[var(--accent)] bg-[var(--interactive-hover)] shadow-sm' : 'border-transparent hover:border-[var(--accent)]/40 hover:bg-[var(--muted)]'} disabled:opacity-60`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -115,7 +115,7 @@ export function PresetBrowser({
                   type="button"
                   onClick={() => onApplyPreset(preset.id)}
                   disabled={disabled}
-                  className="h-8 rounded-md border border-emerald-500/50 px-3 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-60 dark:text-emerald-300"
+                  className="btn btn-primary btn-sm h-8 text-xs font-semibold uppercase tracking-[0.14em]"
                 >
                   Apply preset
                 </button>

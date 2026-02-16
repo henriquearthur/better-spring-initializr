@@ -97,7 +97,7 @@ export function ConfigurationSidebar({
           <button
             type="button"
             onClick={onResetConfig}
-            className="h-7 shrink-0 rounded-md border px-2.5 text-[11px] font-medium text-[var(--muted-foreground)] transition hover:border-emerald-500/40 hover:text-emerald-700 dark:hover:text-emerald-300"
+            className="btn btn-secondary btn-sm h-7 shrink-0 text-[11px] text-[var(--muted-foreground)]"
           >
             Reset
           </button>
@@ -231,7 +231,7 @@ function SidebarSection({
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between text-left"
+        className="flex w-full items-center justify-between rounded-md px-1 py-1 text-left transition hover:bg-[var(--muted)]"
       >
         <div>
           <p className="text-sm font-semibold">{title}</p>
@@ -323,7 +323,7 @@ function SidebarRadioGroup<TValue extends string>({
           return (
             <label
               key={option.value}
-              className={`flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-2 text-xs transition ${active ? 'border-emerald-400 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200' : 'bg-[var(--background)] text-[var(--foreground)]'}`}
+              className={`flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-2 text-xs transition ${active ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)] shadow-sm' : 'bg-[var(--background)] text-[var(--foreground)] hover:border-[var(--accent)]/40'}`}
             >
               <input
                 type="radio"

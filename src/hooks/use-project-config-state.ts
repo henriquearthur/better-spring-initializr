@@ -1,12 +1,8 @@
 import { parseAsString, parseAsStringLiteral, useQueryStates } from 'nuqs'
-import { useEffect, useState } from 'react'
 
 import {
   DEFAULT_PROJECT_CONFIG,
-  hasProjectConfigQueryParams,
   normalizeProjectConfig,
-  readProjectConfigFromStorage,
-  writeProjectConfigToStorage,
   type ProjectConfig,
 } from '@/lib/project-config'
 
@@ -38,36 +34,7 @@ export function useProjectConfigState() {
     history: 'replace',
     shallow: false,
   })
-  const [hydrationReady, setHydrationReady] = useState(false)
-
   const config = normalizeProjectConfig(queryConfig)
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    if (hasProjectConfigQueryParams(window.location.search)) {
-      setHydrationReady(true)
-      return
-    }
-
-    const storedConfig = readProjectConfigFromStorage(window.localStorage)
-
-    if (storedConfig) {
-      void setQueryConfig(storedConfig)
-    }
-
-    setHydrationReady(true)
-  }, [setQueryConfig])
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !hydrationReady) {
-      return
-    }
-
-    writeProjectConfigToStorage(window.localStorage, config)
-  }, [config, hydrationReady])
 
   const setField = (field: ProjectConfigField, value: string) => {
     return setQueryConfig({ [field]: value })

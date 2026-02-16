@@ -206,7 +206,7 @@ export function GitHubAuthPanel() {
           type="button"
           onClick={handleConnect}
           disabled={isLoading || isConnecting || isDisconnecting}
-          className="inline-flex h-9 items-center gap-2 rounded-md border border-sky-400/40 bg-sky-500/10 px-3 text-sm font-medium text-sky-700 transition hover:bg-sky-500/15 disabled:cursor-not-allowed disabled:opacity-60 dark:text-sky-200"
+          className="btn btn-primary"
         >
           {isConnecting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Github className="h-4 w-4" />}
           {isConnecting ? 'Redirecting...' : isConnected ? 'Reconnect GitHub' : 'Connect GitHub'}
@@ -216,7 +216,7 @@ export function GitHubAuthPanel() {
           type="button"
           onClick={handleDisconnect}
           disabled={isLoading || !isConnected || isConnecting || isDisconnecting}
-          className="inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm font-medium text-[var(--foreground)] transition hover:border-rose-500/40 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:text-rose-300"
+          className="btn btn-secondary"
         >
           {isDisconnecting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
           {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}

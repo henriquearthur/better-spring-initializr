@@ -9,6 +9,10 @@
   --border: oklch(0.87 0.008 250);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.19 0.01 255);
+  --accent: oklch(0.57 0.15 160);
+  --accent-foreground: oklch(0.99 0.004 250);
+  --interactive-border: oklch(0.8 0.01 250);
+  --interactive-hover: oklch(0.955 0.008 250);
 }
 
 .dark {
@@ -20,6 +24,10 @@
   --border: oklch(0.3 0.015 255);
   --card: oklch(0.2 0.012 255);
   --card-foreground: oklch(0.97 0.005 250);
+  --accent: oklch(0.73 0.13 160);
+  --accent-foreground: oklch(0.2 0.012 255);
+  --interactive-border: oklch(0.4 0.015 255);
+  --interactive-hover: oklch(0.24 0.012 255);
 }
 
 * {
@@ -39,4 +47,163 @@ body {
   font-family: "Sora", "Avenir Next", "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  user-select: text;
+}
+
+a[href],
+button,
+[role='button'] {
+  cursor: pointer;
+}
+
+button {
+  user-select: text;
+}
+
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex h-9 items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium transition;
+    border-color: var(--interactive-border);
+    background: var(--card);
+    color: var(--foreground);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+  }
+
+  .btn:hover:not(:disabled) {
+    border-color: color-mix(in oklab, var(--accent) 25%, var(--interactive-border));
+    background: var(--interactive-hover);
+  }
+
+  .btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent);
+  }
+
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .btn:disabled {
+    opacity: 0.6;
+  }
+
+  .btn-sm {
+    @apply h-8 px-2.5 text-xs;
+  }
+
+  .btn-primary {
+    border-color: color-mix(in oklab, var(--accent) 72%, black 12%);
+    background: var(--accent);
+    color: var(--accent-foreground);
+    box-shadow: 0 8px 18px -14px color-mix(in oklab, var(--accent) 70%, transparent);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    border-color: color-mix(in oklab, var(--accent) 78%, black 8%);
+    background: color-mix(in oklab, var(--accent) 92%, white 8%);
+    color: var(--accent-foreground);
+  }
+
+  .btn-secondary {
+    border-color: var(--interactive-border);
+    background: var(--card);
+    color: var(--foreground);
+  }
+
+  .btn-ghost {
+    border-color: transparent;
+    background: transparent;
+    color: var(--foreground);
+    box-shadow: none;
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    border-color: var(--interactive-border);
+    background: var(--interactive-hover);
+  }
+
+  .preview-tree-row {
+    @apply flex h-8 w-full min-w-0 items-center gap-2 rounded-sm px-3 text-left text-[13px];
+    background: transparent;
+    color: var(--foreground);
+    cursor: pointer;
+    user-select: none;
+    border: 0;
+  }
+
+  .preview-tree-row:hover {
+    background: color-mix(in oklab, var(--muted) 84%, var(--foreground) 2%);
+  }
+
+  .preview-tree-row:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 46%, transparent);
+  }
+
+  .preview-tree-row-active {
+    background: color-mix(in oklab, var(--accent) 16%, var(--muted));
+    color: var(--foreground);
+    font-weight: 500;
+    box-shadow: inset 2px 0 0 color-mix(in oklab, var(--accent) 56%, transparent);
+  }
+
+  .preview-tree-row-active:hover {
+    background: color-mix(in oklab, var(--accent) 19%, var(--muted));
+  }
+
+  .preview-tree-change-dot {
+    @apply ml-2 h-1.5 w-1.5 shrink-0 rounded-full;
+  }
+
+  .preview-tree-change-dot-added {
+    background: color-mix(in oklab, oklch(0.7 0.18 154) 75%, var(--foreground));
+  }
+
+  .preview-tree-change-dot-modified {
+    background: color-mix(in oklab, oklch(0.76 0.17 85) 76%, var(--foreground));
+  }
+
+  .preview-tree-scroll {
+    @apply h-full w-full;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    box-sizing: border-box;
+    padding: 4px 8px 8px;
+  }
+
+  .preview-code-pane {
+    @apply px-3 py-3;
+    cursor: text;
+    user-select: text;
+  }
+
+  .preview-tree-scroll,
+  .preview-code-pane {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--accent) 28%, transparent) transparent;
+  }
+
+  .preview-tree-scroll::-webkit-scrollbar,
+  .preview-code-pane::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .preview-tree-scroll::-webkit-scrollbar-thumb,
+  .preview-code-pane::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    background-color: color-mix(in oklab, var(--accent) 32%, var(--muted-foreground));
+  }
+
+  .preview-tree-scroll::-webkit-scrollbar-track,
+  .preview-code-pane::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
