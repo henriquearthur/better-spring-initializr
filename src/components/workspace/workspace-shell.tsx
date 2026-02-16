@@ -15,7 +15,7 @@ import { ConfigurationSidebar } from './configuration-sidebar'
 import { DependencyBrowser } from './dependency-browser'
 import { FileContentViewer } from './file-content-viewer'
 import { GitHubPublishDialog } from './github-publish-dialog'
-import { PresetBrowser } from './preset-browser'
+import { PresetLayoutSurface } from './preset-layout-surface'
 import { PreviewFileTree } from './preview-file-tree'
 import { WorkspaceOutputActions } from './workspace-output-actions'
 import { WorkspaceHeader } from './workspace-header'
@@ -53,7 +53,9 @@ export function WorkspaceShell() {
     clearShareTokenFromUrl,
   } = useShareableConfig()
   const [selectedPreviewFilePath, setSelectedPreviewFilePath] = useState<string | null>(null)
-  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(CURATED_PRESETS[0]?.id ?? null)
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
+  const [dependenciesOpen, setDependenciesOpen] = useState(true)
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false)
   const hasAppliedSharedSnapshotRef = useRef(false)
 
   const dependencyDiffBaselinePreviewQuery = useProjectPreview({
@@ -161,19 +163,16 @@ export function WorkspaceShell() {
     [dependencyBrowser],
   )
 
-  const handleSelectPreset = useCallback((presetId: string) => {
-    setSelectedPresetId(presetId)
-  }, [])
-
-  const handleApplyPreset = useCallback(
+  const handleSelectPreset = useCallback(
     (presetId: string) => {
+      setSelectedPresetId(presetId)
+
       const result = applyCuratedPreset(dependencyBrowser.selectedDependencyIds, presetId)
 
       if (!result.ok) {
         return
       }
 
-      setSelectedPresetId(presetId)
       dependencyBrowser.setSelectedDependencyIds(result.nextSelectedDependencyIds)
     },
     [dependencyBrowser],
@@ -181,17 +180,17 @@ export function WorkspaceShell() {
 
   const metadataUnavailable = metadataQuery.isLoading || metadataQuery.isError || !metadataReady
 
-  const [presetsOpen, setPresetsOpen] = useState(false)
-  const [dependenciesOpen, setDependenciesOpen] = useState(true)
-  const [publishDialogOpen, setPublishDialogOpen] = useState(false)
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    if (params.get('github') === 'connected') {
+    const githubState = params.get('github')
+
+    if (githubState === 'connected') {
       setPublishDialogOpen(true)
-      window.history.replaceState({}, '', window.location.pathname)
-    } else if (params.has('github')) {
-      window.history.replaceState({}, '', window.location.pathname)
+    }
+
+    if (params.has('github')) {
+      params.delete('github')
+      replaceSearchParams(params)
     }
   }, [])
 
@@ -205,6 +204,66 @@ export function WorkspaceShell() {
     () => selectedPreviewFile?.path.split('/') ?? [],
     [selectedPreviewFile],
   )
+  const dependencyBrowserContent = (
+    <>
+      <div className="mt-3 flex justify-end">
+        <button
+          type="button"
+          onClick={dependencyBrowser.clearSelectedDependencies}
+          disabled={metadataUnavailable || dependencyBrowser.selectedDependencyCount === 0}
+          className="btn btn-secondary btn-sm h-7 text-[11px] text-[var(--muted-foreground)]"
+        >
+          Clear all
+        </button>
+      </div>
+
+      <DependencyBrowserStatus
+        isLoading={metadataQuery.isLoading}
+        isError={metadataQuery.isError}
+        metadataReady={metadataReady}
+        message={metadataErrorMessage}
+      />
+
+      <div className="mt-3">
+        <DependencyBrowser
+          dependencyGroups={dependencyBrowser.filteredDependencyCategories}
+          searchTerm={dependencyBrowser.searchTerm}
+          onSearchTermChange={handleSearchTermChange}
+          selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
+          onToggleDependency={dependencyBrowser.toggleDependency}
+          hasMetadata={metadataReady}
+          disabled={metadataUnavailable}
+        />
+      </div>
+    </>
+  )
+  const dependencyBrowserSection = (
+    <section className="rounded-xl border bg-[var(--card)] p-3">
+      <button
+        type="button"
+        onClick={() => setDependenciesOpen((current) => !current)}
+        className="flex w-full items-center justify-between rounded-md px-1 py-1 text-left transition hover:bg-[var(--muted)]"
+      >
+        <div>
+          <p className="text-sm font-semibold">Dependency Browser</p>
+          <p className="text-xs text-[var(--muted-foreground)]">
+            Search and pick Spring dependencies for this project.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+            {dependencyBrowser.selectedDependencyCount} selected
+          </span>
+          <ChevronDown
+            className={`h-4 w-4 text-[var(--muted-foreground)] transition-transform ${dependenciesOpen ? '' : '-rotate-90'}`}
+          />
+        </div>
+      </button>
+
+      {dependenciesOpen ? dependencyBrowserContent : null}
+    </section>
+  )
+  const previewLayoutClass = 'xl:grid-cols-[320px_minmax(0,1fr)]'
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -222,100 +281,20 @@ export function WorkspaceShell() {
                 onFieldChange={handleFieldChange}
                 onResetConfig={handleResetConfig}
               />
-
-              <section className="rounded-xl border bg-[var(--card)] p-3">
-                <button
-                  type="button"
-                  onClick={() => setPresetsOpen((current) => !current)}
-                  className="flex w-full items-center justify-between rounded-md px-1 py-1 text-left transition hover:bg-[var(--muted)]"
-                >
-                  <div>
-                    <p className="text-sm font-semibold">Curated Presets</p>
-                    <p className="text-xs text-[var(--muted-foreground)]">
-                      Inspect what each starter includes, then apply in one click.
-                    </p>
-                  </div>
-                  <ChevronDown
-                    className={`h-4 w-4 text-[var(--muted-foreground)] transition-transform ${presetsOpen ? '' : '-rotate-90'}`}
-                  />
-                </button>
-
-                {presetsOpen ? (
-                  <div className="mt-3">
-                    <PresetBrowser
-                      presets={CURATED_PRESETS}
-                      selectedPresetId={selectedPresetId}
-                      onSelectPreset={handleSelectPreset}
-                      onApplyPreset={handleApplyPreset}
-                      availableDependencies={availableDependencies}
-                      metadataAvailable={metadataReady}
-                      disabled={metadataUnavailable}
-                    />
-                  </div>
-                ) : null}
-              </section>
-
-              <section className="rounded-xl border bg-[var(--card)] p-3">
-                <button
-                  type="button"
-                  onClick={() => setDependenciesOpen((current) => !current)}
-                  className="flex w-full items-center justify-between rounded-md px-1 py-1 text-left transition hover:bg-[var(--muted)]"
-                >
-                  <div>
-                    <p className="text-sm font-semibold">Dependency Browser</p>
-                    <p className="text-xs text-[var(--muted-foreground)]">
-                      Search and pick Spring dependencies for this project.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-                      {dependencyBrowser.selectedDependencyCount} selected
-                    </span>
-                    <ChevronDown
-                      className={`h-4 w-4 text-[var(--muted-foreground)] transition-transform ${dependenciesOpen ? '' : '-rotate-90'}`}
-                    />
-                  </div>
-                </button>
-
-                {dependenciesOpen ? (
-                  <>
-                    <div className="mt-3 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={dependencyBrowser.clearSelectedDependencies}
-                        disabled={
-                          metadataUnavailable || dependencyBrowser.selectedDependencyCount === 0
-                        }
-                        className="btn btn-secondary btn-sm h-7 text-[11px] text-[var(--muted-foreground)]"
-                      >
-                        Clear all
-                      </button>
-                    </div>
-
-                    <DependencyBrowserStatus
-                      isLoading={metadataQuery.isLoading}
-                      isError={metadataQuery.isError}
-                      metadataReady={metadataReady}
-                      message={metadataErrorMessage}
-                    />
-
-                    <div className="mt-3">
-                      <DependencyBrowser
-                        dependencyGroups={dependencyBrowser.filteredDependencyCategories}
-                        searchTerm={dependencyBrowser.searchTerm}
-                        onSearchTermChange={handleSearchTermChange}
-                        selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
-                        onToggleDependency={dependencyBrowser.toggleDependency}
-                        hasMetadata={metadataReady}
-                        disabled={metadataUnavailable}
-                      />
-                    </div>
-                  </>
-                ) : null}
-              </section>
+              {dependencyBrowserSection}
             </aside>
 
             <section className="space-y-4">
+              <PresetLayoutSurface
+                presets={CURATED_PRESETS}
+                selectedPresetId={selectedPresetId}
+                onSelectPreset={handleSelectPreset}
+                availableDependencies={availableDependencies}
+                metadataAvailable={metadataReady}
+                selectedDependencyCount={dependencyBrowser.selectedDependencyCount}
+                disabled={metadataUnavailable}
+              />
+
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
@@ -366,7 +345,7 @@ export function WorkspaceShell() {
                 </div>
               ) : null}
 
-              <div className="grid h-[420px] grid-cols-1 gap-4 md:h-[560px] xl:grid-cols-[320px_minmax(0,1fr)]">
+              <div className={`grid h-[420px] grid-cols-1 gap-4 md:h-[560px] ${previewLayoutClass}`}>
                 <PreviewExplorerPanel
                   files={previewFiles}
                   isLoading={projectPreviewQuery.isPending}
@@ -397,6 +376,12 @@ export function WorkspaceShell() {
       </div>
     </div>
   )
+}
+
+function replaceSearchParams(params: URLSearchParams) {
+  const queryString = params.toString()
+  const nextUrl = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname
+  window.history.replaceState({}, '', nextUrl)
 }
 
 type PreviewExplorerPanelProps = {

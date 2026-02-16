@@ -1,5 +1,4 @@
 import { FlaskConical, Github } from 'lucide-react'
-
 import { ThemeToggle } from '../theme/theme-toggle'
 
 export function WorkspaceHeader() {
@@ -16,7 +15,7 @@ export function WorkspaceHeader() {
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <a
           href="https://github.com/henriquearthur/better-spring-initializr"
           target="_blank"
