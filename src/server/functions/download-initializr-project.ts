@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 
 import {
   buildInitializrGenerateParams,
+  type InitializrGenerateParamEntry,
   type InitializrGenerationInput,
 } from '@/lib/initializr-generate-params'
 
@@ -58,16 +59,26 @@ export async function downloadInitializrProjectFromBff(
 ): Promise<DownloadInitializrProjectResponse> {
   try {
     const params = buildInitializrGenerateParams(toGenerationInput(input))
-    const archive = await fetchInitializrZip({ params })
+    let archive: Awaited<ReturnType<typeof fetchInitializrZip>>
 
-      return {
-        ok: true,
-        archive: {
-          base64: encodeBytesToBase64(archive.bytes),
-          contentType: archive.contentType,
-          filename: archive.suggestedFilename,
-        },
+    try {
+      archive = await fetchInitializrZip({ params })
+    } catch (error) {
+      if (!hasBootVersionParam(params)) {
+        throw error
       }
+
+      archive = await fetchInitializrZip({ params: stripParam(params, 'bootVersion') })
+    }
+
+    return {
+      ok: true,
+      archive: {
+        base64: encodeBytesToBase64(archive.bytes),
+        contentType: archive.contentType,
+        filename: archive.suggestedFilename,
+      },
+    }
   } catch (error) {
     return {
       ok: false,
@@ -104,6 +115,17 @@ function toGenerationInput(input: DownloadInitializrProjectInput): InitializrGen
     javaVersion: input.config.javaVersion,
     selectedDependencyIds: input.selectedDependencyIds,
   }
+}
+
+function hasBootVersionParam(params: InitializrGenerateParamEntry[]): boolean {
+  return params.some(([key]) => key === 'bootVersion')
+}
+
+function stripParam(
+  params: InitializrGenerateParamEntry[],
+  keyToRemove: string,
+): InitializrGenerateParamEntry[] {
+  return params.filter(([key]) => key !== keyToRemove)
 }
 
 function sanitizeDownloadError(error: unknown): DownloadInitializrProjectError['error'] {

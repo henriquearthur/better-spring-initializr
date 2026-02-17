@@ -79,4 +79,72 @@ describe('downloadInitializrProjectFromBff', () => {
       },
     })
   })
+
+  it('retries once without bootVersion when first archive request fails', async () => {
+    const fetchSpy = vi
+      .spyOn(generateClient, 'fetchInitializrZip')
+      .mockRejectedValueOnce(
+        new InitializrGenerateClientError('upstream rejected version', 'UPSTREAM_ERROR', 500),
+      )
+      .mockResolvedValueOnce({
+        bytes: new Uint8Array([80, 75, 3, 4]),
+        contentType: 'application/zip',
+        suggestedFilename: 'demo.zip',
+      })
+
+    const result = await downloadInitializrProjectFromBff({
+      config: {
+        ...configFixture,
+        buildTool: 'gradle-project',
+        springBootVersion: '3.5.10.RELEASE',
+      },
+      selectedDependencyIds: ['web'],
+    })
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2)
+
+    const firstSearchParams = new URLSearchParams(
+      Array.from(fetchSpy.mock.calls[0][0].params, ([key, value]) => [key, value]),
+    )
+    const secondSearchParams = new URLSearchParams(
+      Array.from(fetchSpy.mock.calls[1][0].params, ([key, value]) => [key, value]),
+    )
+
+    expect(firstSearchParams.get('bootVersion')).toBe('3.5.10')
+    expect(secondSearchParams.has('bootVersion')).toBe(false)
+    expect(result).toEqual({
+      ok: true,
+      archive: {
+        base64: 'UEsDBA==',
+        contentType: 'application/zip',
+        filename: 'demo.zip',
+      },
+    })
+  })
+
+  it('does not retry when request params do not include bootVersion', async () => {
+    const fetchSpy = vi.spyOn(generateClient, 'fetchInitializrZip').mockRejectedValue(
+      new InitializrGenerateClientError('upstream rejected request', 'UPSTREAM_ERROR', 500),
+    )
+
+    const result = await downloadInitializrProjectFromBff({
+      config: {
+        ...configFixture,
+        buildTool: 'gradle-project',
+        springBootVersion: '   ',
+      },
+      selectedDependencyIds: ['web'],
+    })
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        code: 'PROJECT_DOWNLOAD_UNAVAILABLE',
+        message:
+          'Spring Initializr project download is temporarily unavailable. Please try again in a moment.',
+        retryable: true,
+      },
+    })
+  })
 })

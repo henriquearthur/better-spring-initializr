@@ -1,6 +1,24 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('Workspace Preview Experience', () => {
+  test('switching build tool to gradle updates preview without unavailable error', async ({ page }) => {
+    await page.goto('/')
+
+    await page.getByRole('button', { name: /Build Settings/i }).click()
+    await page.locator('label:has-text("Gradle") input[type="radio"]').first().check()
+
+    await expect(
+      page.locator(
+        'button.preview-tree-row[aria-label="Open gradle/wrapper/gradle-wrapper.properties"]',
+      ),
+    ).toBeVisible({ timeout: 30_000 })
+    await expect(
+      page.getByText(
+        'Spring Initializr preview is temporarily unavailable. Please try again in a moment.',
+      ),
+    ).toHaveCount(0)
+  })
+
   test('opens nested files rapidly without blocking the code pane', async ({ page }) => {
     await page.goto('/')
 

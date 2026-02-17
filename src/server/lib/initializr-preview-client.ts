@@ -1,5 +1,6 @@
 import JSZip from 'jszip'
 
+import { normalizeSpringBootVersionForBuildTool } from '@/lib/initializr-generate-params'
 import type { ProjectConfig } from '@/lib/project-config'
 
 const INITIALIZR_PROJECT_URL = 'https://start.spring.io/starter.zip'
@@ -37,6 +38,10 @@ export async function fetchInitializrProjectPreview(
   options: FetchInitializrProjectPreviewOptions,
 ): Promise<GeneratedProjectFile[]> {
   const fetchImpl = options.fetch ?? fetch
+  const springBootVersion = normalizeSpringBootVersionForBuildTool(
+    options.config.buildTool,
+    options.config.springBootVersion,
+  )
   const dependencies = Array.from(
     new Set(options.selectedDependencyIds.map((dependencyId) => dependencyId.trim())),
   ).filter(Boolean)
@@ -46,16 +51,16 @@ export async function fetchInitializrProjectPreview(
     config: options.config,
     selectedDependencyIds: dependencies,
     signal: options.signal,
-    omitBootVersion: false,
+    springBootVersion,
   })
 
-  if (!response.ok && response.status === 400) {
+  if (!response.ok && springBootVersion) {
     response = await requestPreviewArchive({
       fetchImpl,
       config: options.config,
       selectedDependencyIds: dependencies,
       signal: options.signal,
-      omitBootVersion: true,
+      springBootVersion: undefined,
     })
   }
 
@@ -105,15 +110,15 @@ export async function fetchInitializrProjectPreview(
 function buildPreviewUrlWithOptions(
   config: ProjectConfig,
   selectedDependencyIds: string[],
-  omitBootVersion: boolean,
+  springBootVersion?: string,
 ): URL {
   const url = new URL(INITIALIZR_PROJECT_URL)
 
   url.searchParams.set('type', config.buildTool)
   url.searchParams.set('language', config.language)
 
-  if (!omitBootVersion) {
-    url.searchParams.set('bootVersion', config.springBootVersion)
+  if (springBootVersion) {
+    url.searchParams.set('bootVersion', springBootVersion)
   }
 
   url.searchParams.set('baseDir', config.name)
@@ -137,7 +142,7 @@ type RequestPreviewArchiveInput = {
   config: ProjectConfig
   selectedDependencyIds: string[]
   signal?: AbortSignal
-  omitBootVersion: boolean
+  springBootVersion?: string
 }
 
 async function requestPreviewArchive(input: RequestPreviewArchiveInput): Promise<Response> {
@@ -146,7 +151,7 @@ async function requestPreviewArchive(input: RequestPreviewArchiveInput): Promise
       buildPreviewUrlWithOptions(
         input.config,
         input.selectedDependencyIds,
-        input.omitBootVersion,
+        input.springBootVersion,
       ),
       {
         method: 'GET',

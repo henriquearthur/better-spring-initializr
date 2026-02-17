@@ -20,12 +20,16 @@ export function buildInitializrGenerateParams(
   input: InitializrGenerationInput,
 ): InitializrGenerateParamEntry[] {
   const dependencies = normalizeDependencyIds(input.selectedDependencyIds)
+  const normalizedBootVersion = normalizeSpringBootVersionForBuildTool(
+    input.buildTool,
+    input.springBootVersion,
+  )
   const params: InitializrGenerateParamEntry[] = [
     ['type', input.buildTool],
     ['language', input.language],
   ]
 
-  pushOptionalParam(params, 'bootVersion', input.springBootVersion)
+  pushOptionalParam(params, 'bootVersion', normalizedBootVersion)
 
   params.push(
     ['baseDir', input.name.trim()],
@@ -44,6 +48,34 @@ export function buildInitializrGenerateParams(
   }
 
   return params
+}
+
+export function normalizeSpringBootVersionForBuildTool(
+  buildTool: BuildTool,
+  springBootVersion: string | null | undefined,
+): string | undefined {
+  const normalizedVersion = springBootVersion?.trim()
+
+  if (!normalizedVersion) {
+    return undefined
+  }
+
+  if (buildTool !== 'gradle-project') {
+    return normalizedVersion
+  }
+
+  let gradleVersion = normalizedVersion
+
+  if (gradleVersion.endsWith('.BUILD-SNAPSHOT')) {
+    gradleVersion = `${gradleVersion.slice(0, -'.BUILD-SNAPSHOT'.length)}-SNAPSHOT`
+  } else if (gradleVersion.endsWith('.RELEASE')) {
+    gradleVersion = gradleVersion.slice(0, -'.RELEASE'.length)
+  }
+
+  gradleVersion = gradleVersion.replace(/\.M(\d+)$/, '-M$1')
+  gradleVersion = gradleVersion.replace(/\.RC(\d+)$/, '-RC$1')
+
+  return gradleVersion
 }
 
 function normalizeDependencyIds(selectedDependencyIds: string[]): string[] {

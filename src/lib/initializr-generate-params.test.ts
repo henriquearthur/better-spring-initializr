@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildInitializrGenerateParams } from './initializr-generate-params'
+import {
+  buildInitializrGenerateParams,
+  normalizeSpringBootVersionForBuildTool,
+} from './initializr-generate-params'
 
 describe('buildInitializrGenerateParams', () => {
   it('maps required generation fields to Initializr query params in stable order', () => {
@@ -77,5 +80,53 @@ describe('buildInitializrGenerateParams', () => {
     })
 
     expect(params.at(-1)).toEqual(['dependencies', 'web,actuator'])
+  })
+
+  it('normalizes gradle spring boot versions before serializing bootVersion', () => {
+    const params = buildInitializrGenerateParams({
+      buildTool: 'gradle-project',
+      language: 'java',
+      springBootVersion: '4.1.0.BUILD-SNAPSHOT',
+      group: 'com.example',
+      artifact: 'demo',
+      name: 'demo',
+      description: 'Demo',
+      packageName: 'com.example.demo',
+      packaging: 'jar',
+      javaVersion: '21',
+      selectedDependencyIds: [],
+    })
+
+    expect(params).toContainEqual(['bootVersion', '4.1.0-SNAPSHOT'])
+  })
+})
+
+describe('normalizeSpringBootVersionForBuildTool', () => {
+  it('keeps maven versions unchanged', () => {
+    expect(normalizeSpringBootVersionForBuildTool('maven-project', '4.0.2.RELEASE')).toBe(
+      '4.0.2.RELEASE',
+    )
+    expect(normalizeSpringBootVersionForBuildTool('maven-project', '4.1.0.M1')).toBe('4.1.0.M1')
+    expect(normalizeSpringBootVersionForBuildTool('maven-project', '4.1.0.BUILD-SNAPSHOT')).toBe(
+      '4.1.0.BUILD-SNAPSHOT',
+    )
+  })
+
+  it('normalizes release, milestone, rc, and snapshot suffixes for gradle', () => {
+    expect(normalizeSpringBootVersionForBuildTool('gradle-project', '4.0.2.RELEASE')).toBe(
+      '4.0.2',
+    )
+    expect(normalizeSpringBootVersionForBuildTool('gradle-project', '4.1.0.M1')).toBe('4.1.0-M1')
+    expect(normalizeSpringBootVersionForBuildTool('gradle-project', '4.1.0.RC3')).toBe(
+      '4.1.0-RC3',
+    )
+    expect(normalizeSpringBootVersionForBuildTool('gradle-project', '4.1.0.BUILD-SNAPSHOT')).toBe(
+      '4.1.0-SNAPSHOT',
+    )
+  })
+
+  it('returns undefined when version is empty', () => {
+    expect(normalizeSpringBootVersionForBuildTool('gradle-project', '  ')).toBeUndefined()
+    expect(normalizeSpringBootVersionForBuildTool('maven-project', undefined)).toBeUndefined()
   })
 })
