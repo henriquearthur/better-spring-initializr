@@ -3,6 +3,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
+import { Analytics } from '@vercel/analytics/react'
 
 import { ThemeProvider } from '../components/theme/theme-provider'
 import appCss from '../styles/app.css?url'
@@ -93,6 +94,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           ]}
         />
         <Scripts />
+        <Analytics />
       </body>
     </html>
   )
