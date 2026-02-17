@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { parseAsString, parseAsStringLiteral, useQueryStates } from 'nuqs'
 
 import {
@@ -29,24 +30,59 @@ const projectConfigQueryParsers = {
 
 type ProjectConfigField = keyof ProjectConfig
 
+export type ProjectConfigUpdateOptions = {
+  persistToUrl?: boolean
+}
+
 export function useProjectConfigState() {
   const [queryConfig, setQueryConfig] = useQueryStates(projectConfigQueryParsers, {
     history: 'replace',
     shallow: false,
   })
-  const config = normalizeProjectConfig(queryConfig)
+  const [config, setConfigState] = useState<ProjectConfig>(() =>
+    normalizeProjectConfig(queryConfig),
+  )
 
-  const setField = (field: ProjectConfigField, value: string) => {
+  const setField = (
+    field: ProjectConfigField,
+    value: string,
+    options?: ProjectConfigUpdateOptions,
+  ) => {
+    setConfigState((currentConfig) =>
+      normalizeProjectConfig({
+        ...currentConfig,
+        [field]: value,
+      }),
+    )
+
+    if (options?.persistToUrl === false) {
+      return Promise.resolve(null)
+    }
+
     return setQueryConfig({ [field]: value })
   }
 
-  const setConfig = (nextConfig: ProjectConfig) => {
+  const setConfig = (
+    nextConfig: ProjectConfig,
+    options?: ProjectConfigUpdateOptions,
+  ) => {
     const normalizedConfig = normalizeProjectConfig(nextConfig)
+    setConfigState(normalizedConfig)
+
+    if (options?.persistToUrl === false) {
+      return Promise.resolve(null)
+    }
 
     return setQueryConfig(normalizedConfig)
   }
 
-  const resetConfig = () => {
+  const resetConfig = (options?: ProjectConfigUpdateOptions) => {
+    setConfigState(DEFAULT_PROJECT_CONFIG)
+
+    if (options?.persistToUrl === false) {
+      return Promise.resolve(null)
+    }
+
     return setQueryConfig(DEFAULT_PROJECT_CONFIG)
   }
 

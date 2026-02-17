@@ -3,7 +3,10 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useDependencyBrowser } from '@/hooks/use-dependency-browser'
 import { useInitializrMetadata } from '@/hooks/use-initializr-metadata'
-import { useProjectConfigState } from '@/hooks/use-project-config-state'
+import {
+  useProjectConfigState,
+  type ProjectConfigUpdateOptions,
+} from '@/hooks/use-project-config-state'
 import { useProjectPreview } from '@/hooks/use-project-preview'
 import { useShareableConfig } from '@/hooks/use-shareable-config'
 import { applyCuratedPreset, resolveCuratedPresets } from '@/lib/curated-presets'
@@ -127,7 +130,7 @@ export function WorkspaceShell() {
       return
     }
 
-    void setConfig(restoredSnapshot.config)
+    void setConfig(restoredSnapshot.config, { persistToUrl: false })
     dependencyBrowser.setSelectedDependencyIds(restoredSnapshot.selectedDependencyIds)
 
     clearShareTokenFromUrl()
@@ -151,9 +154,12 @@ export function WorkspaceShell() {
     }
   }, [previewFiles, selectedPreviewFilePath])
 
-  const handleConfigChange = useCallback((nextConfig: ProjectConfig) => {
-    void setConfig(nextConfig)
-  }, [setConfig])
+  const handleConfigChange = useCallback(
+    (nextConfig: ProjectConfig, options?: ProjectConfigUpdateOptions) => {
+      void setConfig(nextConfig, options)
+    },
+    [setConfig],
+  )
 
   const handleFieldChange = useCallback(
     (field: keyof ProjectConfig, value: string) => {

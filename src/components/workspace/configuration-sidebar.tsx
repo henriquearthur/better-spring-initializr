@@ -2,6 +2,7 @@ import { ChevronDown } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { useInitializrMetadata } from '@/hooks/use-initializr-metadata'
+import type { ProjectConfigUpdateOptions } from '@/hooks/use-project-config-state'
 import {
   BUILD_TOOL_OPTIONS,
   LANGUAGE_OPTIONS,
@@ -15,7 +16,10 @@ import {
 
 type ConfigurationSidebarProps = {
   config: ProjectConfig
-  onConfigChange: (nextConfig: ProjectConfig) => void
+  onConfigChange: (
+    nextConfig: ProjectConfig,
+    options?: ProjectConfigUpdateOptions,
+  ) => void
   onFieldChange: (field: keyof ProjectConfig, value: string) => void
   onResetConfig: () => void
   showReset: boolean
@@ -55,15 +59,18 @@ export function ConfigurationSidebar({
       return
     }
 
-    onConfigChange({
-      ...config,
-      javaVersion: hasConfiguredJavaVersion
-        ? config.javaVersion
-        : metadataDrivenOptions.defaults.javaVersion,
-      springBootVersion: hasConfiguredSpringBootVersion
-        ? config.springBootVersion
-        : metadataDrivenOptions.defaults.springBootVersion,
-    })
+    onConfigChange(
+      {
+        ...config,
+        javaVersion: hasConfiguredJavaVersion
+          ? config.javaVersion
+          : metadataDrivenOptions.defaults.javaVersion,
+        springBootVersion: hasConfiguredSpringBootVersion
+          ? config.springBootVersion
+          : metadataDrivenOptions.defaults.springBootVersion,
+      },
+      { persistToUrl: false },
+    )
   }, [
     config,
     metadataDrivenOptions.defaults.javaVersion,
