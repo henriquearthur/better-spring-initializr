@@ -69,12 +69,24 @@ export async function pushProjectToGitHubFromBff(
 
   const owner = input.owner.trim()
   const repositoryName = input.repositoryName.trim()
+  const logContext = {
+    owner,
+    repositoryName,
+    visibility: input.visibility,
+    selectedDependencyCount: input.selectedDependencyIds.length,
+    sessionUser: session.user.login,
+  }
   const allowedOwners = new Set([
     session.user.login,
     ...session.organizations.map((organization) => organization.login),
   ])
 
   if (!allowedOwners.has(owner)) {
+    console.error('GitHub push aborted: owner not available in OAuth session', {
+      ...logContext,
+      allowedOwners: Array.from(allowedOwners).sort((left, right) => left.localeCompare(right)),
+    })
+
     return {
       ok: false,
       error: {
@@ -88,6 +100,8 @@ export async function pushProjectToGitHubFromBff(
   try {
     ensureRepositoryName(repositoryName)
   } catch {
+    console.error('GitHub push aborted: invalid repository name', logContext)
+
     return {
       ok: false,
       error: {
@@ -105,6 +119,11 @@ export async function pushProjectToGitHubFromBff(
   })
 
   if (!downloadResponse.ok) {
+    console.error('GitHub push failed: project archive generation failed', {
+      ...logContext,
+      error: downloadResponse.error,
+    })
+
     return {
       ok: false,
       error: {
@@ -120,6 +139,11 @@ export async function pushProjectToGitHubFromBff(
   try {
     files = await unpackGeneratedProjectZip(downloadResponse.archive.base64)
   } catch (error) {
+    console.error('GitHub push failed: unable to unpack generated archive', {
+      ...logContext,
+      error: formatUnknownError(error),
+    })
+
     if (error instanceof UnpackGeneratedProjectError) {
       return {
         ok: false,
@@ -156,6 +180,11 @@ export async function pushProjectToGitHubFromBff(
       visibility: input.visibility,
     })
   } catch (error) {
+    console.error('GitHub push failed: repository creation failed', {
+      ...logContext,
+      error: formatUnknownError(error),
+    })
+
     return {
       ok: false,
       error: mapCreateRepositoryError(error),
@@ -167,6 +196,7 @@ export async function pushProjectToGitHubFromBff(
       accessToken: session.token.accessToken,
       owner: repository.owner,
       repository: repository.name,
+      branch: repository.defaultBranch,
       message: 'Initial commit from Better Spring Initializr',
       files: files.map((file) => ({
         path: file.path,
@@ -174,6 +204,17 @@ export async function pushProjectToGitHubFromBff(
       })),
     })
   } catch (error) {
+    console.error('GitHub initial commit failed', {
+      ...logContext,
+      createdRepository: repository.fullName,
+      defaultBranch: repository.defaultBranch,
+      generatedFileCount: files.length,
+      generatedFileSample: files
+        .slice(0, 20)
+        .map((file) => `${file.path} (${file.size}b)`),
+      error: formatUnknownError(error),
+    })
+
     return {
       ok: false,
       error: mapPushRepositoryError(error),
@@ -224,6 +265,24 @@ function mapCreateRepositoryError(error: unknown): PushProjectToGitHubError {
 
 function mapPushRepositoryError(error: unknown): PushProjectToGitHubError {
   if (error instanceof GitHubRepositoryClientError) {
+    if (error.status === 401 || error.status === 403) {
+      return {
+        code: 'GITHUB_REPOSITORY_PUSH_FAILED',
+        message:
+          'Repository was created, but GitHub denied commit permissions for this repository/branch.',
+        retryable: false,
+      }
+    }
+
+    if (error.status === 422) {
+      return {
+        code: 'GITHUB_REPOSITORY_PUSH_FAILED',
+        message:
+          'Repository was created, but GitHub rejected the initial branch update. Check branch rulesets/protection and retry.',
+        retryable: false,
+      }
+    }
+
     return {
       code: 'GITHUB_REPOSITORY_PUSH_FAILED',
       message: 'Repository was created, but initial commit push failed. Please retry push.',
@@ -235,6 +294,30 @@ function mapPushRepositoryError(error: unknown): PushProjectToGitHubError {
     code: 'GITHUB_REPOSITORY_PUSH_FAILED',
     message: 'Repository was created, but initial commit push failed. Please retry push.',
     retryable: true,
+  }
+}
+
+function formatUnknownError(error: unknown): Record<string, unknown> {
+  if (error instanceof GitHubRepositoryClientError) {
+    return {
+      name: error.name,
+      code: error.code,
+      status: error.status,
+      message: error.message,
+      context: error.context,
+    }
+  }
+
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    }
+  }
+
+  return {
+    value: String(error),
   }
 }
 

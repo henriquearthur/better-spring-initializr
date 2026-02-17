@@ -32,6 +32,7 @@ export type CreateInitialCommitInput = {
   accessToken: string
   owner: string
   repository: string
+  branch?: string
   files: RepositoryFileEntry[]
   message: string
 }
@@ -48,6 +49,7 @@ export class GitHubRepositoryClientError extends Error {
       | 'UPSTREAM_ERROR'
       | 'COMMIT_FAILED',
     readonly status?: number,
+    readonly context?: Record<string, unknown>,
   ) {
     super(message)
     this.name = 'GitHubRepositoryClientError'
@@ -73,12 +75,12 @@ export async function createRepository(input: CreateRepositoryInput): Promise<Cr
       name: repositoryName,
       description: input.description?.trim() || undefined,
       private: input.visibility === 'private',
-      auto_init: false,
+      auto_init: true,
     },
   })
 
   if (!response.ok) {
-    throw await mapCreateRepositoryError(response)
+    throw await mapCreateRepositoryError(response, { method: 'POST', path: endpoint })
   }
 
   const payload = await parseJson(response)
@@ -118,10 +120,19 @@ export async function createInitialCommit(input: CreateInitialCommitInput): Prom
     )
   }
 
+  const branch = normalizeBranchName(input.branch)
+  const parentCommitSha = await getBranchHeadSha({
+    accessToken: input.accessToken,
+    owner: input.owner,
+    repository: input.repository,
+    branch,
+  })
+
   const blobs = await Promise.all(
     input.files.map(async (file) => {
+      const blobPath = `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repository)}/git/blobs`
       const blobResponse = await requestGitHub(
-        `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repository)}/git/blobs`,
+        blobPath,
         {
           method: 'POST',
           accessToken: input.accessToken,
@@ -133,10 +144,18 @@ export async function createInitialCommit(input: CreateInitialCommitInput): Prom
       )
 
       if (!blobResponse.ok) {
+        const responseBody = await readResponseBodySnippet(blobResponse)
         throw new GitHubRepositoryClientError(
           'Unable to create repository blob in GitHub.',
           'COMMIT_FAILED',
           blobResponse.status,
+          {
+            step: 'CREATE_BLOB',
+            method: 'POST',
+            path: blobPath,
+            filePath: file.path,
+            responseBody,
+          },
         )
       }
 
@@ -158,8 +177,9 @@ export async function createInitialCommit(input: CreateInitialCommitInput): Prom
     }),
   )
 
+  const treePath = `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repository)}/git/trees`
   const treeResponse = await requestGitHub(
-    `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repository)}/git/trees`,
+    treePath,
     {
       method: 'POST',
       accessToken: input.accessToken,
@@ -175,10 +195,17 @@ export async function createInitialCommit(input: CreateInitialCommitInput): Prom
   )
 
   if (!treeResponse.ok) {
+    const responseBody = await readResponseBodySnippet(treeResponse)
     throw new GitHubRepositoryClientError(
       'Unable to create repository tree in GitHub.',
       'COMMIT_FAILED',
       treeResponse.status,
+      {
+        step: 'CREATE_TREE',
+        method: 'POST',
+        path: treePath,
+        responseBody,
+      },
     )
   }
 
@@ -192,24 +219,32 @@ export async function createInitialCommit(input: CreateInitialCommitInput): Prom
     )
   }
 
+  const commitPath = `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repository)}/git/commits`
   const commitResponse = await requestGitHub(
-    `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repository)}/git/commits`,
+    commitPath,
     {
       method: 'POST',
       accessToken: input.accessToken,
       body: {
         message: input.message,
         tree: treePayload.sha,
-        parents: [],
+        parents: parentCommitSha ? [parentCommitSha] : [],
       },
     },
   )
 
   if (!commitResponse.ok) {
+    const responseBody = await readResponseBodySnippet(commitResponse)
     throw new GitHubRepositoryClientError(
       'Unable to create repository commit in GitHub.',
       'COMMIT_FAILED',
       commitResponse.status,
+      {
+        step: 'CREATE_COMMIT',
+        method: 'POST',
+        path: commitPath,
+        responseBody,
+      },
     )
   }
 
@@ -223,8 +258,9 @@ export async function createInitialCommit(input: CreateInitialCommitInput): Prom
     )
   }
 
+  const updateRefPath = `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repository)}/git/refs/heads/${encodeURIComponent(branch)}`
   const updateRefResponse = await requestGitHub(
-    `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repository)}/git/refs/heads/main`,
+    updateRefPath,
     {
       method: 'PATCH',
       accessToken: input.accessToken,
@@ -235,47 +271,169 @@ export async function createInitialCommit(input: CreateInitialCommitInput): Prom
     },
   )
 
-  if (updateRefResponse.status === 404) {
+  if (updateRefResponse.status === 404 || updateRefResponse.status === 422) {
+    const createRefPath = `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repository)}/git/refs`
     const createRefResponse = await requestGitHub(
-      `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repository)}/git/refs`,
+      createRefPath,
       {
         method: 'POST',
         accessToken: input.accessToken,
         body: {
-          ref: 'refs/heads/main',
+          ref: `refs/heads/${branch}`,
           sha: commitPayload.sha,
         },
       },
     )
 
+    if (createRefResponse.ok) {
+      return { commitSha: commitPayload.sha }
+    }
+
+    if (createRefResponse.status === 422) {
+      const retryUpdateRefResponse = await requestGitHub(
+        updateRefPath,
+        {
+          method: 'PATCH',
+          accessToken: input.accessToken,
+          body: {
+            sha: commitPayload.sha,
+            force: false,
+          },
+        },
+      )
+
+      if (retryUpdateRefResponse.ok) {
+        return { commitSha: commitPayload.sha }
+      }
+
+      const createRefResponseBody = await readResponseBodySnippet(createRefResponse)
+      const retryUpdateRefResponseBody = await readResponseBodySnippet(retryUpdateRefResponse)
+      throw new GitHubRepositoryClientError(
+        'Unable to establish repository branch reference in GitHub.',
+        'COMMIT_FAILED',
+        retryUpdateRefResponse.status,
+        {
+          step: 'UPDATE_REF_RETRY_FAILED',
+          branch,
+          updateRefStatus: updateRefResponse.status,
+          updateRefPath,
+          createRefStatus: createRefResponse.status,
+          createRefPath,
+          createRefResponseBody,
+          retryUpdateRefStatus: retryUpdateRefResponse.status,
+          retryUpdateRefPath: updateRefPath,
+          retryUpdateRefResponseBody,
+        },
+      )
+    }
+
     if (!createRefResponse.ok) {
+      const updateRefResponseBody = await readResponseBodySnippet(updateRefResponse)
+      const createRefResponseBody = await readResponseBodySnippet(createRefResponse)
       throw new GitHubRepositoryClientError(
         'Unable to create repository main branch reference in GitHub.',
         'COMMIT_FAILED',
         createRefResponse.status,
+        {
+          step: 'CREATE_REF',
+          branch,
+          updateRefStatus: updateRefResponse.status,
+          updateRefPath,
+          updateRefResponseBody,
+          createRefStatus: createRefResponse.status,
+          createRefPath,
+          createRefResponseBody,
+        },
       )
     }
-
-    return { commitSha: commitPayload.sha }
   }
 
   if (!updateRefResponse.ok) {
+    const responseBody = await readResponseBodySnippet(updateRefResponse)
     throw new GitHubRepositoryClientError(
       'Unable to update repository main branch reference in GitHub.',
       'COMMIT_FAILED',
       updateRefResponse.status,
+      {
+        step: 'UPDATE_REF',
+        method: 'PATCH',
+        path: updateRefPath,
+        branch,
+        responseBody,
+      },
     )
   }
 
   return { commitSha: commitPayload.sha }
 }
 
-async function mapCreateRepositoryError(response: Response): Promise<GitHubRepositoryClientError> {
+type GetBranchHeadShaInput = {
+  accessToken: string
+  owner: string
+  repository: string
+  branch: string
+}
+
+async function getBranchHeadSha(input: GetBranchHeadShaInput): Promise<string | null> {
+  const refPath = `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repository)}/git/refs/heads/${encodeURIComponent(input.branch)}`
+  const response = await requestGitHub(refPath, {
+    method: 'GET',
+    accessToken: input.accessToken,
+  })
+
+  if (response.status === 404) {
+    return null
+  }
+
+  if (!response.ok) {
+    const responseBody = await readResponseBodySnippet(response)
+    throw new GitHubRepositoryClientError(
+      'Unable to read repository branch reference in GitHub.',
+      'COMMIT_FAILED',
+      response.status,
+      {
+        step: 'GET_REF',
+        method: 'GET',
+        path: refPath,
+        responseBody,
+      },
+    )
+  }
+
+  const payload = await parseJson(response)
+  const object = isRecord(payload.object) ? payload.object : null
+
+  if (typeof object?.sha !== 'string' || object.sha.length === 0) {
+    throw new GitHubRepositoryClientError(
+      'GitHub branch reference payload was invalid.',
+      'INVALID_RESPONSE',
+      response.status,
+      {
+        step: 'GET_REF',
+        method: 'GET',
+        path: refPath,
+      },
+    )
+  }
+
+  return object.sha
+}
+
+async function mapCreateRepositoryError(
+  response: Response,
+  requestContext: { method: string; path: string },
+): Promise<GitHubRepositoryClientError> {
+  const responseBody = await readResponseBodySnippet(response.clone())
+
   if (response.status === 401 || response.status === 403) {
     return new GitHubRepositoryClientError(
       'GitHub rejected repository creation due to missing permissions.',
       'PERMISSION_DENIED',
       response.status,
+      {
+        ...requestContext,
+        responseBody,
+      },
     )
   }
 
@@ -300,6 +458,10 @@ async function mapCreateRepositoryError(response: Response): Promise<GitHubRepos
         'A repository with this name already exists for the selected owner.',
         'REPOSITORY_ALREADY_EXISTS',
         response.status,
+        {
+          ...requestContext,
+          responseBody,
+        },
       )
     }
   }
@@ -308,6 +470,10 @@ async function mapCreateRepositoryError(response: Response): Promise<GitHubRepos
     'GitHub repository creation request failed.',
     'UPSTREAM_ERROR',
     response.status,
+    {
+      ...requestContext,
+      responseBody,
+    },
   )
 }
 
@@ -329,10 +495,16 @@ async function requestGitHub(path: string, options: RequestOptions): Promise<Res
       },
       body: options.body ? JSON.stringify(options.body) : undefined,
     })
-  } catch {
+  } catch (error) {
     throw new GitHubRepositoryClientError(
       'Unable to reach GitHub repository API endpoints.',
       'UPSTREAM_ERROR',
+      undefined,
+      {
+        method: options.method,
+        path,
+        networkError: error instanceof Error ? error.message : String(error),
+      },
     )
   }
 }
@@ -361,6 +533,34 @@ function normalizeOwner(value: string): string {
 
 function normalizeRepositoryName(value: string): string {
   return value.trim()
+}
+
+function normalizeBranchName(value: string | undefined): string {
+  const trimmed = value?.trim()
+
+  if (!trimmed) {
+    return 'main'
+  }
+
+  return trimmed
+}
+
+async function readResponseBodySnippet(response: Response): Promise<string | undefined> {
+  try {
+    const body = (await response.text()).trim()
+
+    if (body.length === 0) {
+      return undefined
+    }
+
+    if (body.length <= 1200) {
+      return body
+    }
+
+    return `${body.slice(0, 1200)}...[truncated]`
+  } catch {
+    return undefined
+  }
 }
 
 function ensureOwner(owner: string) {

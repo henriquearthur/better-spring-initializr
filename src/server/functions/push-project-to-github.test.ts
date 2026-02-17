@@ -130,12 +130,66 @@ describe('pushProjectToGitHubFromBff', () => {
       expect.objectContaining({
         owner: 'acme-inc',
         repository: 'demo-service',
+        branch: 'main',
       }),
     )
     expect(response).toEqual({
       ok: true,
       repositoryUrl: 'https://github.com/acme-inc/demo-service',
       fullName: 'acme-inc/demo-service',
+    })
+  })
+
+  it('returns actionable error when GitHub rejects initial branch update', async () => {
+    vi.spyOn(oauthSession, 'getGitHubSessionCookie').mockResolvedValue(sessionFixture)
+    vi.spyOn(downloadProject, 'downloadInitializrProjectFromBff').mockResolvedValue({
+      ok: true,
+      archive: {
+        base64: 'UEsDBA==',
+        contentType: 'application/zip',
+        filename: 'demo.zip',
+      },
+    })
+    vi.spyOn(unpackProject, 'unpackGeneratedProjectZip').mockResolvedValue([
+      {
+        path: 'README.md',
+        base64Content: 'IyBkZW1v',
+        size: 6,
+        binary: false,
+      },
+    ])
+    vi.spyOn(githubRepositoryClient, 'createRepository').mockResolvedValue({
+      owner: 'acme-inc',
+      name: 'demo-service',
+      fullName: 'acme-inc/demo-service',
+      htmlUrl: 'https://github.com/acme-inc/demo-service',
+      defaultBranch: 'main',
+    })
+    vi.spyOn(githubRepositoryClient, 'createInitialCommit').mockRejectedValue(
+      new githubRepositoryClient.GitHubRepositoryClientError(
+        'Unable to update repository main branch reference in GitHub.',
+        'COMMIT_FAILED',
+        422,
+      ),
+    )
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const response = await pushProjectToGitHubFromBff({
+      config: configFixture,
+      selectedDependencyIds: ['web', 'data-jpa'],
+      owner: 'acme-inc',
+      repositoryName: 'demo-service',
+      visibility: 'public',
+    })
+
+    expect(response).toEqual({
+      ok: false,
+      error: {
+        code: 'GITHUB_REPOSITORY_PUSH_FAILED',
+        message:
+          'Repository was created, but GitHub rejected the initial branch update. Check branch rulesets/protection and retry.',
+        retryable: false,
+      },
     })
   })
 })
