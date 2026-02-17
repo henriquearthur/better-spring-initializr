@@ -42,6 +42,7 @@ describe('PresetLayoutSurface', () => {
     expect(html).toContain('data-testid="preset-surface-hero-strip"')
     expect(html).not.toContain('No preset selected')
     expect(html).not.toContain('Apply preset')
+    expect(html).not.toContain('mt-4 rounded-xl border bg-[var(--card)] p-3')
   })
 
   it('uses the compact details label for an active preset', () => {
