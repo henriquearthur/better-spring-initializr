@@ -1,4 +1,4 @@
-import { Check, Copy, Download, Github, LoaderCircle, TriangleAlert } from 'lucide-react'
+import { Check, Copy, Download, Github, LoaderCircle, Rocket, TriangleAlert } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 
 import type { ProjectConfig } from '@/lib/project-config'
@@ -9,7 +9,7 @@ import {
   type DownloadInitializrProjectResponse,
 } from '@/server/functions/download-initializr-project'
 
-type WorkspaceOutputActionsProps = {
+type WorkspaceFinalizePanelProps = {
   config: ProjectConfig
   selectedDependencyIds: string[]
   createShareUrl: (snapshot: ShareConfigSnapshot) => string
@@ -23,12 +23,12 @@ type FeedbackState =
     }
   | null
 
-export function WorkspaceOutputActions({
+export function WorkspaceFinalizePanel({
   config,
   selectedDependencyIds,
   createShareUrl,
   onPublish,
-}: WorkspaceOutputActionsProps) {
+}: WorkspaceFinalizePanelProps) {
   const [isDownloading, setIsDownloading] = useState(false)
   const [isCopying, setIsCopying] = useState(false)
   const [feedback, setFeedback] = useState<FeedbackState>(null)
@@ -37,6 +37,10 @@ export function WorkspaceOutputActions({
     () => createShareUrl({ config, selectedDependencyIds }),
     [config, createShareUrl, selectedDependencyIds],
   )
+
+  const isBusy = isDownloading || isCopying
+  const projectCoordinates = `${config.group}.${config.artifact}`
+  const stackLabel = `${config.language.toUpperCase()} / ${getBuildToolLabel(config.buildTool)}`
 
   const handleDownload = useCallback(async () => {
     if (isDownloading) {
@@ -103,62 +107,102 @@ export function WorkspaceOutputActions({
   }, [isCopying, shareUrl])
 
   return (
-    <section className="rounded-xl border bg-[var(--card)] p-3">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold">Output Actions</p>
+    <section className="finalize-panel finalize-panel-enter" data-testid="workspace-finalize-panel">
+      <div className="finalize-panel-glow" />
+      <div className="finalize-panel-glow-secondary" />
+
+      <div className="finalize-panel-header">
+        <div className="space-y-2">
+          <p className="finalize-panel-badge">Finalize & Share</p>
+          <p className="text-sm font-semibold">Ship your project in one final step</p>
           <p className="text-xs text-[var(--muted-foreground)]">
-            Download your generated ZIP or share this exact configuration.
+            {projectCoordinates} <span className="mx-1">|</span> {stackLabel}
           </p>
         </div>
-
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={handleDownload}
-          disabled={isDownloading || isCopying}
-          className="btn btn-primary"
-        >
-          {isDownloading ? (
-            <LoaderCircle className="h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="h-4 w-4" />
-          )}
-          {isDownloading ? 'Preparing ZIP...' : 'Download ZIP'}
-        </button>
-
-        <button
-          type="button"
-          onClick={handleCopyShareLink}
-          disabled={isDownloading || isCopying || !shareUrl}
-          className="btn btn-secondary"
-        >
-          {isCopying ? (
-            <LoaderCircle className="h-4 w-4 animate-spin" />
-          ) : (
-            <Copy className="h-4 w-4" />
-          )}
-          {isCopying ? 'Copying...' : 'Copy Share Link'}
-        </button>
-
+      <div className="finalize-action-grid">
         {onPublish ? (
+          <article className="finalize-action-card finalize-action-card-primary md:col-span-2">
+            <div className="space-y-1">
+              <p className="finalize-action-eyebrow">
+                <Rocket className="h-3.5 w-3.5" />
+                Recommended next step
+              </p>
+              <p className="text-sm font-semibold">Publish to GitHub</p>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Create a repository and push the generated project with one guided flow.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onPublish}
+              disabled={isBusy}
+              className="btn btn-primary mt-3 w-full justify-center md:w-auto"
+            >
+              <Github className="h-4 w-4" />
+              Publish to GitHub
+            </button>
+          </article>
+        ) : null}
+
+        <article className="finalize-action-card">
+          <div className="space-y-1">
+            <p className="finalize-action-eyebrow">
+              <Download className="h-3.5 w-3.5" />
+              Local artifact
+            </p>
+            <p className="text-sm font-semibold">Download ZIP</p>
+            <p className="text-xs text-[var(--muted-foreground)]">
+              Export the generated project archive and open it locally.
+            </p>
+          </div>
           <button
             type="button"
-            onClick={onPublish}
-            disabled={isDownloading || isCopying}
-            className="btn btn-secondary"
+            onClick={handleDownload}
+            disabled={isBusy}
+            className="btn btn-secondary mt-3 w-full justify-center"
           >
-            <Github className="h-4 w-4" />
-            Publish to GitHub
+            {isDownloading ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {isDownloading ? 'Preparing ZIP...' : 'Download ZIP'}
           </button>
-        ) : null}
+        </article>
+
+        <article className="finalize-action-card">
+          <div className="space-y-1">
+            <p className="finalize-action-eyebrow">
+              <Copy className="h-3.5 w-3.5" />
+              Share setup
+            </p>
+            <p className="text-sm font-semibold">Copy Share Link</p>
+            <p className="text-xs text-[var(--muted-foreground)]">
+              Capture this exact configuration and share it with your team.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleCopyShareLink}
+            disabled={isBusy || !shareUrl}
+            className="btn btn-secondary mt-3 w-full justify-center"
+          >
+            {isCopying ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+            {isCopying ? 'Copying...' : 'Copy Share Link'}
+          </button>
+        </article>
       </div>
 
       {feedback ? (
         <div
-          className={`mt-3 flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${feedback.tone === 'success' ? 'border-emerald-400/80 bg-emerald-100 text-emerald-950 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100' : 'border-red-400/80 bg-red-100 text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'}`}
+          aria-live="polite"
+          className={`finalize-feedback ${feedback.tone === 'success' ? 'finalize-feedback-success' : 'finalize-feedback-error'}`}
         >
           {feedback.tone === 'success' ? (
             <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -175,6 +219,14 @@ export function WorkspaceOutputActions({
 const invokeDownloadProject = downloadInitializrProject as unknown as (payload: {
   data: DownloadInitializrProjectInput
 }) => Promise<DownloadInitializrProjectResponse>
+
+export function getBuildToolLabel(buildTool: ProjectConfig['buildTool']): string {
+  if (buildTool === 'maven-project') {
+    return 'Maven'
+  }
+
+  return 'Gradle'
+}
 
 function triggerArchiveDownload(response: DownloadInitializrProjectResponse & { ok: true }) {
   const archiveBuffer = decodeBase64ToBuffer(response.archive.base64)

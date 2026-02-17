@@ -1,4 +1,13 @@
-import { Check, ExternalLink, Github, LoaderCircle, LogOut, TriangleAlert, X } from 'lucide-react'
+import {
+  Check,
+  ChevronRight,
+  ExternalLink,
+  Github,
+  LoaderCircle,
+  LogOut,
+  TriangleAlert,
+  X,
+} from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { ProjectConfig } from '@/lib/project-config'
@@ -35,7 +44,15 @@ type DialogFeedback = {
   message: string
 } | null
 
+type PublishFlowStep = 'connect' | 'configure' | 'publish'
+
 const REPOSITORY_NAME_PATTERN = /^[A-Za-z0-9._-]+$/
+
+const FLOW_STEPS: Array<{ key: PublishFlowStep; label: string }> = [
+  { key: 'connect', label: 'Connect' },
+  { key: 'configure', label: 'Configure' },
+  { key: 'publish', label: 'Publish' },
+]
 
 export function GitHubPublishDialog({
   open,
@@ -132,18 +149,12 @@ export function GitHubPublishDialog({
   }, [open, config.artifact])
 
   const trimmedRepositoryName = repositoryName.trim()
-  const repositoryNameError = useMemo(() => {
-    if (trimmedRepositoryName.length === 0) return 'Repository name is required.'
-    if (
-      trimmedRepositoryName.length > 100 ||
-      !REPOSITORY_NAME_PATTERN.test(trimmedRepositoryName) ||
-      trimmedRepositoryName.startsWith('.') ||
-      trimmedRepositoryName.endsWith('.')
-    ) {
-      return 'Use letters, numbers, dots, dashes, or underscores.'
-    }
-    return null
-  }, [trimmedRepositoryName])
+  const repositoryNameError = useMemo(
+    () => getRepositoryNameError(trimmedRepositoryName),
+    [trimmedRepositoryName],
+  )
+
+  const activeFlowStep = getActiveFlowStep(phase)
 
   const handleConnect = useCallback(async () => {
     setFeedback(null)
@@ -227,32 +238,62 @@ export function GitHubPublishDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="m-auto w-full max-w-lg rounded-2xl border bg-[var(--card)] p-0 text-[var(--foreground)] shadow-xl backdrop:bg-black/50"
+      className="github-publish-dialog m-auto w-full max-w-2xl rounded-2xl border bg-[var(--card)] p-0 text-[var(--foreground)] shadow-xl backdrop:bg-black/50"
     >
-      <div className="flex items-center justify-between border-b px-5 py-3">
-        <div className="flex items-center gap-2">
-          <Github className="h-5 w-5" />
-          <p className="text-sm font-semibold">Publish to GitHub</p>
+      <div className="github-publish-dialog-header border-b px-5 py-4">
+        <div className="space-y-1">
+          <p className="github-publish-dialog-eyebrow">Finalize & Share</p>
+          <div className="flex items-center gap-2">
+            <Github className="h-5 w-5" />
+            <p className="text-sm font-semibold">Publish to GitHub</p>
+          </div>
+          <p className="text-xs text-[var(--muted-foreground)]">
+            Connect, configure, and push your generated project in one guided flow.
+          </p>
         </div>
         <button
           type="button"
           onClick={onClose}
+          aria-label="Close dialog"
           className="rounded-md p-1.5 text-[var(--muted-foreground)] transition hover:bg-[var(--muted)]"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="p-5">
+      <div className="space-y-5 p-5">
+        <ol className="github-publish-stepper" aria-label="Publish steps">
+          {FLOW_STEPS.map((step, index) => {
+            const state = getStepState(step.key, activeFlowStep, phase)
+
+            return (
+              <li key={step.key} className="github-publish-stepper-item">
+                <span
+                  className={`github-publish-stepper-pill ${
+                    state === 'current'
+                      ? 'github-publish-stepper-pill-current'
+                      : state === 'complete'
+                        ? 'github-publish-stepper-pill-complete'
+                        : ''
+                  }`}
+                >
+                  {step.label}
+                </span>
+                {index < FLOW_STEPS.length - 1 ? <ChevronRight className="h-3.5 w-3.5 text-[var(--muted-foreground)]" /> : null}
+              </li>
+            )
+          })}
+        </ol>
+
         {phase === 'loading' ? (
-          <div className="flex items-center justify-center gap-2 py-8 text-sm text-[var(--muted-foreground)]">
+          <div className="github-publish-phase-card flex items-center justify-center gap-2 py-10 text-sm text-[var(--muted-foreground)]">
             <LoaderCircle className="h-4 w-4 animate-spin" />
             Checking GitHub connection...
           </div>
         ) : null}
 
         {phase === 'connect' ? (
-          <div className="space-y-4">
+          <div className="github-publish-phase-card space-y-4">
             <p className="text-sm text-[var(--muted-foreground)]">
               Connect your GitHub account to create a repository and push the generated project.
             </p>
@@ -260,7 +301,7 @@ export function GitHubPublishDialog({
             <button
               type="button"
               onClick={handleConnect}
-              className="btn btn-primary"
+              className="btn btn-primary w-full justify-center sm:w-auto"
             >
               <Github className="h-4 w-4" />
               Connect GitHub
@@ -269,8 +310,8 @@ export function GitHubPublishDialog({
         ) : null}
 
         {phase === 'configure' ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="github-publish-phase-card space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-[var(--background)] px-3 py-2">
               <p className="text-xs text-[var(--muted-foreground)]">
                 Connected as <span className="font-medium text-[var(--foreground)]">{userName}</span>
               </p>
@@ -315,28 +356,41 @@ export function GitHubPublishDialog({
               </label>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setVisibility('private')}
-                className={`h-8 rounded-md border px-3 text-xs font-medium transition ${visibility === 'private' ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)] shadow-sm' : 'text-[var(--muted-foreground)] hover:border-[var(--accent)]/40 hover:bg-[var(--muted)]'}`}
-              >
-                Private
-              </button>
-              <button
-                type="button"
-                onClick={() => setVisibility('public')}
-                className={`h-8 rounded-md border px-3 text-xs font-medium transition ${visibility === 'public' ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)] shadow-sm' : 'text-[var(--muted-foreground)] hover:border-[var(--accent)]/40 hover:bg-[var(--muted)]'}`}
-              >
-                Public
-              </button>
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+                Repository visibility
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setVisibility('private')}
+                  className={`h-9 rounded-md border px-3 text-xs font-medium transition ${
+                    visibility === 'private'
+                      ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)] shadow-sm'
+                      : 'text-[var(--muted-foreground)] hover:border-[var(--accent)]/40 hover:bg-[var(--muted)]'
+                  }`}
+                >
+                  Private
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVisibility('public')}
+                  className={`h-9 rounded-md border px-3 text-xs font-medium transition ${
+                    visibility === 'public'
+                      ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)] shadow-sm'
+                      : 'text-[var(--muted-foreground)] hover:border-[var(--accent)]/40 hover:bg-[var(--muted)]'
+                  }`}
+                >
+                  Public
+                </button>
+              </div>
             </div>
 
             <button
               type="button"
               onClick={handlePush}
               disabled={!owner || repositoryNameError !== null}
-              className="btn btn-primary"
+              className="btn btn-primary w-full justify-center sm:w-auto"
             >
               <Github className="h-4 w-4" />
               Push to GitHub
@@ -345,46 +399,51 @@ export function GitHubPublishDialog({
         ) : null}
 
         {phase === 'pushing' ? (
-          <div className="flex items-center justify-center gap-2 py-8 text-sm text-[var(--muted-foreground)]">
+          <div className="github-publish-phase-card flex items-center justify-center gap-2 py-10 text-sm text-[var(--muted-foreground)]">
             <LoaderCircle className="h-4 w-4 animate-spin" />
             Creating repository and pushing project...
           </div>
         ) : null}
 
         {phase === 'done' ? (
-          <div className="space-y-4">
+          <div className="github-publish-phase-card space-y-4">
             <div className="flex items-start gap-2 rounded-lg border border-emerald-400/80 bg-emerald-100 px-3 py-2 text-xs text-emerald-950 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100">
               <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <p>Repository {resultFullName} created and initial commit pushed.</p>
             </div>
 
             {resultUrl ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <a
-                  href={resultUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 font-mono text-xs underline underline-offset-2"
-                >
-                  {resultFullName}
-                  <ExternalLink className="h-3 w-3" />
-                </a>
+              <div className="rounded-xl border bg-[var(--background)] p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+                  Repository ready
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <a
+                    href={resultUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 font-mono text-xs underline underline-offset-2"
+                  >
+                    {resultFullName}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
 
-                <button
-                  type="button"
-                  onClick={() => window.open(resultUrl, '_blank', 'noopener,noreferrer')}
-                  className="btn btn-primary btn-sm h-8 gap-1.5 text-xs"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Open Repo
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => window.open(resultUrl, '_blank', 'noopener,noreferrer')}
+                    className="btn btn-primary btn-sm h-8 gap-1.5 text-xs"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Open Repo
+                  </button>
+                </div>
               </div>
             ) : null}
 
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-secondary"
+              className="btn btn-secondary w-full justify-center sm:w-auto"
             >
               Close
             </button>
@@ -393,7 +452,7 @@ export function GitHubPublishDialog({
 
         {feedback ? (
           <div
-            className={`mt-4 flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${feedback.tone === 'success' ? 'border-emerald-400/80 bg-emerald-100 text-emerald-950 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100' : 'border-red-400/80 bg-red-100 text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'}`}
+            className={`finalize-feedback ${feedback.tone === 'success' ? 'finalize-feedback-success' : 'finalize-feedback-error'}`}
           >
             {feedback.tone === 'success' ? (
               <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -406,6 +465,58 @@ export function GitHubPublishDialog({
       </div>
     </dialog>
   )
+}
+
+export function getRepositoryNameError(repositoryName: string): string | null {
+  const trimmedRepositoryName = repositoryName.trim()
+
+  if (trimmedRepositoryName.length === 0) return 'Repository name is required.'
+  if (
+    trimmedRepositoryName.length > 100 ||
+    !REPOSITORY_NAME_PATTERN.test(trimmedRepositoryName) ||
+    trimmedRepositoryName.startsWith('.') ||
+    trimmedRepositoryName.endsWith('.')
+  ) {
+    return 'Use letters, numbers, dots, dashes, or underscores.'
+  }
+
+  return null
+}
+
+export function getActiveFlowStep(phase: DialogPhase): PublishFlowStep {
+  if (phase === 'connect') {
+    return 'connect'
+  }
+
+  if (phase === 'configure') {
+    return 'configure'
+  }
+
+  return 'publish'
+}
+
+export function getStepState(
+  step: PublishFlowStep,
+  activeFlowStep: PublishFlowStep,
+  phase: DialogPhase,
+): 'pending' | 'current' | 'complete' {
+  const stepOrder = FLOW_STEPS.map((item) => item.key)
+  const stepIndex = stepOrder.indexOf(step)
+  const activeIndex = stepOrder.indexOf(activeFlowStep)
+
+  if (phase === 'loading') {
+    return step === 'connect' ? 'current' : 'pending'
+  }
+
+  if (stepIndex < activeIndex) {
+    return 'complete'
+  }
+
+  if (stepIndex === activeIndex) {
+    return phase === 'done' && step === 'publish' ? 'complete' : 'current'
+  }
+
+  return 'pending'
 }
 
 const invokeStartGitHubOAuth = startGitHubOAuth as unknown as () => Promise<StartGitHubOAuthResponse>

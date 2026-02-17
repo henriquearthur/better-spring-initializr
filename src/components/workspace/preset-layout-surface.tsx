@@ -104,45 +104,43 @@ export function PresetLayoutSurface({
         })}
       </div>
 
-      <div className="relative z-10 mt-4 rounded-xl border bg-[var(--card)] p-3">
-        {activePreset ? (
-          <>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold">{activePreset.name}</p>
-                <p className="mt-1 text-xs text-[var(--muted-foreground)]">{activePreset.intent}</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {activePreset.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-900 dark:text-emerald-200"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+      {activePreset ? (
+        <div className="relative z-10 mt-4 rounded-xl border bg-[var(--card)] p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">{activePreset.name}</p>
+              <p className="mt-1 text-xs text-[var(--muted-foreground)]">{activePreset.intent}</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {activePreset.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-900 dark:text-emerald-200"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
-              <button
-                type="button"
-                onClick={() => setDetailsOpen((current) => !current)}
-                className="btn btn-secondary btn-sm h-8 text-[11px]"
-              >
-                {detailsOpen ? 'Hide details' : 'Details'}
-              </button>
             </div>
+            <button
+              type="button"
+              onClick={() => setDetailsOpen((current) => !current)}
+              className="btn btn-secondary btn-sm h-8 text-[11px]"
+            >
+              {detailsOpen ? 'Hide details' : 'Details'}
+            </button>
+          </div>
 
-            {detailsOpen ? (
-              <div className="mt-3 border-t pt-3">
-                <PresetDependencyList
-                  preset={activePreset}
-                  dependencyById={dependencyById}
-                  metadataAvailable={metadataAvailable}
-                />
-              </div>
-            ) : null}
-          </>
-        ) : null}
-      </div>
+          {detailsOpen ? (
+            <div className="mt-3 border-t pt-3">
+              <PresetDependencyList
+                preset={activePreset}
+                dependencyById={dependencyById}
+                metadataAvailable={metadataAvailable}
+              />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   )
 }

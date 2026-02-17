@@ -17,7 +17,7 @@ import { FileContentViewer } from './file-content-viewer'
 import { GitHubPublishDialog } from './github-publish-dialog'
 import { PresetLayoutSurface } from './preset-layout-surface'
 import { PreviewFileTree } from './preview-file-tree'
-import { WorkspaceOutputActions } from './workspace-output-actions'
+import { WorkspaceFinalizePanel } from './workspace-finalize-panel'
 import { WorkspaceHeader } from './workspace-header'
 
 export function WorkspaceShell() {
@@ -353,7 +353,7 @@ export function WorkspaceShell() {
                 />
               </div>
 
-              <WorkspaceOutputActions
+              <WorkspaceFinalizePanel
                 config={projectConfig}
                 selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
                 createShareUrl={createShareUrl}

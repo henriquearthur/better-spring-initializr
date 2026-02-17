@@ -211,6 +211,138 @@ button:disabled,
   .preset-layout-enter {
     animation: preset-layout-enter 280ms cubic-bezier(0.2, 0.9, 0.2, 1);
   }
+
+  .finalize-panel {
+    @apply relative overflow-hidden rounded-2xl border p-4;
+    background: var(--card);
+  }
+
+  .finalize-panel-enter {
+    animation: finalize-panel-enter 340ms cubic-bezier(0.18, 0.78, 0.2, 1);
+  }
+
+  .finalize-panel-glow {
+    @apply pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full;
+    background: color-mix(in oklab, var(--accent) 22%, transparent);
+    filter: blur(34px);
+    opacity: 0.8;
+  }
+
+  .finalize-panel-glow-secondary {
+    @apply pointer-events-none absolute -left-8 bottom-0 h-28 w-28 rounded-full;
+    background: color-mix(in oklab, var(--accent) 14%, transparent);
+    filter: blur(24px);
+    opacity: 0.65;
+  }
+
+  .finalize-panel-header {
+    @apply relative z-10 mb-4;
+  }
+
+  .finalize-panel-badge {
+    @apply inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em];
+    color: color-mix(in oklab, var(--foreground) 72%, var(--accent));
+    border-color: color-mix(in oklab, var(--accent) 48%, var(--interactive-border));
+    background: color-mix(in oklab, var(--accent) 12%, var(--card));
+  }
+
+  .finalize-action-grid {
+    @apply relative z-10 grid grid-cols-1 gap-3 md:grid-cols-2;
+  }
+
+  .finalize-action-card {
+    @apply rounded-xl border px-3 py-3 transition;
+    background: color-mix(in oklab, var(--card) 86%, var(--muted));
+    border-color: color-mix(in oklab, var(--interactive-border) 92%, var(--accent));
+    box-shadow: 0 8px 24px -22px rgb(15 23 42 / 0.65);
+  }
+
+  .finalize-action-card:hover {
+    border-color: color-mix(in oklab, var(--accent) 38%, var(--interactive-border));
+    transform: translateY(-1px);
+  }
+
+  .finalize-action-card-primary {
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--accent) 14%, var(--card)) 0%,
+      color-mix(in oklab, var(--card) 90%, var(--muted)) 100%
+    );
+    border-color: color-mix(in oklab, var(--accent) 44%, var(--interactive-border));
+    box-shadow: 0 16px 28px -22px color-mix(in oklab, var(--accent) 58%, transparent);
+  }
+
+  .finalize-action-eyebrow {
+    @apply inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)];
+  }
+
+  .finalize-feedback {
+    @apply mt-3 flex items-start gap-2 rounded-lg border px-3 py-2 text-xs;
+  }
+
+  .finalize-feedback-success {
+    @apply border-emerald-400/80 bg-emerald-100 text-emerald-950 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100;
+  }
+
+  .finalize-feedback-error {
+    @apply border-red-400/80 bg-red-100 text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100;
+  }
+
+  .github-publish-dialog {
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--card) 92%, var(--muted)) 0%,
+      var(--card) 56%
+    );
+  }
+
+  .github-publish-dialog-header {
+    @apply flex items-start justify-between gap-3;
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--accent) 8%, var(--card)) 0%,
+      var(--card) 100%
+    );
+  }
+
+  .github-publish-dialog-eyebrow {
+    @apply inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em];
+    color: color-mix(in oklab, var(--foreground) 72%, var(--accent));
+    border-color: color-mix(in oklab, var(--accent) 46%, var(--interactive-border));
+    background: color-mix(in oklab, var(--accent) 10%, var(--card));
+  }
+
+  .github-publish-stepper {
+    @apply flex flex-wrap items-center gap-1.5;
+  }
+
+  .github-publish-stepper-item {
+    @apply inline-flex items-center gap-1.5;
+  }
+
+  .github-publish-stepper-pill {
+    @apply rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em];
+    color: var(--muted-foreground);
+    border-color: var(--interactive-border);
+    background: color-mix(in oklab, var(--card) 86%, var(--muted));
+  }
+
+  .github-publish-stepper-pill-current {
+    border-color: color-mix(in oklab, var(--accent) 44%, var(--interactive-border));
+    background: color-mix(in oklab, var(--accent) 14%, var(--card));
+    color: color-mix(in oklab, var(--foreground) 90%, var(--accent));
+  }
+
+  .github-publish-stepper-pill-complete {
+    border-color: color-mix(in oklab, var(--accent) 52%, var(--interactive-border));
+    background: color-mix(in oklab, var(--accent) 20%, var(--card));
+    color: color-mix(in oklab, var(--foreground) 92%, var(--accent));
+  }
+
+  .github-publish-phase-card {
+    @apply rounded-xl border bg-[var(--card)] p-4;
+    box-shadow: 0 12px 24px -22px rgb(15 23 42 / 0.72);
+  }
 }
 
 @keyframes preset-layout-enter {
@@ -222,5 +354,17 @@ button:disabled,
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes finalize-panel-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
