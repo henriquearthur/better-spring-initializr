@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import JSZip from 'jszip'
 
+import { DEFAULT_AGENTS_MD_PREFERENCES } from '@/lib/ai-extras'
 import type { ProjectConfig } from '@/lib/project-config'
 import {
   fetchInitializrProjectPreview,
@@ -39,6 +40,9 @@ describe('fetchInitializrProjectPreview', () => {
     const files = await fetchInitializrProjectPreview({
       config: baseConfig,
       selectedDependencyIds: [],
+      selectedAiExtraIds: [],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'agents',
       fetch: fetchMock as typeof fetch,
     })
 
@@ -79,6 +83,9 @@ describe('fetchInitializrProjectPreview', () => {
         springBootVersion: '4.1.0.BUILD-SNAPSHOT',
       },
       selectedDependencyIds: ['web'],
+      selectedAiExtraIds: [],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'agents',
       fetch: fetchMock as typeof fetch,
     })
 
@@ -100,6 +107,9 @@ describe('fetchInitializrProjectPreview', () => {
       fetchInitializrProjectPreview({
         config: baseConfig,
         selectedDependencyIds: [],
+        selectedAiExtraIds: [],
+        agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+        aiExtrasTarget: 'agents',
         fetch: fetchMock as typeof fetch,
       }),
     ).rejects.toEqual(
@@ -110,6 +120,85 @@ describe('fetchInitializrProjectPreview', () => {
     )
 
     expect(requestCount).toBe(2)
+  })
+
+  it('includes AI extra markdown files in preview snapshot when selected', async () => {
+    const zipPayload = await createZipPayload()
+    const fetchMock = async () =>
+      new Response(zipPayload, {
+        status: 200,
+        headers: {
+          'content-type': 'application/zip',
+        },
+      })
+
+    const files = await fetchInitializrProjectPreview({
+      config: baseConfig,
+      selectedDependencyIds: [],
+      selectedAiExtraIds: ['agents-md', 'skill-security-audit'],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'agents',
+      fetch: fetchMock as typeof fetch,
+    })
+
+    const paths = files.map((file) => file.path)
+
+    expect(paths).toContain('AGENTS.md')
+    expect(paths).toContain('.agents/skills/security-audit/SKILL.md')
+  })
+
+  it('includes CLAUDE.md and .claude skills for claude target', async () => {
+    const zipPayload = await createZipPayload()
+    const fetchMock = async () =>
+      new Response(zipPayload, {
+        status: 200,
+        headers: {
+          'content-type': 'application/zip',
+        },
+      })
+
+    const files = await fetchInitializrProjectPreview({
+      config: baseConfig,
+      selectedDependencyIds: [],
+      selectedAiExtraIds: ['agents-md', 'skill-security-audit'],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'claude',
+      fetch: fetchMock as typeof fetch,
+    })
+
+    const paths = files.map((file) => file.path)
+
+    expect(paths).toContain('CLAUDE.md')
+    expect(paths).toContain('.claude/skills/security-audit/SKILL.md')
+    expect(paths).not.toContain('AGENTS.md')
+    expect(paths).not.toContain('.agents/skills/security-audit/SKILL.md')
+  })
+
+  it('duplicates files across both targets when target is both', async () => {
+    const zipPayload = await createZipPayload()
+    const fetchMock = async () =>
+      new Response(zipPayload, {
+        status: 200,
+        headers: {
+          'content-type': 'application/zip',
+        },
+      })
+
+    const files = await fetchInitializrProjectPreview({
+      config: baseConfig,
+      selectedDependencyIds: [],
+      selectedAiExtraIds: ['agents-md', 'skill-security-audit'],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'both',
+      fetch: fetchMock as typeof fetch,
+    })
+
+    const paths = files.map((file) => file.path)
+
+    expect(paths).toContain('AGENTS.md')
+    expect(paths).toContain('CLAUDE.md')
+    expect(paths).toContain('.agents/skills/security-audit/SKILL.md')
+    expect(paths).toContain('.claude/skills/security-audit/SKILL.md')
   })
 })
 

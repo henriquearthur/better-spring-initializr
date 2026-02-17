@@ -1,6 +1,7 @@
 import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
+import { DEFAULT_AGENTS_MD_PREFERENCES } from '@/lib/ai-extras'
 import { DEFAULT_PROJECT_CONFIG } from '@/lib/project-config'
 
 import { WorkspaceFinalizePanel, getBuildToolLabel } from './workspace-finalize-panel'
@@ -11,6 +12,9 @@ describe('WorkspaceFinalizePanel', () => {
       <WorkspaceFinalizePanel
         config={DEFAULT_PROJECT_CONFIG}
         selectedDependencyIds={['web']}
+        selectedAiExtraIds={[]}
+        agentsMdPreferences={DEFAULT_AGENTS_MD_PREFERENCES}
+        aiExtrasTarget="agents"
         createShareUrl={() => 'https://example.test/?share=abc'}
         onPublish={() => undefined}
       />,
@@ -30,6 +34,9 @@ describe('WorkspaceFinalizePanel', () => {
       <WorkspaceFinalizePanel
         config={DEFAULT_PROJECT_CONFIG}
         selectedDependencyIds={[]}
+        selectedAiExtraIds={[]}
+        agentsMdPreferences={DEFAULT_AGENTS_MD_PREFERENCES}
+        aiExtrasTarget="agents"
         createShareUrl={() => 'https://example.test/?share=abc'}
       />,
     )
@@ -42,6 +49,9 @@ describe('WorkspaceFinalizePanel', () => {
       <WorkspaceFinalizePanel
         config={DEFAULT_PROJECT_CONFIG}
         selectedDependencyIds={[]}
+        selectedAiExtraIds={[]}
+        agentsMdPreferences={DEFAULT_AGENTS_MD_PREFERENCES}
+        aiExtrasTarget="agents"
         createShareUrl={() => ''}
         onPublish={() => undefined}
       />,

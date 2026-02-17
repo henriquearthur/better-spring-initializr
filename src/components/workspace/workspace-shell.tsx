@@ -9,11 +9,25 @@ import {
 } from '@/hooks/use-project-config-state'
 import { useProjectPreview } from '@/hooks/use-project-preview'
 import { useShareableConfig } from '@/hooks/use-shareable-config'
+import {
+  normalizeAgentsMdPreferences,
+  normalizeAiExtrasTarget,
+  getAgentsMdPreferenceIdsByGuidance,
+  DEFAULT_AGENTS_MD_PREFERENCES,
+  DEFAULT_AI_EXTRAS_TARGET,
+  normalizeSelectedAiExtraIds,
+  type AgentsMdGuidanceId,
+  type AgentsMdPreferences,
+  type AiExtrasTarget,
+  type AiSkillExtraId,
+  type AiExtraId,
+} from '@/lib/ai-extras'
 import { applyCuratedPreset, resolveCuratedPresets } from '@/lib/curated-presets'
 import { type PreviewFileDiff } from '@/lib/preview-diff'
 import { DEFAULT_PROJECT_CONFIG, type ProjectConfig } from '@/lib/project-config'
 import { resolveDependencyPreviewDiff } from '@/lib/dependency-preview-diff'
 import type { PreviewSnapshotFile } from '@/lib/preview-tree'
+import { AiExtrasPanel } from './ai-extras-panel'
 import { ConfigurationSidebar } from './configuration-sidebar'
 import { DependencyBrowser } from './dependency-browser'
 import { FileContentViewer } from './file-content-viewer'
@@ -62,6 +76,13 @@ export function WorkspaceShell() {
   const [selectedPreviewFilePath, setSelectedPreviewFilePath] = useState<string | null>(null)
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
   const [appliedPresetDependencyIds, setAppliedPresetDependencyIds] = useState<string[]>([])
+  const [selectedAiExtraIds, setSelectedAiExtraIds] = useState<AiExtraId[]>([])
+  const [aiExtrasTarget, setAiExtrasTarget] = useState<AiExtrasTarget>(
+    DEFAULT_AI_EXTRAS_TARGET,
+  )
+  const [agentsMdPreferences, setAgentsMdPreferences] = useState<AgentsMdPreferences>(
+    DEFAULT_AGENTS_MD_PREFERENCES,
+  )
   const [dependenciesOpen, setDependenciesOpen] = useState(true)
   const [publishDialogOpen, setPublishDialogOpen] = useState(false)
   const hasAppliedSharedSnapshotRef = useRef(false)
@@ -74,10 +95,16 @@ export function WorkspaceShell() {
   const dependencyDiffBaselinePreviewQuery = useProjectPreview({
     config: DEFAULT_PROJECT_CONFIG,
     selectedDependencyIds: [],
+    selectedAiExtraIds,
+    agentsMdPreferences,
+    aiExtrasTarget,
   })
   const projectPreviewQuery = useProjectPreview({
     config: projectConfig,
     selectedDependencyIds: dependencyBrowser.selectedDependencyIds,
+    selectedAiExtraIds,
+    agentsMdPreferences,
+    aiExtrasTarget,
   })
 
   const dependencyDiff = useMemo(
@@ -132,6 +159,9 @@ export function WorkspaceShell() {
 
     void setConfig(restoredSnapshot.config, { persistToUrl: false })
     dependencyBrowser.setSelectedDependencyIds(restoredSnapshot.selectedDependencyIds)
+    setSelectedAiExtraIds(restoredSnapshot.selectedAiExtraIds)
+    setAgentsMdPreferences(restoredSnapshot.agentsMdPreferences)
+    setAiExtrasTarget(normalizeAiExtrasTarget(restoredSnapshot.aiExtrasTarget))
 
     clearShareTokenFromUrl()
   }, [
@@ -140,6 +170,9 @@ export function WorkspaceShell() {
     hasShareToken,
     restoredSnapshot,
     setConfig,
+    setAiExtrasTarget,
+    setAgentsMdPreferences,
+    setSelectedAiExtraIds,
   ])
 
   useEffect(() => {
@@ -214,6 +247,56 @@ export function WorkspaceShell() {
     },
     [appliedPresetDependencyIds, dependencyBrowser, resolvedPresets, selectedPresetId],
   )
+  const handleToggleAgentsMdEnabled = useCallback(() => {
+    setSelectedAiExtraIds((currentIds) => {
+      if (currentIds.includes('agents-md')) {
+        return currentIds.filter((currentId) => currentId !== 'agents-md')
+      }
+
+      return normalizeSelectedAiExtraIds([...currentIds, 'agents-md'])
+    })
+  }, [])
+  const handleToggleAiSkill = useCallback((skillId: AiSkillExtraId) => {
+    setSelectedAiExtraIds((currentIds) => {
+      if (currentIds.includes(skillId)) {
+        return normalizeSelectedAiExtraIds(
+          currentIds.filter((currentId) => currentId !== skillId),
+        )
+      }
+
+      return normalizeSelectedAiExtraIds([...currentIds, skillId])
+    })
+  }, [])
+  const handleToggleAgentsMdGuidance = useCallback((guidanceId: AgentsMdGuidanceId) => {
+    const preferenceIds = getAgentsMdPreferenceIdsByGuidance(guidanceId)
+
+    setAgentsMdPreferences((currentPreferences) => {
+      const shouldEnable = preferenceIds.some((preferenceId) => !currentPreferences[preferenceId])
+      const nextPreferences: Partial<AgentsMdPreferences> = { ...currentPreferences }
+
+      for (const preferenceId of preferenceIds) {
+        nextPreferences[preferenceId] = shouldEnable
+      }
+
+      return normalizeAgentsMdPreferences(nextPreferences)
+    })
+  }, [])
+  const handleToggleAgentsMdPreference = useCallback(
+    (preferenceId: keyof AgentsMdPreferences) => {
+      setAgentsMdPreferences((currentPreferences) =>
+        normalizeAgentsMdPreferences({
+          ...currentPreferences,
+          [preferenceId]: !currentPreferences[preferenceId],
+        }),
+      )
+    },
+    [],
+  )
+  const handleChangeAiExtrasTarget = useCallback((nextTarget: AiExtrasTarget) => {
+    setAiExtrasTarget((currentTarget) =>
+      currentTarget === nextTarget ? currentTarget : nextTarget,
+    )
+  }, [])
 
   const metadataUnavailable = metadataQuery.isLoading || metadataQuery.isError || !metadataReady
 
@@ -331,6 +414,16 @@ export function WorkspaceShell() {
                 selectedDependencyCount={dependencyBrowser.selectedDependencyCount}
                 disabled={metadataUnavailable}
               />
+              <AiExtrasPanel
+                selectedAiExtraIds={selectedAiExtraIds}
+                aiExtrasTarget={aiExtrasTarget}
+                agentsMdPreferences={agentsMdPreferences}
+                onChangeAiExtrasTarget={handleChangeAiExtrasTarget}
+                onToggleAgentsMdEnabled={handleToggleAgentsMdEnabled}
+                onToggleAgentsMdGuidance={handleToggleAgentsMdGuidance}
+                onToggleAgentsMdPreference={handleToggleAgentsMdPreference}
+                onToggleAiSkill={handleToggleAiSkill}
+              />
 
               <div>
                 <div>
@@ -366,6 +459,9 @@ export function WorkspaceShell() {
               <WorkspaceFinalizePanel
                 config={projectConfig}
                 selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
+                selectedAiExtraIds={selectedAiExtraIds}
+                agentsMdPreferences={agentsMdPreferences}
+                aiExtrasTarget={aiExtrasTarget}
                 createShareUrl={createShareUrl}
                 onPublish={() => setPublishDialogOpen(true)}
               />
@@ -378,6 +474,9 @@ export function WorkspaceShell() {
           onClose={() => setPublishDialogOpen(false)}
           config={projectConfig}
           selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
+          selectedAiExtraIds={selectedAiExtraIds}
+          agentsMdPreferences={agentsMdPreferences}
+          aiExtrasTarget={aiExtrasTarget}
         />
       </div>
     </div>

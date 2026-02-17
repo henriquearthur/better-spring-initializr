@@ -1,6 +1,7 @@
 import { Check, ExternalLink, Github, LoaderCircle, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { DEFAULT_AGENTS_MD_PREFERENCES, DEFAULT_AI_EXTRAS_TARGET } from '@/lib/ai-extras'
 import type { ProjectConfig } from '@/lib/project-config'
 import {
   getGitHubOAuthSession,
@@ -122,6 +123,9 @@ export function GitHubPushPanel({ config, selectedDependencyIds }: GitHubPushPan
         data: {
           config,
           selectedDependencyIds,
+          selectedAiExtraIds: [],
+          agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+          aiExtrasTarget: DEFAULT_AI_EXTRAS_TARGET,
           owner,
           repositoryName: trimmedRepositoryName,
           visibility,

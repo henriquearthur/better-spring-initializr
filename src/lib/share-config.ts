@@ -1,14 +1,28 @@
+import {
+  normalizeAgentsMdPreferences,
+  normalizeAiExtrasTarget,
+  normalizeSelectedAiExtraIds,
+  type AgentsMdPreferences,
+  type AiExtraId,
+  type AiExtrasTarget,
+} from './ai-extras'
 import { normalizeProjectConfig, type ProjectConfig } from './project-config'
 
 export type ShareConfigSnapshot = {
   config: ProjectConfig
   selectedDependencyIds: string[]
+  selectedAiExtraIds: AiExtraId[]
+  agentsMdPreferences: AgentsMdPreferences
+  aiExtrasTarget: AiExtrasTarget
 }
 
 type ShareConfigV1Payload = {
   v: 1
   config: ProjectConfig
   selectedDependencyIds: string[]
+  selectedAiExtraIds?: string[]
+  agentsMdPreferences?: Partial<AgentsMdPreferences>
+  aiExtrasTarget?: AiExtrasTarget
 }
 
 const CURRENT_SHARE_CONFIG_VERSION = 1
@@ -18,6 +32,9 @@ export function encodeShareConfig(snapshot: ShareConfigSnapshot): string {
     v: CURRENT_SHARE_CONFIG_VERSION,
     config: normalizeProjectConfig(snapshot.config),
     selectedDependencyIds: normalizeSelectedDependencyIds(snapshot.selectedDependencyIds),
+    selectedAiExtraIds: normalizeSelectedAiExtraIds(snapshot.selectedAiExtraIds),
+    agentsMdPreferences: normalizeAgentsMdPreferences(snapshot.agentsMdPreferences),
+    aiExtrasTarget: normalizeAiExtrasTarget(snapshot.aiExtrasTarget),
   } satisfies ShareConfigV1Payload
 
   const encodedJson = new TextEncoder().encode(JSON.stringify(payload))
@@ -59,10 +76,22 @@ export function decodeShareConfig(token: string): ShareConfigSnapshot | null {
       ? parsedPayload.selectedDependencyIds
       : [],
   )
+  const selectedAiExtraIds = normalizeSelectedAiExtraIds(
+    isStringArray(parsedPayload.selectedAiExtraIds) ? parsedPayload.selectedAiExtraIds : [],
+  )
+  const agentsMdPreferences = normalizeAgentsMdPreferences(
+    isObject(parsedPayload.agentsMdPreferences)
+      ? (parsedPayload.agentsMdPreferences as Partial<AgentsMdPreferences>)
+      : undefined,
+  )
+  const aiExtrasTarget = normalizeAiExtrasTarget(parsedPayload.aiExtrasTarget)
 
   return {
     config,
     selectedDependencyIds,
+    selectedAiExtraIds,
+    agentsMdPreferences,
+    aiExtrasTarget,
   }
 }
 

@@ -1,4 +1,7 @@
+import JSZip from 'jszip'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { DEFAULT_AGENTS_MD_PREFERENCES } from '@/lib/ai-extras'
 
 import * as generateClient from '../lib/initializr-generate-client'
 import {
@@ -36,6 +39,9 @@ describe('downloadInitializrProjectFromBff', () => {
     const result = await downloadInitializrProjectFromBff({
       config: configFixture,
       selectedDependencyIds: ['web', 'data-jpa'],
+      selectedAiExtraIds: [],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'agents',
     })
 
     expect(fetchSpy).toHaveBeenCalledTimes(1)
@@ -67,6 +73,9 @@ describe('downloadInitializrProjectFromBff', () => {
     const result = await downloadInitializrProjectFromBff({
       config: configFixture,
       selectedDependencyIds: ['web'],
+      selectedAiExtraIds: [],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'agents',
     })
 
     expect(result).toEqual({
@@ -99,6 +108,9 @@ describe('downloadInitializrProjectFromBff', () => {
         springBootVersion: '3.5.10.RELEASE',
       },
       selectedDependencyIds: ['web'],
+      selectedAiExtraIds: [],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'agents',
     })
 
     expect(fetchSpy).toHaveBeenCalledTimes(2)
@@ -134,6 +146,9 @@ describe('downloadInitializrProjectFromBff', () => {
         springBootVersion: '   ',
       },
       selectedDependencyIds: ['web'],
+      selectedAiExtraIds: [],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'agents',
     })
 
     expect(fetchSpy).toHaveBeenCalledTimes(1)
@@ -147,4 +162,166 @@ describe('downloadInitializrProjectFromBff', () => {
       },
     })
   })
+
+  it('injects AGENTS.md into the generated archive when agents-md extra is selected', async () => {
+    vi.spyOn(generateClient, 'fetchInitializrZip').mockResolvedValue({
+      bytes: await createFixtureArchiveBytes(),
+      contentType: 'application/zip',
+      suggestedFilename: 'demo.zip',
+    })
+
+    const result = await downloadInitializrProjectFromBff({
+      config: configFixture,
+      selectedDependencyIds: ['web'],
+      selectedAiExtraIds: ['agents-md'],
+      agentsMdPreferences: {
+        includeFeatureBranchesGuidance: false,
+        includeConventionalCommitsGuidance: false,
+        includePullRequestsGuidance: false,
+        includeRunRelevantTestsGuidance: false,
+        includeTaskScopeDisciplineGuidance: false,
+      },
+      aiExtrasTarget: 'agents',
+    })
+
+    expect(result.ok).toBe(true)
+
+    if (!result.ok) {
+      throw new Error('Expected successful download response')
+    }
+
+    const archiveFiles = await listArchiveFiles(result.archive.base64)
+
+    expect(archiveFiles).toContain('AGENTS.md')
+    const agentsContent = await readArchiveFileContent(result.archive.base64, 'AGENTS.md')
+    expect(agentsContent).not.toContain(configFixture.artifact)
+    expect(agentsContent).not.toContain('## Git Workflow')
+  })
+
+  it('injects skill markdown when a core-java skill extra is selected', async () => {
+    vi.spyOn(generateClient, 'fetchInitializrZip').mockResolvedValue({
+      bytes: await createFixtureArchiveBytes(),
+      contentType: 'application/zip',
+      suggestedFilename: 'demo.zip',
+    })
+
+    const result = await downloadInitializrProjectFromBff({
+      config: configFixture,
+      selectedDependencyIds: ['web'],
+      selectedAiExtraIds: ['skill-java-code-review'],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'agents',
+    })
+
+    expect(result.ok).toBe(true)
+
+    if (!result.ok) {
+      throw new Error('Expected successful download response')
+    }
+
+    const archiveFiles = await listArchiveFiles(result.archive.base64)
+
+    expect(archiveFiles).toContain('.agents/skills/java-code-review/SKILL.md')
+  })
+
+  it('injects CLAUDE.md and .claude skills when target is claude', async () => {
+    vi.spyOn(generateClient, 'fetchInitializrZip').mockResolvedValue({
+      bytes: await createFixtureArchiveBytes(),
+      contentType: 'application/zip',
+      suggestedFilename: 'demo.zip',
+    })
+
+    const result = await downloadInitializrProjectFromBff({
+      config: configFixture,
+      selectedDependencyIds: ['web'],
+      selectedAiExtraIds: ['agents-md', 'skill-java-code-review'],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'claude',
+    })
+
+    expect(result.ok).toBe(true)
+
+    if (!result.ok) {
+      throw new Error('Expected successful download response')
+    }
+
+    const archiveFiles = await listArchiveFiles(result.archive.base64)
+
+    expect(archiveFiles).toContain('CLAUDE.md')
+    expect(archiveFiles).toContain('.claude/skills/java-code-review/SKILL.md')
+    expect(archiveFiles).not.toContain('AGENTS.md')
+    expect(archiveFiles).not.toContain('.agents/skills/java-code-review/SKILL.md')
+  })
+
+  it('duplicates guidance and skills in both target mode', async () => {
+    vi.spyOn(generateClient, 'fetchInitializrZip').mockResolvedValue({
+      bytes: await createFixtureArchiveBytes(),
+      contentType: 'application/zip',
+      suggestedFilename: 'demo.zip',
+    })
+
+    const result = await downloadInitializrProjectFromBff({
+      config: configFixture,
+      selectedDependencyIds: ['web'],
+      selectedAiExtraIds: ['agents-md', 'skill-java-code-review'],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'both',
+    })
+
+    expect(result.ok).toBe(true)
+
+    if (!result.ok) {
+      throw new Error('Expected successful download response')
+    }
+
+    const archiveFiles = await listArchiveFiles(result.archive.base64)
+
+    expect(archiveFiles).toContain('AGENTS.md')
+    expect(archiveFiles).toContain('CLAUDE.md')
+    expect(archiveFiles).toContain('.agents/skills/java-code-review/SKILL.md')
+    expect(archiveFiles).toContain('.claude/skills/java-code-review/SKILL.md')
+  })
 })
+
+async function createFixtureArchiveBytes(): Promise<Uint8Array> {
+  const zip = new JSZip()
+  zip.file('demo/README.md', '# demo')
+
+  return zip.generateAsync({ type: 'uint8array' })
+}
+
+async function listArchiveFiles(archiveBase64: string): Promise<string[]> {
+  const zip = await JSZip.loadAsync(Buffer.from(archiveBase64, 'base64'))
+
+  return Object.values(zip.files)
+    .filter((entry) => !entry.dir)
+    .map((entry) => normalizeArchivePath(entry.name))
+    .sort((left, right) => left.localeCompare(right))
+}
+
+function normalizeArchivePath(path: string): string {
+  const slashIndex = path.indexOf('/')
+
+  if (slashIndex === -1) {
+    return path
+  }
+
+  return path.slice(slashIndex + 1)
+}
+
+async function readArchiveFileContent(archiveBase64: string, normalizedPath: string): Promise<string> {
+  const zip = await JSZip.loadAsync(Buffer.from(archiveBase64, 'base64'))
+  const matchedEntry = Object.values(zip.files).find((entry) => {
+    if (entry.dir) {
+      return false
+    }
+
+    return normalizeArchivePath(entry.name) === normalizedPath
+  })
+
+  if (!matchedEntry) {
+    throw new Error(`Archive file not found: ${normalizedPath}`)
+  }
+
+  return matchedEntry.async('text')
+}
