@@ -127,7 +127,7 @@ export function PresetLayoutSurface({
                 onClick={() => setDetailsOpen((current) => !current)}
                 className="btn btn-secondary btn-sm h-8 text-[11px]"
               >
-                {detailsOpen ? 'Hide details' : 'Inspect details'}
+                {detailsOpen ? 'Hide details' : 'Details'}
               </button>
             </div>
 
@@ -141,14 +141,7 @@ export function PresetLayoutSurface({
               </div>
             ) : null}
           </>
-        ) : (
-          <div>
-            <p className="text-sm font-semibold">No preset selected</p>
-            <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-              Choose one of the curated presets above to apply dependencies automatically.
-            </p>
-          </div>
-        )}
+        ) : null}
       </div>
     </section>
   )

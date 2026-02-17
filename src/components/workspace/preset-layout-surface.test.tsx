@@ -27,7 +27,7 @@ const availableDependenciesFixture: InitializrDependency[] = [
 ]
 
 describe('PresetLayoutSurface', () => {
-  it('renders hero strip with no preset selected by default', () => {
+  it('renders hero strip without an empty-state card by default', () => {
     const html = renderToString(
       <PresetLayoutSurface
         presets={CURATED_PRESETS}
@@ -40,8 +40,24 @@ describe('PresetLayoutSurface', () => {
     )
 
     expect(html).toContain('data-testid="preset-surface-hero-strip"')
-    expect(html).toContain('No preset selected')
+    expect(html).not.toContain('No preset selected')
     expect(html).not.toContain('Apply preset')
+  })
+
+  it('uses the compact details label for an active preset', () => {
+    const html = renderToString(
+      <PresetLayoutSurface
+        presets={CURATED_PRESETS}
+        selectedPresetId={CURATED_PRESETS[0]?.id ?? null}
+        onSelectPreset={vi.fn()}
+        availableDependencies={availableDependenciesFixture}
+        metadataAvailable
+        selectedDependencyCount={2}
+      />,
+    )
+
+    expect(html).toContain('Details')
+    expect(html).not.toContain('Inspect details')
   })
 
   it('shows a fallback card when no curated presets are available', () => {

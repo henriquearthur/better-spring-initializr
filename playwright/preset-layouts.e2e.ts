@@ -6,7 +6,7 @@ test.describe('Curated preset hero strip', () => {
 
     const surface = page.getByTestId('preset-surface-hero-strip')
     await expect(surface).toBeVisible({ timeout: 20_000 })
-    await expect(surface).toContainText('No preset selected')
+    await expect(surface).not.toContainText('No preset selected')
     await expect(page.getByRole('button', { name: 'Apply preset' })).toHaveCount(0)
   })
 
@@ -40,7 +40,7 @@ test.describe('Curated preset hero strip', () => {
     await expect(dependencyBrowserToggle).not.toContainText('0 selected')
 
     await reactivePresetCard.click()
-    await expect(page.getByTestId('preset-surface-hero-strip')).toContainText('No preset selected')
+    await expect(page.getByTestId('preset-surface-hero-strip')).not.toContainText('No preset selected')
     await expect(dependencyBrowserToggle).toContainText('0 selected')
   })
 })

@@ -7,6 +7,21 @@ import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
 import { ThemeProvider } from '../components/theme/theme-provider'
 import appCss from '../styles/app.css?url'
 
+const THEME_BOOTSTRAP_SCRIPT = `
+(() => {
+  const root = document.documentElement
+  const key = 'better-spring-initializr-theme'
+
+  try {
+    const stored = window.localStorage.getItem(key)
+    const theme = stored === 'light' || stored === 'dark' ? stored : 'dark'
+    root.classList.toggle('dark', theme === 'dark')
+  } catch {
+    root.classList.add('dark')
+  }
+})()
+`
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -57,6 +72,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
         <HeadContent />
       </head>
       <body>

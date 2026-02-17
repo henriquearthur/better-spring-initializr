@@ -1,4 +1,4 @@
-import { ChevronDown, LoaderCircle } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { useInitializrMetadata } from '@/hooks/use-initializr-metadata'
@@ -18,6 +18,7 @@ type ConfigurationSidebarProps = {
   onConfigChange: (nextConfig: ProjectConfig) => void
   onFieldChange: (field: keyof ProjectConfig, value: string) => void
   onResetConfig: () => void
+  showReset: boolean
 }
 
 export function ConfigurationSidebar({
@@ -25,6 +26,7 @@ export function ConfigurationSidebar({
   onConfigChange,
   onFieldChange,
   onResetConfig,
+  showReset,
 }: ConfigurationSidebarProps) {
   const [metadataOpen, setMetadataOpen] = useState(true)
   const [buildSettingsOpen, setBuildSettingsOpen] = useState(false)
@@ -94,13 +96,15 @@ export function ConfigurationSidebar({
           <p className="text-xs text-[var(--muted-foreground)]">
             Configure project metadata and build defaults before preview and generation.
           </p>
-          <button
-            type="button"
-            onClick={onResetConfig}
-            className="btn btn-secondary btn-sm h-7 shrink-0 text-[11px] text-[var(--muted-foreground)]"
-          >
-            Reset
-          </button>
+          {showReset ? (
+            <button
+              type="button"
+              onClick={onResetConfig}
+              className="btn btn-secondary btn-sm h-7 shrink-0 text-[11px] text-[var(--muted-foreground)]"
+            >
+              Reset
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -183,12 +187,7 @@ function MetadataStatusBanner() {
   const metadataQuery = useInitializrMetadata()
 
   if (metadataQuery.isLoading) {
-    return (
-      <div className="flex items-center gap-2 rounded-lg border border-amber-400/80 bg-amber-100 px-3 py-2 text-xs text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
-        <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-        Loading Java and Spring Boot options from the metadata service...
-      </div>
-    )
+    return null
   }
 
   if (metadataQuery.isError) {

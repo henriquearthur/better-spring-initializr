@@ -58,6 +58,11 @@ export function WorkspaceShell() {
   const [dependenciesOpen, setDependenciesOpen] = useState(true)
   const [publishDialogOpen, setPublishDialogOpen] = useState(false)
   const hasAppliedSharedSnapshotRef = useRef(false)
+  const initialSessionConfigRef = useRef<ProjectConfig | null>(null)
+
+  if (initialSessionConfigRef.current === null) {
+    initialSessionConfigRef.current = projectConfig
+  }
 
   const dependencyDiffBaselinePreviewQuery = useProjectPreview({
     config: DEFAULT_PROJECT_CONFIG,
@@ -222,10 +227,9 @@ export function WorkspaceShell() {
   const handleSelectPreviewFile = useCallback((path: string | null) => {
     setSelectedPreviewFilePath(path)
   }, [])
-  const previewPathSegments = useMemo(
-    () => selectedPreviewFile?.path.split('/') ?? [],
-    [selectedPreviewFile],
-  )
+  const resetBaselineConfig =
+    restoredSnapshot?.config ?? initialSessionConfigRef.current ?? projectConfig
+  const hasConfigChanges = !isProjectConfigEqual(projectConfig, resetBaselineConfig)
   const dependencyBrowserContent = (
     <>
       <div className="mt-3 flex justify-end">
@@ -273,7 +277,7 @@ export function WorkspaceShell() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+          <span className="whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
             {dependencyBrowser.selectedDependencyCount} selected
           </span>
           <ChevronDown
@@ -302,6 +306,7 @@ export function WorkspaceShell() {
                 onConfigChange={handleConfigChange}
                 onFieldChange={handleFieldChange}
                 onResetConfig={handleResetConfig}
+                showReset={hasConfigChanges}
               />
               {dependencyBrowserSection}
             </aside>
@@ -317,7 +322,7 @@ export function WorkspaceShell() {
                 disabled={metadataUnavailable}
               />
 
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
                     Main Preview
@@ -327,45 +332,7 @@ export function WorkspaceShell() {
                     {projectConfig.buildTool})
                   </p>
                 </div>
-
-                <div className="rounded-lg border bg-[var(--card)] px-3 py-2 text-xs text-[var(--muted-foreground)]">
-                  {selectedPreviewFile ? (
-                    <div className="space-y-1">
-                      <p>
-                        Selected: <span className="font-mono">{selectedPreviewFile.path}</span> ({selectedPreviewFile.size} bytes)
-                      </p>
-                      <p className="flex flex-wrap items-center gap-1 font-mono text-[11px]">
-                        {previewPathSegments.map((segment, index) => (
-                          <span key={`${segment}-${index}`} className="inline-flex items-center gap-1">
-                            {index > 0 ? (
-                              <span className="text-[var(--muted-foreground)]/60">/</span>
-                            ) : null}
-                            <span>{segment}</span>
-                          </span>
-                        ))}
-                      </p>
-                    </div>
-                  ) : (
-                    <p>Select a file to inspect its path and size.</p>
-                  )}
-                </div>
               </div>
-
-              <WorkspaceOutputActions
-                config={projectConfig}
-                selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
-                createShareUrl={createShareUrl}
-                onPublish={() => setPublishDialogOpen(true)}
-              />
-
-              {dependencyDiff ? (
-                <div className="rounded-lg border bg-[var(--card)] px-3 py-2 text-xs text-[var(--muted-foreground)]">
-                  <p>
-                    Dependency diff: {dependencyDiff.modified.length} modified, {dependencyDiff.added.length} added,{' '}
-                    {dependencyDiff.removed.length} removed files.
-                  </p>
-                </div>
-              ) : null}
 
               <div className={`grid h-[760px] grid-cols-1 gap-4 md:h-[820px] xl:h-[560px] ${previewLayoutClass}`}>
                 <PreviewExplorerPanel
@@ -385,6 +352,13 @@ export function WorkspaceShell() {
                   onRetry={handleRetryPreview}
                 />
               </div>
+
+              <WorkspaceOutputActions
+                config={projectConfig}
+                selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
+                createShareUrl={createShareUrl}
+                onPublish={() => setPublishDialogOpen(true)}
+              />
             </section>
           </main>
         </div>
@@ -404,6 +378,21 @@ function replaceSearchParams(params: URLSearchParams) {
   const queryString = params.toString()
   const nextUrl = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname
   window.history.replaceState({}, '', nextUrl)
+}
+
+function isProjectConfigEqual(left: ProjectConfig, right: ProjectConfig): boolean {
+  return (
+    left.group === right.group &&
+    left.artifact === right.artifact &&
+    left.name === right.name &&
+    left.description === right.description &&
+    left.packageName === right.packageName &&
+    left.javaVersion === right.javaVersion &&
+    left.springBootVersion === right.springBootVersion &&
+    left.buildTool === right.buildTool &&
+    left.language === right.language &&
+    left.packaging === right.packaging
+  )
 }
 
 type PreviewExplorerPanelProps = {
@@ -475,14 +464,10 @@ function DependencyBrowserStatus({
   message,
 }: DependencyBrowserStatusProps) {
   if (isLoading) {
-    return (
-      <div className="mt-3 rounded-lg border border-amber-400/80 bg-amber-100 px-3 py-2 text-xs text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
-        Loading dependency metadata from Spring Initializr...
-      </div>
-    )
+    return null
   }
 
-  if (isError || !metadataReady) {
+  if (isError || (!metadataReady && Boolean(message))) {
     return (
       <div className="mt-3 rounded-lg border border-red-400/80 bg-red-100 px-3 py-2 text-xs text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100">
         {message ?? 'Dependency metadata is unavailable. Dependency selection is disabled.'}

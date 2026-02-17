@@ -137,13 +137,6 @@ export function DependencyBrowser({
         </div>
       ) : null}
 
-      {!hasMetadata ? (
-        <EmptyState
-          title="Dependency metadata not ready"
-          description="Dependencies will appear here once metadata is available from Spring Initializr."
-        />
-      ) : null}
-
       {hasMetadata && !hasAnyDependencies ? (
         <EmptyState
           title="No dependencies match your search"
