@@ -183,7 +183,7 @@ export function GitHubAuthPanel() {
     }
 
     return (
-      <span className="rounded-full border border-emerald-400/60 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-200">
+      <span className="rounded-full border border-emerald-400/60 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-900 dark:text-emerald-200">
         {session.user.login} · {organizationLabel}
       </span>
     )
@@ -225,7 +225,7 @@ export function GitHubAuthPanel() {
 
       {feedback ? (
         <div
-          className={`mt-3 flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${feedback.tone === 'success' ? 'border-emerald-300/70 bg-emerald-50/70 text-emerald-900 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100' : 'border-red-300/70 bg-red-50/70 text-red-900 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'}`}
+          className={`mt-3 flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${feedback.tone === 'success' ? 'border-emerald-400/80 bg-emerald-100 text-emerald-950 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100' : 'border-red-400/80 bg-red-100 text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'}`}
         >
           {feedback.tone === 'success' ? (
             <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />

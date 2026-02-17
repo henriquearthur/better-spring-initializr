@@ -244,7 +244,7 @@ export function GitHubPushPanel({ config, selectedDependencyIds }: GitHubPushPan
 
       {feedback ? (
         <div
-          className={`mt-3 rounded-lg border px-3 py-2 text-xs ${feedback.tone === 'success' ? 'border-emerald-300/70 bg-emerald-50/70 text-emerald-900 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100' : 'border-red-300/70 bg-red-50/70 text-red-900 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'}`}
+          className={`mt-3 rounded-lg border px-3 py-2 text-xs ${feedback.tone === 'success' ? 'border-emerald-400/80 bg-emerald-100 text-emerald-950 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100' : 'border-red-400/80 bg-red-100 text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'}`}
         >
           <p className="flex items-start gap-2">
             {feedback.tone === 'success' ? (

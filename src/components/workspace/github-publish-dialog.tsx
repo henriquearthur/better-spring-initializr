@@ -353,7 +353,7 @@ export function GitHubPublishDialog({
 
         {phase === 'done' ? (
           <div className="space-y-4">
-            <div className="flex items-start gap-2 rounded-lg border border-emerald-300/70 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100">
+            <div className="flex items-start gap-2 rounded-lg border border-emerald-400/80 bg-emerald-100 px-3 py-2 text-xs text-emerald-950 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100">
               <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <p>Repository {resultFullName} created and initial commit pushed.</p>
             </div>
@@ -393,7 +393,7 @@ export function GitHubPublishDialog({
 
         {feedback ? (
           <div
-            className={`mt-4 flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${feedback.tone === 'success' ? 'border-emerald-300/70 bg-emerald-50/70 text-emerald-900 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100' : 'border-red-300/70 bg-red-50/70 text-red-900 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'}`}
+            className={`mt-4 flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${feedback.tone === 'success' ? 'border-emerald-400/80 bg-emerald-100 text-emerald-950 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-100' : 'border-red-400/80 bg-red-100 text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'}`}
           >
             {feedback.tone === 'success' ? (
               <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />

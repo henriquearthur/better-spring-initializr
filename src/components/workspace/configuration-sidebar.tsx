@@ -184,7 +184,7 @@ function MetadataStatusBanner() {
 
   if (metadataQuery.isLoading) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-amber-300/70 bg-amber-50/70 px-3 py-2 text-xs text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
+      <div className="flex items-center gap-2 rounded-lg border border-amber-400/80 bg-amber-100 px-3 py-2 text-xs text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
         <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
         Loading Java and Spring Boot options from the metadata service...
       </div>
@@ -193,7 +193,7 @@ function MetadataStatusBanner() {
 
   if (metadataQuery.isError) {
     return (
-      <div className="rounded-lg border border-red-300/70 bg-red-50/70 px-3 py-2 text-xs text-red-900 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100">
+      <div className="rounded-lg border border-red-400/80 bg-red-100 px-3 py-2 text-xs text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100">
         Metadata is unavailable right now. Build version selects are temporarily disabled.
       </div>
     )
@@ -201,7 +201,7 @@ function MetadataStatusBanner() {
 
   if (!metadataQuery.data?.ok) {
     return (
-      <div className="rounded-lg border border-red-300/70 bg-red-50/70 px-3 py-2 text-xs text-red-900 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100">
+      <div className="rounded-lg border border-red-400/80 bg-red-100 px-3 py-2 text-xs text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100">
         {metadataQuery.data?.error.message ??
           'Metadata is unavailable right now. Build version selects are temporarily disabled.'}
       </div>

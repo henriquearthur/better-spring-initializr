@@ -54,6 +54,7 @@ export function WorkspaceShell() {
   } = useShareableConfig()
   const [selectedPreviewFilePath, setSelectedPreviewFilePath] = useState<string | null>(null)
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
+  const [appliedPresetDependencyIds, setAppliedPresetDependencyIds] = useState<string[]>([])
   const [dependenciesOpen, setDependenciesOpen] = useState(true)
   const [publishDialogOpen, setPublishDialogOpen] = useState(false)
   const hasAppliedSharedSnapshotRef = useRef(false)
@@ -165,17 +166,38 @@ export function WorkspaceShell() {
 
   const handleSelectPreset = useCallback(
     (presetId: string) => {
-      setSelectedPresetId(presetId)
+      const currentSelectedDependencyIds = dependencyBrowser.selectedDependencyIds
+      const appliedDependencySet = new Set(appliedPresetDependencyIds)
+      const baseDependencySelection =
+        appliedDependencySet.size === 0
+          ? currentSelectedDependencyIds
+          : currentSelectedDependencyIds.filter(
+              (dependencyId) => !appliedDependencySet.has(dependencyId),
+            )
 
-      const result = applyCuratedPreset(dependencyBrowser.selectedDependencyIds, presetId)
+      if (selectedPresetId === presetId) {
+        setSelectedPresetId(null)
+        setAppliedPresetDependencyIds([])
+        dependencyBrowser.setSelectedDependencyIds(baseDependencySelection)
+        return
+      }
+
+      const result = applyCuratedPreset(baseDependencySelection, presetId)
 
       if (!result.ok) {
         return
       }
 
+      const baseDependencySet = new Set(baseDependencySelection)
+      const nextAppliedPresetDependencyIds = result.nextSelectedDependencyIds.filter(
+        (dependencyId) => !baseDependencySet.has(dependencyId),
+      )
+
+      setSelectedPresetId(presetId)
+      setAppliedPresetDependencyIds(nextAppliedPresetDependencyIds)
       dependencyBrowser.setSelectedDependencyIds(result.nextSelectedDependencyIds)
     },
-    [dependencyBrowser],
+    [appliedPresetDependencyIds, dependencyBrowser, selectedPresetId],
   )
 
   const metadataUnavailable = metadataQuery.isLoading || metadataQuery.isError || !metadataReady
@@ -345,7 +367,7 @@ export function WorkspaceShell() {
                 </div>
               ) : null}
 
-              <div className={`grid h-[420px] grid-cols-1 gap-4 md:h-[560px] ${previewLayoutClass}`}>
+              <div className={`grid h-[760px] grid-cols-1 gap-4 md:h-[820px] xl:h-[560px] ${previewLayoutClass}`}>
                 <PreviewExplorerPanel
                   files={previewFiles}
                   isLoading={projectPreviewQuery.isPending}
@@ -454,7 +476,7 @@ function DependencyBrowserStatus({
 }: DependencyBrowserStatusProps) {
   if (isLoading) {
     return (
-      <div className="mt-3 rounded-lg border border-amber-300/70 bg-amber-50/70 px-3 py-2 text-xs text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
+      <div className="mt-3 rounded-lg border border-amber-400/80 bg-amber-100 px-3 py-2 text-xs text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
         Loading dependency metadata from Spring Initializr...
       </div>
     )
@@ -462,7 +484,7 @@ function DependencyBrowserStatus({
 
   if (isError || !metadataReady) {
     return (
-      <div className="mt-3 rounded-lg border border-red-300/70 bg-red-50/70 px-3 py-2 text-xs text-red-900 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100">
+      <div className="mt-3 rounded-lg border border-red-400/80 bg-red-100 px-3 py-2 text-xs text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100">
         {message ?? 'Dependency metadata is unavailable. Dependency selection is disabled.'}
       </div>
     )

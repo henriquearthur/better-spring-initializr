@@ -59,7 +59,7 @@ export function PresetBrowser({
                   <p className="mt-1 text-xs text-[var(--muted-foreground)]">{preset.intent}</p>
                 </div>
 
-                <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+                <span className="rounded-full border px-2 py-0.5 text-[11px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
                   {preset.dependencyIds.length} deps
                 </span>
               </div>
@@ -68,7 +68,7 @@ export function PresetBrowser({
                 {preset.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300"
+                    className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-900 dark:text-emerald-300"
                   >
                     {tag}
                   </span>
@@ -93,7 +93,7 @@ export function PresetBrowser({
                             <span className="ml-1 text-[var(--muted-foreground)]">({dependencyId})</span>
                           </span>
                           {metadataAvailable && !metadataDependency ? (
-                            <span className="rounded-full border border-amber-400/60 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-300">
+                            <span className="rounded-full border border-amber-400/60 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-950 dark:text-amber-300">
                               Not in metadata
                             </span>
                           ) : null}
@@ -103,7 +103,7 @@ export function PresetBrowser({
                   </ul>
 
                   {missingDependencyIds.length > 0 ? (
-                    <p className="mt-2 rounded-md border border-amber-300/70 bg-amber-50/70 px-2.5 py-2 text-[11px] text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
+                    <p className="mt-2 rounded-md border border-amber-400/80 bg-amber-100 px-2.5 py-2 text-[11px] text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
                       Compatibility note: {missingDependencyIds.length} preset dependency
                       {missingDependencyIds.length > 1 ? 'ies are' : ' is'} unavailable in current
                       Spring Initializr metadata and may not be selectable.

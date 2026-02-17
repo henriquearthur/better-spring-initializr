@@ -108,7 +108,7 @@ export function PreviewFileTree({
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search by name or path"
-              className="h-full w-full border-0 bg-transparent px-2 text-sm outline-none placeholder:text-[var(--muted-foreground)]"
+              className="h-full min-w-0 flex-1 border-0 bg-transparent px-2 text-sm outline-none placeholder:text-[var(--muted-foreground)]"
             />
             {searchTerm ? (
               <button
@@ -231,7 +231,7 @@ type StatusPanelProps = {
 function StatusPanel({ message, tone, onRetry }: StatusPanelProps) {
   const palette =
     tone === 'error'
-      ? 'border-red-300/70 bg-red-50/70 text-red-900 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'
+      ? 'border-red-400/80 bg-red-100 text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'
       : 'border-dashed text-[var(--muted-foreground)]'
 
   return (

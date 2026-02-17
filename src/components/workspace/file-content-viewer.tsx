@@ -129,7 +129,7 @@ function ContentPanel({ file, diff, preview, onRetry }: ContentPanelProps) {
         <footer
           className={`border-t px-3 py-2 text-xs ${
             footerTone === 'warning'
-              ? 'bg-amber-50/80 text-amber-900 dark:bg-amber-400/10 dark:text-amber-100'
+              ? 'bg-amber-100 text-amber-950 dark:bg-amber-400/10 dark:text-amber-100'
               : 'bg-[var(--muted)]/60 text-[var(--muted-foreground)]'
           }`}
         >
@@ -241,7 +241,7 @@ function CurrentLineRow({ lineNumber, added, plainText, tokens }: CurrentLineRow
       <span
         className={`sticky left-0 z-10 h-full border-r px-2 text-right text-xs ${
           added
-            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+            ? 'bg-emerald-500/10 text-emerald-900 dark:text-emerald-300'
             : 'bg-[var(--card)] text-[var(--muted-foreground)]'
         }`}
       >
@@ -360,9 +360,9 @@ type ViewerStateProps = {
 function ViewerState({ message, tone, onRetry }: ViewerStateProps) {
   const palette =
     tone === 'warning'
-      ? 'border-amber-300/70 bg-amber-50/70 text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100'
+      ? 'border-amber-400/80 bg-amber-100 text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100'
       : tone === 'error'
-        ? 'border-red-300/70 bg-red-50/70 text-red-900 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'
+        ? 'border-red-400/80 bg-red-100 text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100'
         : 'border-dashed text-[var(--muted-foreground)]'
 
   return (

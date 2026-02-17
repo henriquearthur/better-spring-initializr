@@ -68,16 +68,16 @@ export function PresetLayoutSurface({
 
       <div className="relative z-10 flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <p className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-200">
+          <p className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-900 dark:text-emerald-200">
             <LayoutPanelTop className="h-3.5 w-3.5" />
             Curated Starter Lane
           </p>
           <p className="text-sm font-semibold">Start with a production-ready blueprint</p>
           <p className="text-xs text-[var(--muted-foreground)]">
-            Click a preset to apply its dependencies automatically.
+            Click a preset to apply dependencies, and click it again to deselect.
           </p>
         </div>
-        <span className="rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+        <span className="rounded-full border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
           {selectedDependencyCount} selected
         </span>
       </div>
@@ -96,7 +96,7 @@ export function PresetLayoutSurface({
             >
               <p className="text-sm font-semibold">{preset.name}</p>
               <p className="mt-1 text-xs text-[var(--muted-foreground)]">{preset.intent}</p>
-              <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+              <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
                 {preset.dependencyIds.length} dependencies
               </p>
             </button>
@@ -115,7 +115,7 @@ export function PresetLayoutSurface({
                   {activePreset.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-200"
+                      className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-900 dark:text-emerald-200"
                     >
                       {tag}
                     </span>
@@ -188,7 +188,7 @@ function PresetDependencyList({
       </ul>
 
       {missingDependencyIds.length > 0 ? (
-        <p className="mt-2 rounded-md border border-amber-300/70 bg-amber-50/70 px-2.5 py-2 text-[11px] text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
+        <p className="mt-2 rounded-md border border-amber-400/80 bg-amber-100 px-2.5 py-2 text-[11px] text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100">
           {missingDependencyIds.length} dependencies are unavailable in current metadata.
         </p>
       ) : null}

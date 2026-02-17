@@ -22,4 +22,25 @@ test.describe('Curated preset hero strip', () => {
 
     await expect(dependencyBrowserToggle).not.toContainText('0 selected')
   })
+
+  test('clicking the selected preset again de-selects it and removes dependencies it applied', async ({ page }) => {
+    await page.goto('/')
+
+    const reactivePresetCard = page.getByRole('button', {
+      name: /Reactive Microservice/i,
+    })
+    const dependencyBrowserToggle = page.getByRole('button', {
+      name: /Dependency Browser/i,
+    })
+    await expect(reactivePresetCard).toBeVisible({ timeout: 20_000 })
+    await expect(dependencyBrowserToggle).toContainText('0 selected')
+
+    await reactivePresetCard.click()
+    await expect(page.getByTestId('preset-surface-hero-strip')).not.toContainText('No preset selected')
+    await expect(dependencyBrowserToggle).not.toContainText('0 selected')
+
+    await reactivePresetCard.click()
+    await expect(page.getByTestId('preset-surface-hero-strip')).toContainText('No preset selected')
+    await expect(dependencyBrowserToggle).toContainText('0 selected')
+  })
 })
