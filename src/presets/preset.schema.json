@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://better-spring-initializr.dev/schemas/preset.schema.json",
+  "title": "Better Spring Initializr Curated Preset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "intent",
+    "tags",
+    "dependencyIds",
+    "sortOrder"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "intent": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "dependencyIds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "sortOrder": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "optionalDependencyResolvers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/optionalDependencyResolver"
+      }
+    }
+  },
+  "$defs": {
+    "optionalDependencyResolver": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "candidates"],
+      "properties": {
+        "strategy": {
+          "const": "first-available"
+        },
+        "candidates": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "fallbackNamePattern": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

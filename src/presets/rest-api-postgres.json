@@ -1,0 +1,28 @@
+{
+  "id": "rest-api-postgres",
+  "name": "REST API + PostgreSQL",
+  "intent": "Bootstrap a production-ready REST API with persistence and validation.",
+  "tags": ["REST", "PostgreSQL", "Validation"],
+  "dependencyIds": [
+    "web",
+    "validation",
+    "data-jpa",
+    "postgresql",
+    "flyway",
+    "actuator",
+    "devtools"
+  ],
+  "sortOrder": 10,
+  "optionalDependencyResolvers": [
+    {
+      "strategy": "first-available",
+      "candidates": [
+        "springdoc-openapi-starter-webmvc-ui",
+        "springdoc-openapi",
+        "openapi",
+        "swagger"
+      ],
+      "fallbackNamePattern": "openapi|swagger"
+    }
+  ]
+}

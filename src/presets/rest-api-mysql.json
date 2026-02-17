@@ -1,0 +1,16 @@
+{
+  "id": "rest-api-mysql",
+  "name": "REST API + MySQL",
+  "intent": "Ship a production-ready REST API backed by MySQL with schema migrations.",
+  "tags": ["REST", "MySQL", "Validation"],
+  "dependencyIds": [
+    "web",
+    "validation",
+    "data-jpa",
+    "mysql",
+    "flyway",
+    "actuator",
+    "devtools"
+  ],
+  "sortOrder": 20
+}

@@ -1,0 +1,8 @@
+{
+  "id": "event-driven-rabbitmq",
+  "name": "Event-Driven RabbitMQ",
+  "intent": "Build asynchronous messaging flows with Spring Cloud Stream and RabbitMQ.",
+  "tags": ["Event-Driven", "RabbitMQ", "Cloud Stream"],
+  "dependencyIds": ["cloud-stream", "amqp", "actuator", "devtools"],
+  "sortOrder": 50
+}
