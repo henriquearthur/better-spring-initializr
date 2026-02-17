@@ -1,0 +1,8 @@
+{
+  "id": "api-gateway-reactive",
+  "name": "API Gateway Reactive",
+  "intent": "Bootstrap a reactive edge gateway for routing, filters, and observability.",
+  "tags": ["Gateway", "Reactive", "Cloud"],
+  "dependencyIds": ["cloud-gateway-reactive", "actuator", "devtools"],
+  "sortOrder": 60
+}

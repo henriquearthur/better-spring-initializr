@@ -8,6 +8,17 @@ export type CuratedPreset = {
   dependencyIds: string[]
 }
 
+type CuratedPresetOptionalDependencyResolver = {
+  strategy: 'first-available'
+  candidates: string[]
+  fallbackNamePattern?: string
+}
+
+export type CuratedPresetSource = CuratedPreset & {
+  sortOrder: number
+  optionalDependencyResolvers?: CuratedPresetOptionalDependencyResolver[]
+}
+
 export type ApplyCuratedPresetResult =
   | {
       ok: true
@@ -20,98 +31,41 @@ export type ApplyCuratedPresetResult =
       nextSelectedDependencyIds: string[]
     }
 
-export const CURATED_PRESETS: CuratedPreset[] = [
-  {
-    id: 'rest-api-postgres',
-    name: 'REST API + PostgreSQL',
-    intent: 'Bootstrap a production-ready REST API with persistence and validation.',
-    tags: ['REST', 'PostgreSQL', 'Validation'],
-    dependencyIds: [
-      'web',
-      'validation',
-      'data-jpa',
-      'postgresql',
-      'flyway',
-      'actuator',
-      'devtools',
-    ],
-  },
-  {
-    id: 'rest-api-mysql',
-    name: 'REST API + MySQL',
-    intent: 'Ship a production-ready REST API backed by MySQL with schema migrations.',
-    tags: ['REST', 'MySQL', 'Validation'],
-    dependencyIds: [
-      'web',
-      'validation',
-      'data-jpa',
-      'mysql',
-      'flyway',
-      'actuator',
-      'devtools',
-    ],
-  },
-  {
-    id: 'secure-rest-api',
-    name: 'Secure REST API',
-    intent: 'Start a JWT-protected REST API with Spring Security and resource server support.',
-    tags: ['REST', 'Security', 'JWT'],
-    dependencyIds: [
-      'web',
-      'validation',
-      'security',
-      'oauth2-resource-server',
-      'actuator',
-      'devtools',
-    ],
-  },
-  {
-    id: 'event-driven-kafka',
-    name: 'Event-Driven Kafka',
-    intent: 'Start an event-driven service with Spring Cloud Stream and Kafka bindings.',
-    tags: ['Event-Driven', 'Kafka', 'Cloud Stream'],
-    dependencyIds: ['cloud-stream', 'kafka', 'actuator', 'devtools'],
-  },
-  {
-    id: 'event-driven-rabbitmq',
-    name: 'Event-Driven RabbitMQ',
-    intent: 'Build asynchronous messaging flows with Spring Cloud Stream and RabbitMQ.',
-    tags: ['Event-Driven', 'RabbitMQ', 'Cloud Stream'],
-    dependencyIds: ['cloud-stream', 'amqp', 'actuator', 'devtools'],
-  },
-  {
-    id: 'api-gateway-reactive',
-    name: 'API Gateway Reactive',
-    intent: 'Bootstrap a reactive edge gateway for routing, filters, and observability.',
-    tags: ['Gateway', 'Reactive', 'Cloud'],
-    dependencyIds: ['cloud-gateway-reactive', 'actuator', 'devtools'],
-  },
-]
+const PRESET_MODULES = import.meta.glob('../presets/*.json', {
+  eager: true,
+  import: 'default',
+}) as Record<string, unknown>
 
-const SWAGGER_DEPENDENCY_ID_CANDIDATES = [
-  'springdoc-openapi-starter-webmvc-ui',
-  'springdoc-openapi',
-  'openapi',
-  'swagger',
-]
+const CURATED_PRESET_SOURCES = loadCuratedPresetSourcesFromModules(PRESET_MODULES)
+
+export const CURATED_PRESETS: CuratedPreset[] = CURATED_PRESET_SOURCES.map((presetSource) =>
+  toCuratedPreset(presetSource),
+)
 
 export function resolveCuratedPresets(
   availableDependencies: InitializrDependency[],
 ): CuratedPreset[] {
-  const swaggerDependencyId = resolveSwaggerDependencyId(availableDependencies)
+  const normalizedDependencies = availableDependencies.map((dependency) => ({
+    ...dependency,
+    id: dependency.id.trim(),
+  }))
+  const dependencyById = new Map(
+    normalizedDependencies.map((dependency) => [dependency.id, dependency]),
+  )
 
-  if (!swaggerDependencyId) {
-    return CURATED_PRESETS
-  }
-
-  return CURATED_PRESETS.map((preset) => {
-    if (preset.id !== 'rest-api-postgres') {
-      return preset
-    }
+  return CURATED_PRESET_SOURCES.map((presetSource) => {
+    const optionalDependencyIds = resolveOptionalDependencyIds(
+      presetSource.optionalDependencyResolvers,
+      normalizedDependencies,
+      dependencyById,
+    )
 
     return {
-      ...preset,
-      dependencyIds: normalizeDependencyIds([...preset.dependencyIds, swaggerDependencyId]),
+      ...toCuratedPreset(presetSource),
+      dependencyIds: normalizeDependencyIds([
+        ...presetSource.dependencyIds,
+        ...optionalDependencyIds,
+      ]),
     }
   })
 }
@@ -154,26 +108,254 @@ export function applyCuratedPreset(
   }
 }
 
-function normalizeDependencyIds(dependencyIds: string[]): string[] {
-  return Array.from(new Set(dependencyIds.map((dependencyId) => dependencyId.trim()).filter(Boolean)))
-}
-
-function resolveSwaggerDependencyId(
-  availableDependencies: InitializrDependency[],
-): string | null {
-  const dependencyById = new Map(
-    availableDependencies.map((dependency) => [dependency.id.trim(), dependency]),
+export function loadCuratedPresetSourcesFromModules(
+  presetModules: Record<string, unknown>,
+): CuratedPresetSource[] {
+  const moduleEntries = Object.entries(presetModules).filter(
+    ([filePath]) => !filePath.endsWith('/preset.schema.json'),
   )
 
-  for (const candidateId of SWAGGER_DEPENDENCY_ID_CANDIDATES) {
-    if (dependencyById.has(candidateId)) {
-      return candidateId
+  if (moduleEntries.length === 0) {
+    throw new Error('Curated preset catalog is empty. Add JSON files under src/presets/.')
+  }
+
+  const normalizedSources = moduleEntries
+    .sort(([leftPath], [rightPath]) => leftPath.localeCompare(rightPath))
+    .map(([path, value]) => normalizeCuratedPresetSource(path, value))
+
+  const seenPresetIds = new Set<string>()
+
+  for (const presetSource of normalizedSources) {
+    if (seenPresetIds.has(presetSource.id)) {
+      throw new Error(`Duplicate curated preset id "${presetSource.id}".`)
+    }
+
+    seenPresetIds.add(presetSource.id)
+  }
+
+  return normalizedSources.sort((left, right) => {
+    if (left.sortOrder !== right.sortOrder) {
+      return left.sortOrder - right.sortOrder
+    }
+
+    return left.id.localeCompare(right.id)
+  })
+}
+
+function toCuratedPreset(presetSource: CuratedPresetSource): CuratedPreset {
+  return {
+    id: presetSource.id,
+    name: presetSource.name,
+    intent: presetSource.intent,
+    tags: [...presetSource.tags],
+    dependencyIds: [...presetSource.dependencyIds],
+  }
+}
+
+function normalizeCuratedPresetSource(
+  filePath: string,
+  value: unknown,
+): CuratedPresetSource {
+  const source = asObject(value, filePath)
+  assertAllowedKeys(
+    source,
+    [
+      '$schema',
+      'id',
+      'name',
+      'intent',
+      'tags',
+      'dependencyIds',
+      'sortOrder',
+      'optionalDependencyResolvers',
+    ],
+    filePath,
+  )
+
+  const id = normalizeNonEmptyString(source.id, `${filePath}: id`)
+  const name = normalizeNonEmptyString(source.name, `${filePath}: name`)
+  const intent = normalizeNonEmptyString(source.intent, `${filePath}: intent`)
+  const tags = normalizeNonEmptyStringArray(source.tags, `${filePath}: tags`)
+  const dependencyIds = normalizeNonEmptyStringArray(
+    source.dependencyIds,
+    `${filePath}: dependencyIds`,
+  )
+  const sortOrder = normalizeNonNegativeInteger(source.sortOrder, `${filePath}: sortOrder`)
+  const optionalDependencyResolvers = normalizeOptionalDependencyResolvers(
+    source.optionalDependencyResolvers,
+    `${filePath}: optionalDependencyResolvers`,
+  )
+
+  return {
+    id,
+    name,
+    intent,
+    tags,
+    dependencyIds,
+    sortOrder,
+    optionalDependencyResolvers,
+  }
+}
+
+function normalizeOptionalDependencyResolvers(
+  value: unknown,
+  context: string,
+): CuratedPresetOptionalDependencyResolver[] | undefined {
+  if (value === undefined) {
+    return undefined
+  }
+
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error(`${context} must be a non-empty array when provided.`)
+  }
+
+  return value.map((entry, index) =>
+    normalizeOptionalDependencyResolver(entry, `${context}[${index}]`),
+  )
+}
+
+function normalizeOptionalDependencyResolver(
+  value: unknown,
+  context: string,
+): CuratedPresetOptionalDependencyResolver {
+  const resolver = asObject(value, context)
+  assertAllowedKeys(resolver, ['strategy', 'candidates', 'fallbackNamePattern'], context)
+
+  if (resolver.strategy !== 'first-available') {
+    throw new Error(`${context}: strategy must be "first-available".`)
+  }
+
+  const candidates = normalizeNonEmptyStringArray(resolver.candidates, `${context}: candidates`)
+  const fallbackNamePattern =
+    resolver.fallbackNamePattern === undefined
+      ? undefined
+      : normalizeNonEmptyString(resolver.fallbackNamePattern, `${context}: fallbackNamePattern`)
+
+  if (fallbackNamePattern) {
+    try {
+      new RegExp(fallbackNamePattern, 'i')
+    } catch {
+      throw new Error(`${context}: fallbackNamePattern must be a valid regular expression.`)
     }
   }
 
-  const dependencyWithSwagger = availableDependencies.find((dependency) =>
-    /openapi|swagger/i.test(dependency.name),
+  return {
+    strategy: 'first-available',
+    candidates,
+    fallbackNamePattern,
+  }
+}
+
+function resolveOptionalDependencyIds(
+  optionalDependencyResolvers: CuratedPresetOptionalDependencyResolver[] | undefined,
+  availableDependencies: InitializrDependency[],
+  dependencyById: Map<string, InitializrDependency>,
+): string[] {
+  if (!optionalDependencyResolvers || optionalDependencyResolvers.length === 0) {
+    return []
+  }
+
+  const resolvedDependencyIds: string[] = []
+
+  for (const resolver of optionalDependencyResolvers) {
+    if (resolver.strategy !== 'first-available') {
+      continue
+    }
+
+    const candidateId = resolver.candidates.find((candidate) =>
+      dependencyById.has(candidate),
+    )
+
+    if (candidateId) {
+      resolvedDependencyIds.push(candidateId)
+      continue
+    }
+
+    if (!resolver.fallbackNamePattern) {
+      continue
+    }
+
+    const fallbackPattern = new RegExp(resolver.fallbackNamePattern, 'i')
+    const fallbackByName = availableDependencies.find((dependency) =>
+      fallbackPattern.test(dependency.name),
+    )
+
+    if (fallbackByName) {
+      resolvedDependencyIds.push(fallbackByName.id.trim())
+    }
+  }
+
+  return normalizeDependencyIds(resolvedDependencyIds)
+}
+
+function normalizeDependencyIds(dependencyIds: string[]): string[] {
+  return Array.from(
+    new Set(dependencyIds.map((dependencyId) => dependencyId.trim()).filter(Boolean)),
+  )
+}
+
+function normalizeNonEmptyString(value: unknown, context: string): string {
+  if (typeof value !== 'string') {
+    throw new Error(`${context} must be a string.`)
+  }
+
+  const normalized = value.trim()
+
+  if (!normalized) {
+    throw new Error(`${context} must be a non-empty string.`)
+  }
+
+  return normalized
+}
+
+function normalizeNonEmptyStringArray(value: unknown, context: string): string[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`${context} must be an array.`)
+  }
+
+  const normalized = normalizeDependencyIds(
+    value.map((entry) => {
+      if (typeof entry !== 'string') {
+        throw new Error(`${context} must contain only strings.`)
+      }
+
+      return entry
+    }),
   )
 
-  return dependencyWithSwagger?.id ?? null
+  if (normalized.length === 0) {
+    throw new Error(`${context} must contain at least one non-empty value.`)
+  }
+
+  return normalized
+}
+
+function normalizeNonNegativeInteger(value: unknown, context: string): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+    throw new Error(`${context} must be a non-negative integer.`)
+  }
+
+  return value
+}
+
+function asObject(value: unknown, context: string): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Error(`${context} must be an object.`)
+  }
+
+  return value as Record<string, unknown>
+}
+
+function assertAllowedKeys(
+  value: Record<string, unknown>,
+  allowedKeys: string[],
+  context: string,
+) {
+  const allowedKeySet = new Set(allowedKeys)
+
+  for (const key of Object.keys(value)) {
+    if (!allowedKeySet.has(key)) {
+      throw new Error(`${context} contains unsupported key "${key}".`)
+    }
+  }
 }

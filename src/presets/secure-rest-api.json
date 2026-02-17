@@ -1,0 +1,15 @@
+{
+  "id": "secure-rest-api",
+  "name": "Secure REST API",
+  "intent": "Start a JWT-protected REST API with Spring Security and resource server support.",
+  "tags": ["REST", "Security", "JWT"],
+  "dependencyIds": [
+    "web",
+    "validation",
+    "security",
+    "oauth2-resource-server",
+    "actuator",
+    "devtools"
+  ],
+  "sortOrder": 30
+}

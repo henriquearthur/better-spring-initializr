@@ -45,3 +45,17 @@ Then open: `http://localhost:3000`
 
 This project is open source and evolving.  
 If you find an issue or have a feature idea, open an issue in this repository.
+
+## Contributing to Presets
+
+Curated presets are data-driven and live in:
+
+- `src/presets`
+
+How to contribute:
+
+1. Add or edit a `*.json` file in `src/presets`.
+2. Follow `src/presets/preset.schema.json`.
+3. Keep ids unique and kebab-case.
+4. Use `sortOrder` to control card order in the UI.
+5. Open a pull request with your changes.

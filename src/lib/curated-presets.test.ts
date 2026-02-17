@@ -5,6 +5,7 @@ import {
   CURATED_PRESETS,
   applyCuratedPreset,
   getCuratedPresetById,
+  loadCuratedPresetSourcesFromModules,
   resolveCuratedPresets,
 } from './curated-presets'
 
@@ -40,6 +41,84 @@ describe('curated preset catalog', () => {
   it('finds preset by id and returns null for unknown id', () => {
     expect(getCuratedPresetById('rest-api-postgres')?.name).toBe('REST API + PostgreSQL')
     expect(getCuratedPresetById('missing-preset')).toBeNull()
+  })
+})
+
+describe('loadCuratedPresetSourcesFromModules', () => {
+  it('sorts curated presets by sortOrder and id', () => {
+    const loaded = loadCuratedPresetSourcesFromModules({
+      '../presets/zeta.json': {
+        id: 'zeta',
+        name: 'Zeta',
+        intent: 'Zeta intent',
+        tags: ['A'],
+        dependencyIds: ['web'],
+        sortOrder: 30,
+      },
+      '../presets/alpha.json': {
+        id: 'alpha',
+        name: 'Alpha',
+        intent: 'Alpha intent',
+        tags: ['B'],
+        dependencyIds: ['data-jpa'],
+        sortOrder: 10,
+      },
+      '../presets/beta.json': {
+        id: 'beta',
+        name: 'Beta',
+        intent: 'Beta intent',
+        tags: ['C'],
+        dependencyIds: ['amqp'],
+        sortOrder: 10,
+      },
+    })
+
+    expect(loaded.map((preset) => preset.id)).toEqual(['alpha', 'beta', 'zeta'])
+  })
+
+  it('throws when duplicate preset ids exist', () => {
+    expect(() =>
+      loadCuratedPresetSourcesFromModules({
+        '../presets/a.json': {
+          id: 'duplicate',
+          name: 'A',
+          intent: 'A intent',
+          tags: ['A'],
+          dependencyIds: ['web'],
+          sortOrder: 10,
+        },
+        '../presets/b.json': {
+          id: 'duplicate',
+          name: 'B',
+          intent: 'B intent',
+          tags: ['B'],
+          dependencyIds: ['data-jpa'],
+          sortOrder: 20,
+        },
+      }),
+    ).toThrow('Duplicate curated preset id "duplicate".')
+  })
+
+  it('throws when optional dependency resolver has invalid fallback regex', () => {
+    expect(() =>
+      loadCuratedPresetSourcesFromModules({
+        '../presets/a.json': {
+          id: 'invalid-regex',
+          name: 'Invalid Regex',
+          intent: 'Invalid resolver regex',
+          tags: ['A'],
+          dependencyIds: ['web'],
+          sortOrder: 10,
+          optionalDependencyResolvers: [
+            {
+              strategy: 'first-available',
+              candidates: ['swagger'],
+              fallbackNamePattern: '[invalid',
+            },
+          ],
+        },
+      }),
+    ).toThrow('fallbackNamePattern must be a valid regular expression.')
   })
 })
 

@@ -1,0 +1,8 @@
+{
+  "id": "event-driven-kafka",
+  "name": "Event-Driven Kafka",
+  "intent": "Start an event-driven service with Spring Cloud Stream and Kafka bindings.",
+  "tags": ["Event-Driven", "Kafka", "Cloud Stream"],
+  "dependencyIds": ["cloud-stream", "kafka", "actuator", "devtools"],
+  "sortOrder": 40
+}
