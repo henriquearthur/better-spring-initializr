@@ -24,6 +24,8 @@ export function groupDependenciesByCategory(
   dependencies: InitializrDependency[],
 ): DependencyGroup[] {
   const grouped = new Map<string, InitializrDependency[]>()
+  const compareAlphabetically = (left: string, right: string) =>
+    left.localeCompare(right, undefined, { sensitivity: 'base' })
 
   for (const dependency of dependencies) {
     const existing = grouped.get(dependency.group)
@@ -36,10 +38,20 @@ export function groupDependenciesByCategory(
     grouped.set(dependency.group, [dependency])
   }
 
-  return Array.from(grouped.entries()).map(([category, categoryDependencies]) => ({
-    category,
-    dependencies: categoryDependencies,
-  }))
+  return Array.from(grouped.entries())
+    .sort(([leftCategory], [rightCategory]) => compareAlphabetically(leftCategory, rightCategory))
+    .map(([category, categoryDependencies]) => ({
+      category,
+      dependencies: [...categoryDependencies].sort((leftDependency, rightDependency) => {
+        const byName = compareAlphabetically(leftDependency.name, rightDependency.name)
+
+        if (byName !== 0) {
+          return byName
+        }
+
+        return compareAlphabetically(leftDependency.id, rightDependency.id)
+      }),
+    }))
 }
 
 export function filterDependencyGroups(

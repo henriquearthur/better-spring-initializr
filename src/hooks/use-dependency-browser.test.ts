@@ -40,11 +40,11 @@ const dependencyFixture: InitializrDependency[] = [
 ]
 
 describe('groupDependenciesByCategory', () => {
-  it('groups dependencies by category while preserving insertion order', () => {
+  it('groups dependencies by category and sorts categories/dependencies alphabetically', () => {
     const groups = groupDependenciesByCategory(dependencyFixture)
 
-    expect(groups.map((group) => group.category)).toEqual(['Web', 'SQL', 'Security'])
-    expect(groups[0]?.dependencies.map((dependency) => dependency.id)).toEqual(['web', 'graphql'])
+    expect(groups.map((group) => group.category)).toEqual(['Security', 'SQL', 'Web'])
+    expect(groups[2]?.dependencies.map((dependency) => dependency.id)).toEqual(['graphql', 'web'])
   })
 })
 

@@ -1,24 +1,97 @@
 import { describe, expect, it } from 'vitest'
 
+import type { InitializrDependency } from '@/server/lib/initializr-client'
 import {
   CURATED_PRESETS,
   applyCuratedPreset,
   getCuratedPresetById,
+  resolveCuratedPresets,
 } from './curated-presets'
+
+function createDependency(id: string, name: string): InitializrDependency {
+  return {
+    id,
+    name,
+    default: false,
+    group: 'Test',
+  }
+}
 
 describe('curated preset catalog', () => {
   it('exposes a deterministic local preset list', () => {
-    expect(CURATED_PRESETS).toHaveLength(3)
+    expect(CURATED_PRESETS).toHaveLength(6)
     expect(CURATED_PRESETS.map((preset) => preset.id)).toEqual([
       'rest-api-postgres',
-      'reactive-microservice',
-      'batch-worker',
+      'rest-api-mysql',
+      'secure-rest-api',
+      'event-driven-kafka',
+      'event-driven-rabbitmq',
+      'api-gateway-reactive',
     ])
+  })
+
+  it('includes actuator and devtools in every preset', () => {
+    for (const preset of CURATED_PRESETS) {
+      expect(preset.dependencyIds).toContain('actuator')
+      expect(preset.dependencyIds).toContain('devtools')
+    }
   })
 
   it('finds preset by id and returns null for unknown id', () => {
     expect(getCuratedPresetById('rest-api-postgres')?.name).toBe('REST API + PostgreSQL')
     expect(getCuratedPresetById('missing-preset')).toBeNull()
+  })
+})
+
+describe('resolveCuratedPresets', () => {
+  it('keeps base dependencies when no swagger-compatible dependency exists', () => {
+    const resolved = resolveCuratedPresets([
+      createDependency('web', 'Spring Web'),
+      createDependency('data-jpa', 'Spring Data JPA'),
+      createDependency('postgresql', 'PostgreSQL Driver'),
+    ])
+
+    const restApiPostgresPreset = getCuratedPresetById('rest-api-postgres', resolved)
+
+    expect(restApiPostgresPreset).not.toBeNull()
+    expect(restApiPostgresPreset?.dependencyIds).toEqual([
+      'web',
+      'validation',
+      'data-jpa',
+      'postgresql',
+      'flyway',
+      'actuator',
+      'devtools',
+    ])
+  })
+
+  it('adds swagger dependency to REST API + PostgreSQL when compatible id exists', () => {
+    const resolved = resolveCuratedPresets([
+      createDependency('swagger', 'Swagger UI'),
+      createDependency(
+        'springdoc-openapi-starter-webmvc-ui',
+        'OpenAPI UI Starter',
+      ),
+      createDependency('web', 'Spring Web'),
+    ])
+
+    const restApiPostgresPreset = getCuratedPresetById('rest-api-postgres', resolved)
+
+    expect(restApiPostgresPreset?.dependencyIds).toContain(
+      'springdoc-openapi-starter-webmvc-ui',
+    )
+    expect(restApiPostgresPreset?.dependencyIds).not.toContain('swagger')
+  })
+
+  it('adds swagger dependency by name fallback when id does not match candidates', () => {
+    const resolved = resolveCuratedPresets([
+      createDependency('custom-docs', 'Swagger Tools'),
+      createDependency('web', 'Spring Web'),
+    ])
+
+    const restApiPostgresPreset = getCuratedPresetById('rest-api-postgres', resolved)
+
+    expect(restApiPostgresPreset?.dependencyIds).toContain('custom-docs')
   })
 })
 
@@ -39,7 +112,24 @@ describe('applyCuratedPreset', () => {
       'data-jpa',
       'postgresql',
       'flyway',
+      'devtools',
     ])
+  })
+
+  it('applies dependencies from resolved preset catalog', () => {
+    const resolved = resolveCuratedPresets([
+      createDependency('springdoc-openapi-starter-webmvc-ui', 'OpenAPI UI Starter'),
+      createDependency('web', 'Spring Web'),
+    ])
+    const result = applyCuratedPreset(['web'], 'rest-api-postgres', resolved)
+
+    expect(result.ok).toBe(true)
+
+    if (!result.ok) {
+      return
+    }
+
+    expect(result.nextSelectedDependencyIds).toContain('springdoc-openapi-starter-webmvc-ui')
   })
 
   it('returns PRESET_NOT_FOUND and normalized current selection for unknown preset', () => {

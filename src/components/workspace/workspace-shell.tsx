@@ -6,7 +6,7 @@ import { useInitializrMetadata } from '@/hooks/use-initializr-metadata'
 import { useProjectConfigState } from '@/hooks/use-project-config-state'
 import { useProjectPreview } from '@/hooks/use-project-preview'
 import { useShareableConfig } from '@/hooks/use-shareable-config'
-import { CURATED_PRESETS, applyCuratedPreset } from '@/lib/curated-presets'
+import { applyCuratedPreset, resolveCuratedPresets } from '@/lib/curated-presets'
 import { type PreviewFileDiff } from '@/lib/preview-diff'
 import { DEFAULT_PROJECT_CONFIG, type ProjectConfig } from '@/lib/project-config'
 import { resolveDependencyPreviewDiff } from '@/lib/dependency-preview-diff'
@@ -46,6 +46,10 @@ export function WorkspaceShell() {
     return undefined
   }, [metadataQuery.data])
   const dependencyBrowser = useDependencyBrowser(availableDependencies)
+  const resolvedPresets = useMemo(
+    () => resolveCuratedPresets(availableDependencies),
+    [availableDependencies],
+  )
   const {
     restoredSnapshot,
     hasShareToken,
@@ -187,7 +191,7 @@ export function WorkspaceShell() {
         return
       }
 
-      const result = applyCuratedPreset(baseDependencySelection, presetId)
+      const result = applyCuratedPreset(baseDependencySelection, presetId, resolvedPresets)
 
       if (!result.ok) {
         return
@@ -202,7 +206,7 @@ export function WorkspaceShell() {
       setAppliedPresetDependencyIds(nextAppliedPresetDependencyIds)
       dependencyBrowser.setSelectedDependencyIds(result.nextSelectedDependencyIds)
     },
-    [appliedPresetDependencyIds, dependencyBrowser, selectedPresetId],
+    [appliedPresetDependencyIds, dependencyBrowser, resolvedPresets, selectedPresetId],
   )
 
   const metadataUnavailable = metadataQuery.isLoading || metadataQuery.isError || !metadataReady
@@ -313,7 +317,7 @@ export function WorkspaceShell() {
 
             <section className="space-y-4">
               <PresetLayoutSurface
-                presets={CURATED_PRESETS}
+                presets={resolvedPresets}
                 selectedPresetId={selectedPresetId}
                 onSelectPreset={handleSelectPreset}
                 availableDependencies={availableDependencies}

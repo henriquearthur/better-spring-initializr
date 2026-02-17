@@ -50,4 +50,19 @@ describe('ConfigurationSidebar reset button visibility', () => {
 
     expect(html).toContain('>Reset<')
   })
+
+  it('renders build settings content expanded by default', () => {
+    const html = renderToString(
+      <ConfigurationSidebar
+        config={DEFAULT_PROJECT_CONFIG}
+        onConfigChange={vi.fn()}
+        onFieldChange={vi.fn()}
+        onResetConfig={vi.fn()}
+        showReset={false}
+      />,
+    )
+
+    expect(html).toContain('Java Version')
+    expect(html).toContain('Spring Boot')
+  })
 })

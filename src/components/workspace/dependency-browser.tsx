@@ -42,8 +42,12 @@ export function DependencyBrowser({
       return
     }
 
+    const availableCategories = new Set(dependencyGroups.map((group) => group.category))
+
     setExpandedCategories((current) => {
-      const next = new Set(current)
+      const next = new Set(
+        Array.from(current).filter((category) => availableCategories.has(category)),
+      )
 
       if (normalizedSearch) {
         for (const group of dependencyGroups) {
@@ -61,10 +65,6 @@ export function DependencyBrowser({
         if (hasSelectedDependency) {
           next.add(group.category)
         }
-      }
-
-      if (next.size === 0) {
-        next.add(dependencyGroups[0]?.category ?? '')
       }
 
       return next
@@ -174,7 +174,7 @@ export function DependencyBrowser({
                 </button>
 
                 {isExpanded ? (
-                  <div className="grid gap-2">
+                  <div className="grid grid-cols-1 gap-2">
                     {group.dependencies.map((dependency) => {
                       const isSelected = selectedIdSet.has(dependency.id)
 
@@ -184,14 +184,11 @@ export function DependencyBrowser({
                           type="button"
                           disabled={disabled}
                           onClick={() => onToggleDependency(dependency.id)}
-                          className={`rounded-lg border px-3 py-2 text-left transition ${isSelected ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)] shadow-sm' : 'bg-[var(--card)] hover:border-[var(--accent)]/40 hover:bg-[var(--muted)]'} disabled:opacity-60`}
+                          className={`w-full min-w-0 rounded-lg border px-3 py-2 text-left transition ${isSelected ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-foreground)] shadow-sm' : 'bg-[var(--card)] hover:border-[var(--accent)]/40 hover:bg-[var(--muted)]'} disabled:opacity-60`}
                         >
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="text-sm font-semibold">{dependency.name}</p>
-                            <span className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] ${isSelected ? 'border-[var(--accent-foreground)]/30 text-[var(--accent-foreground)]/80' : 'text-[var(--muted-foreground)]'}`}>
-                              {dependency.id}
-                            </span>
-                          </div>
+                          <p className="break-words text-sm font-semibold">
+                            {dependency.name}
+                          </p>
                           <p className={`mt-1 text-xs ${isSelected ? 'text-[var(--accent-foreground)]/80' : 'text-[var(--muted-foreground)]'}`}>
                             {dependency.description ?? 'No description available for this dependency.'}
                           </p>

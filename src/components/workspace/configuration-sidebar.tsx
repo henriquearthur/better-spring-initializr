@@ -29,7 +29,7 @@ export function ConfigurationSidebar({
   showReset,
 }: ConfigurationSidebarProps) {
   const [metadataOpen, setMetadataOpen] = useState(true)
-  const [buildSettingsOpen, setBuildSettingsOpen] = useState(false)
+  const [buildSettingsOpen, setBuildSettingsOpen] = useState(true)
   const metadataQuery = useInitializrMetadata()
 
   const metadataDrivenOptions = useMemo(
