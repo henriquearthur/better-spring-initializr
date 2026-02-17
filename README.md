@@ -1,6 +1,6 @@
 # Better Spring Initializr
 
-![Better Spring Initializr](public/icon.png)
+<img src="public/icon.png" alt="Better Spring Initializr" width="280" />
 
 A better way to bootstrap Spring Boot projects with live preview, curated presets, and a smoother final handoff.
 
