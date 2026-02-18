@@ -1,11 +1,12 @@
 import { createServerFn } from '@tanstack/react-start'
+
+import { executeGetInitializrMetadata } from '../domain/get-initializr-metadata'
 import {
   type InitializrMetadata,
 } from '../infra/initializr-client'
 import {
   type MetadataCacheInstrumentation,
 } from '../infra/metadata-cache'
-import { executeGetInitializrMetadata } from '../domain/get-initializr-metadata'
 
 export type InitializrMetadataSuccess = {
   ok: true

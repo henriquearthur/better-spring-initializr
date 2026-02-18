@@ -1,5 +1,3 @@
-import { useCallback, useMemo } from 'react'
-
 import {
   decodeShareConfig,
   encodeShareConfig,
@@ -16,7 +14,7 @@ export type UseShareableConfigResult = {
 }
 
 export function useShareableConfig(): UseShareableConfigResult {
-  const restoredSnapshot = useMemo(() => {
+  const restoredSnapshot = (() => {
     if (typeof window === 'undefined') {
       return null
     }
@@ -29,17 +27,17 @@ export function useShareableConfig(): UseShareableConfigResult {
     }
 
     return decodeShareConfig(shareToken)
-  }, [])
+  })()
 
-  const hasShareToken = useMemo(() => {
+  const hasShareToken = (() => {
     if (typeof window === 'undefined') {
       return false
     }
 
     return new URL(window.location.href).searchParams.has(SHARE_TOKEN_PARAM)
-  }, [])
+  })()
 
-  const createShareUrl = useCallback((snapshot: ShareConfigSnapshot): string => {
+  const createShareUrl = (snapshot: ShareConfigSnapshot): string => {
     if (typeof window === 'undefined') {
       return ''
     }
@@ -49,9 +47,9 @@ export function useShareableConfig(): UseShareableConfigResult {
     url.searchParams.set(SHARE_TOKEN_PARAM, encodeShareConfig(snapshot))
 
     return url.toString()
-  }, [])
+  }
 
-  const clearShareTokenFromUrl = useCallback(() => {
+  const clearShareTokenFromUrl = () => {
     if (typeof window === 'undefined') {
       return
     }
@@ -64,7 +62,7 @@ export function useShareableConfig(): UseShareableConfigResult {
 
     url.searchParams.delete(SHARE_TOKEN_PARAM)
     window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
-  }, [])
+  }
 
   return {
     restoredSnapshot,

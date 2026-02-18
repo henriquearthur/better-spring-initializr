@@ -1,15 +1,15 @@
 import { Check, Github, LoaderCircle, LogOut, TriangleAlert } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   completeGitHubOAuth,
-  disconnectGitHubOAuth,
-  getGitHubOAuthSession,
-  startGitHubOAuth,
   type CompleteGitHubOAuthResponse,
+  disconnectGitHubOAuth,
   type DisconnectGitHubOAuthResponse,
-  type GitHubOAuthSessionSummary,
+  getGitHubOAuthSession,
   type GetGitHubOAuthSessionResponse,
+  type GitHubOAuthSessionSummary,
+  startGitHubOAuth,
   type StartGitHubOAuthResponse,
 } from '@/server/features/github/functions/github-oauth'
 
@@ -31,23 +31,22 @@ export function GitHubAuthPanel() {
   const organizationCount = session?.organizations?.length ?? 0
   const organizationLabel = `${organizationCount} org${organizationCount === 1 ? '' : 's'}`
 
-  const refreshSession = useCallback(async () => {
-    const response = await invokeGetGitHubOAuthSession()
-
-    if (!response.ok) {
-      setSession({ connected: false })
-      setFeedback({
-        tone: 'error',
-        message: response.error.message,
-      })
-      return
-    }
-
-    setSession(response.session)
-  }, [])
-
   useEffect(() => {
     let isMounted = true
+    const refreshSession = async () => {
+      const response = await invokeGetGitHubOAuthSession()
+
+      if (!response.ok) {
+        setSession({ connected: false })
+        setFeedback({
+          tone: 'error',
+          message: response.error.message,
+        })
+        return
+      }
+
+      setSession(response.session)
+    }
 
     const load = async () => {
       try {
@@ -107,9 +106,9 @@ export function GitHubAuthPanel() {
     return () => {
       isMounted = false
     }
-  }, [refreshSession])
+  }, [])
 
-  const handleConnect = useCallback(async () => {
+  const handleConnect = async () => {
     if (isConnecting || isDisconnecting) {
       return
     }
@@ -137,9 +136,9 @@ export function GitHubAuthPanel() {
     } finally {
       setIsConnecting(false)
     }
-  }, [isConnecting, isDisconnecting])
+  }
 
-  const handleDisconnect = useCallback(async () => {
+  const handleDisconnect = async () => {
     if (isDisconnecting || isConnecting) {
       return
     }
@@ -171,9 +170,9 @@ export function GitHubAuthPanel() {
     } finally {
       setIsDisconnecting(false)
     }
-  }, [isConnecting, isDisconnecting])
+  }
 
-  const connectionBadge = useMemo(() => {
+  const connectionBadge = (() => {
     if (!isConnected || !session?.user) {
       return (
         <span className="rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
@@ -187,7 +186,7 @@ export function GitHubAuthPanel() {
         {session.user.login} · {organizationLabel}
       </span>
     )
-  }, [isConnected, organizationLabel, session?.user])
+  })()
 
   return (
     <section className="rounded-xl border bg-[var(--card)] p-3">

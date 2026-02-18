@@ -1,16 +1,17 @@
 import { createServerFn } from '@tanstack/react-start'
 
 import {
+  EnvironmentConfigurationError,
+  requireEnvironmentVariable,
+} from '@/server/shared/config'
+
+import {
   createGitHubOAuthStart,
   exchangeCodeForToken,
   fetchAuthenticatedUser,
   GitHubOAuthClientError,
   type GitHubOAuthConfig,
 } from '../infra/github-oauth-client'
-import {
-  EnvironmentConfigurationError,
-  requireEnvironmentVariable,
-} from '@/server/shared/config'
 
 export type GitHubOAuthSessionSummary = {
   connected: boolean

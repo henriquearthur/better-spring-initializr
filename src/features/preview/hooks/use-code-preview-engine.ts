@@ -1,10 +1,10 @@
+import type { HighlighterGeneric } from '@shikijs/types'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { BuiltinLanguage, ThemedToken } from 'shiki'
-import type { HighlighterGeneric } from '@shikijs/types'
 
 import {
-  codePreviewCache,
   type CodePreviewCache,
+  codePreviewCache,
   type HighlightTokenCacheKey,
 } from '@/features/preview/model/code-preview-cache'
 import { inferCodePreviewLanguage } from '@/features/preview/model/code-preview-language'
@@ -184,15 +184,15 @@ export function useCodePreviewEngine({
   )
 
   const theme = isDarkMode ? SHIKI_DARK_THEME : SHIKI_LIGHT_THEME
-  const language = useMemo(() => inferCodePreviewLanguage(file?.path), [file?.path])
+  const language = inferCodePreviewLanguage(file?.path)
 
-  const lines = useMemo(() => {
+  const lines = (() => {
     if (!file || file.binary || file.content === undefined) {
       return []
     }
 
     return resolvedCache.getSplitLines(file.hash, file.content)
-  }, [file?.binary, file?.content, file?.hash, resolvedCache])
+  })()
 
   const [state, setState] = useState<CodePreviewEngineState>({
     tokenLines: null,

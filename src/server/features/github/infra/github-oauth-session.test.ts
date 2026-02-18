@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  GitHubOAuthSessionError,
   buildGitHubCookieOptions,
+  GitHubOAuthSessionError,
   verifyOAuthState,
 } from './github-oauth-session'
 

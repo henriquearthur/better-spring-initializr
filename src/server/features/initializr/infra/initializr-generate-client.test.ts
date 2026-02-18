@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  InitializrGenerateClientError,
   fetchInitializrZip,
+  InitializrGenerateClientError,
 } from './initializr-generate-client'
 
 describe('fetchInitializrZip', () => {

@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
 import JSZip from 'jszip'
+import { describe, expect, it } from 'vitest'
 
 import { AI_SKILL_OPTIONS, DEFAULT_AGENTS_MD_PREFERENCES } from '@/features/ai-extras/model/ai-extras'
 import type { ProjectConfig } from '@/shared/lib/project-config'
+
 import {
   fetchInitializrProjectPreview,
   InitializrPreviewClientError,

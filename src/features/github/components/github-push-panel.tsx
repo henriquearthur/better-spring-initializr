@@ -1,11 +1,10 @@
 import { Check, ExternalLink, Github, LoaderCircle, TriangleAlert } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   DEFAULT_AGENTS_MD_PREFERENCES,
   DEFAULT_AI_EXTRAS_TARGET,
 } from '@/features/ai-extras/model/ai-extras'
-import type { ProjectConfig } from '@/shared/lib/project-config'
 import {
   getGitHubOAuthSession,
   type GetGitHubOAuthSessionResponse,
@@ -15,6 +14,7 @@ import {
   type PushProjectToGitHubInput,
   type PushProjectToGitHubResponse,
 } from '@/server/features/github/functions/push-project-to-github'
+import type { ProjectConfig } from '@/shared/lib/project-config'
 
 type GitHubPushPanelProps = {
   config: ProjectConfig
@@ -96,7 +96,7 @@ export function GitHubPushPanel({ config, selectedDependencyIds }: GitHubPushPan
   }, [config.artifact])
 
   const trimmedRepositoryName = repositoryName.trim()
-  const repositoryNameError = useMemo(() => {
+  const repositoryNameError = (() => {
     if (trimmedRepositoryName.length === 0) {
       return 'Repository name is required.'
     }
@@ -111,9 +111,9 @@ export function GitHubPushPanel({ config, selectedDependencyIds }: GitHubPushPan
     }
 
     return null
-  }, [trimmedRepositoryName])
+  })()
 
-  const handlePush = useCallback(async () => {
+  const handlePush = async () => {
     if (isPushing || !connected || !owner || repositoryNameError) {
       return
     }
@@ -158,16 +158,7 @@ export function GitHubPushPanel({ config, selectedDependencyIds }: GitHubPushPan
     } finally {
       setIsPushing(false)
     }
-  }, [
-    config,
-    connected,
-    isPushing,
-    owner,
-    repositoryNameError,
-    selectedDependencyIds,
-    trimmedRepositoryName,
-    visibility,
-  ])
+  }
 
   if (isLoadingSession || !connected) {
     return null

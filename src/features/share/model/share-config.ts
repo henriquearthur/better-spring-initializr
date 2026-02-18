@@ -1,11 +1,11 @@
 import {
+  type AgentsMdPreferences,
+  type AiExtraId,
+  type AiExtrasTarget,
   DEFAULT_AI_EXTRAS_TARGET,
   normalizeAgentsMdPreferences,
   normalizeAiExtrasTarget,
   normalizeSelectedAiExtraIds,
-  type AgentsMdPreferences,
-  type AiExtraId,
-  type AiExtrasTarget,
 } from '@/features/ai-extras/model/ai-extras'
 import { normalizeProjectConfig, type ProjectConfig } from '@/shared/lib/project-config'
 

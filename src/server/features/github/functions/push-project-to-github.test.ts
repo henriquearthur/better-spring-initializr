@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_AGENTS_MD_PREFERENCES } from '@/features/ai-extras/model/ai-extras'
-
-import * as githubRepositoryClient from '../infra/github-repository-client'
-import * as oauthSession from '../infra/github-oauth-session.server'
-import * as unpackProject from '../infra/unpack-generated-project'
 import * as downloadProject from '@/server/features/initializr/functions/download-initializr-project'
+
+import * as oauthSession from '../infra/github-oauth-session.server'
+import * as githubRepositoryClient from '../infra/github-repository-client'
+import * as unpackProject from '../infra/unpack-generated-project'
 import { pushProjectToGitHubFromBff } from './push-project-to-github'
 
 const configFixture = {

@@ -1,19 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
 
 import {
+  type AgentsMdPreferences,
+  type AiExtrasTarget,
   normalizeAgentsMdPreferences,
   normalizeAiExtrasTarget,
   normalizeSelectedAiExtraIds,
-  type AgentsMdPreferences,
-  type AiExtrasTarget,
 } from '@/features/ai-extras/model/ai-extras'
-import type { ProjectConfig } from '@/shared/lib/project-config'
-import { useDebouncedValue } from '@/shared/lib/debounce'
 import {
   getProjectPreview,
   type ProjectPreviewResponse,
 } from '@/server/features/initializr/functions/get-project-preview'
+import { useDebouncedValue } from '@/shared/lib/debounce'
+import type { ProjectConfig } from '@/shared/lib/project-config'
 
 type UseProjectPreviewInput = {
   config: ProjectConfig
@@ -37,22 +36,13 @@ export function useProjectPreview(input: UseProjectPreviewInput) {
       data: UseProjectPreviewInput
     }) => Promise<ProjectPreviewResponse>
 
-  const normalizedInput = useMemo(
-    () => ({
-      config: input.config,
-      selectedDependencyIds: Array.from(new Set(input.selectedDependencyIds)).sort(),
-      selectedAiExtraIds: normalizeSelectedAiExtraIds(input.selectedAiExtraIds),
-      agentsMdPreferences: normalizeAgentsMdPreferences(input.agentsMdPreferences),
-      aiExtrasTarget: normalizeAiExtrasTarget(input.aiExtrasTarget),
-    }),
-    [
-      input.config,
-      input.selectedAiExtraIds,
-      input.agentsMdPreferences,
-      input.selectedDependencyIds,
-      input.aiExtrasTarget,
-    ],
-  )
+  const normalizedInput = {
+    config: input.config,
+    selectedDependencyIds: Array.from(new Set(input.selectedDependencyIds)).sort(),
+    selectedAiExtraIds: normalizeSelectedAiExtraIds(input.selectedAiExtraIds),
+    agentsMdPreferences: normalizeAgentsMdPreferences(input.agentsMdPreferences),
+    aiExtrasTarget: normalizeAiExtrasTarget(input.aiExtrasTarget),
+  }
 
   const debouncedInput = useDebouncedValue(normalizedInput, PREVIEW_REFRESH_DEBOUNCE_MS)
 

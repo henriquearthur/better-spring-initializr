@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { scheduleWhenIdle, shouldSkipHighlighting, type HighlightPolicy } from './use-code-preview-engine'
+import { type HighlightPolicy,scheduleWhenIdle, shouldSkipHighlighting } from './use-code-preview-engine'
 
 const DEFAULT_POLICY: HighlightPolicy = {
   maxBytesForHighlight: 300 * 1024,

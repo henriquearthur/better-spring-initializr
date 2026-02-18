@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import type { InitializrDependency } from '@/shared/lib/project-config/initializr-metadata'
+
 import {
-  CURATED_PRESETS,
   applyCuratedPreset,
+  CURATED_PRESETS,
   getCuratedPresetById,
   loadCuratedPresetSourcesFromModules,
   resolveCuratedPresets,

@@ -1,14 +1,14 @@
 import { Check, Copy, Download, Github, LoaderCircle, Rocket, TriangleAlert } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import type { AgentsMdPreferences, AiExtraId, AiExtrasTarget } from '@/features/ai-extras/model/ai-extras'
-import type { ProjectConfig } from '@/shared/lib/project-config'
 import type { ShareConfigSnapshot } from '@/features/share/model/share-config'
 import {
   downloadInitializrProject,
   type DownloadInitializrProjectInput,
   type DownloadInitializrProjectResponse,
 } from '@/server/features/initializr/functions/download-initializr-project'
+import type { ProjectConfig } from '@/shared/lib/project-config'
 
 type WorkspaceFinalizePanelProps = {
   config: ProjectConfig
@@ -40,30 +40,19 @@ export function WorkspaceFinalizePanel({
   const [isCopying, setIsCopying] = useState(false)
   const [feedback, setFeedback] = useState<FeedbackState>(null)
 
-  const shareUrl = useMemo(
-    () =>
-      createShareUrl({
-        config,
-        selectedDependencyIds,
-        selectedAiExtraIds,
-        agentsMdPreferences,
-        aiExtrasTarget,
-      }),
-    [
-      agentsMdPreferences,
-      aiExtrasTarget,
-      config,
-      createShareUrl,
-      selectedAiExtraIds,
-      selectedDependencyIds,
-    ],
-  )
+  const shareUrl = createShareUrl({
+    config,
+    selectedDependencyIds,
+    selectedAiExtraIds,
+    agentsMdPreferences,
+    aiExtrasTarget,
+  })
 
   const isBusy = isDownloading || isCopying
   const projectCoordinates = `${config.group}.${config.artifact}`
   const stackLabel = `${config.language.toUpperCase()} / ${getBuildToolLabel(config.buildTool)}`
 
-  const handleDownload = useCallback(async () => {
+  const handleDownload = async () => {
     if (isDownloading) {
       return
     }
@@ -104,16 +93,9 @@ export function WorkspaceFinalizePanel({
     } finally {
       setIsDownloading(false)
     }
-  }, [
-    agentsMdPreferences,
-    aiExtrasTarget,
-    config,
-    isDownloading,
-    selectedAiExtraIds,
-    selectedDependencyIds,
-  ])
+  }
 
-  const handleCopyShareLink = useCallback(async () => {
+  const handleCopyShareLink = async () => {
     if (isCopying || !shareUrl) {
       return
     }
@@ -135,7 +117,7 @@ export function WorkspaceFinalizePanel({
     } finally {
       setIsCopying(false)
     }
-  }, [isCopying, shareUrl])
+  }
 
   return (
     <section className="finalize-panel finalize-panel-enter" data-testid="workspace-finalize-panel">

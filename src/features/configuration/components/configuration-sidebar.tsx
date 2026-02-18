@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react'
 import type { ProjectConfigUpdateOptions } from '@/features/configuration/hooks/use-project-config-state'
 import {
   BUILD_TOOL_OPTIONS,
-  LANGUAGE_OPTIONS,
-  PACKAGING_OPTIONS,
   type BuildTool,
+  LANGUAGE_OPTIONS,
   type MetadataDrivenConfigOptions,
+  PACKAGING_OPTIONS,
   type PackagingType,
   type ProjectConfig,
   type ProjectLanguage,

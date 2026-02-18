@@ -2,8 +2,8 @@ import JSZip from 'jszip'
 import { describe, expect, it } from 'vitest'
 
 import {
-  unpackGeneratedProjectZip,
   UnpackGeneratedProjectError,
+  unpackGeneratedProjectZip,
 } from './unpack-generated-project'
 
 describe('unpackGeneratedProjectZip', () => {

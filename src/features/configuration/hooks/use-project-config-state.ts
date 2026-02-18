@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { parseAsString, parseAsStringLiteral, useQueryStates } from 'nuqs'
+import { useState } from 'react'
 
 import {
   DEFAULT_PROJECT_CONFIG,

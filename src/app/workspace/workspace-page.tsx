@@ -1,24 +1,10 @@
 import { ChevronDown } from 'lucide-react'
-import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 
 import { WorkspaceFinalizePanel } from '@/app/workspace/components/workspace-finalize-panel'
 import { WorkspaceHeader } from '@/app/workspace/components/workspace-header'
-import {
-  type AgentsMdGuidanceId,
-  type AgentsMdPreferences,
-  type AiExtraId,
-  type AiExtrasTarget,
-  type AiSkillExtraId,
-  areAllAiPowerUpOptionsEnabled,
-  DEFAULT_AGENTS_MD_PREFERENCES,
-  DEFAULT_AI_EXTRAS_TARGET,
-  getAgentsMdPreferenceIdsByGuidance,
-  getAllAiExtraIds,
-  normalizeAgentsMdPreferences,
-  normalizeAiExtrasTarget,
-  normalizeSelectedAiExtraIds,
-  setAllAgentsMdPreferences,
-} from '@/features/ai-extras/model/ai-extras'
+import { useAiExtrasState } from '@/features/ai-extras/hooks/use-ai-extras-state'
+import { normalizeAiExtrasTarget } from '@/features/ai-extras/model/ai-extras'
 import { ConfigurationSidebar } from '@/features/configuration/components/configuration-sidebar'
 import { useInitializrMetadata } from '@/features/configuration/hooks/use-initializr-metadata'
 import {
@@ -26,19 +12,21 @@ import {
   useProjectConfigState,
 } from '@/features/configuration/hooks/use-project-config-state'
 import { DependencyBrowser } from '@/features/dependencies/components/dependency-browser'
+import { DependencyBrowserStatus, type MetadataStatus } from '@/features/dependencies/components/dependency-browser-status'
 import { useDependencyBrowser } from '@/features/dependencies/hooks/use-dependency-browser'
-import { resolveDependencyPreviewDiff } from '@/features/dependencies/model/dependency-preview-diff'
 import { PresetLayoutSurface } from '@/features/presets/components/preset-layout-surface'
-import { applyCuratedPreset, resolveCuratedPresets } from '@/features/presets/model/curated-presets'
-import { useProjectPreview } from '@/features/preview/hooks/use-project-preview'
-import { type PreviewFileDiff } from '@/features/preview/model/preview-diff'
-import type { PreviewSnapshotFile } from '@/features/preview/model/preview-tree'
+import { usePresetSelection } from '@/features/presets/hooks/use-preset-selection'
+import { resolveCuratedPresets } from '@/features/presets/model/curated-presets'
+import { PreviewContentPanel } from '@/features/preview/components/preview-content-panel'
+import { PreviewExplorerPanel } from '@/features/preview/components/preview-explorer-panel'
+import { usePreviewState } from '@/features/preview/hooks/use-preview-state'
 import { useShareableConfig } from '@/features/share/hooks/use-shareable-config'
 import {
-  DEFAULT_PROJECT_CONFIG,
   getMetadataDrivenConfigOptions,
+  isProjectConfigEqual,
   type ProjectConfig,
 } from '@/shared/lib/project-config'
+import { FeaturePanelFallback } from '@/shared/ui/feature-panel-fallback'
 
 const AiExtrasPanel = lazy(async () => {
   const module = await import('@/features/ai-extras/components/ai-extras-panel')
@@ -52,25 +40,13 @@ const GitHubPublishDialog = lazy(async () => {
   return { default: module.GitHubPublishDialog }
 })
 
-const FileContentViewer = lazy(async () => {
-  const module = await import('@/features/preview/components/file-content-viewer')
-
-  return { default: module.FileContentViewer }
-})
-
-const PreviewFileTree = lazy(async () => {
-  const module = await import('@/features/preview/components/preview-file-tree')
-
-  return { default: module.PreviewFileTree }
-})
-
 export function WorkspacePage() {
   const metadataQuery = useInitializrMetadata()
   const { config: projectConfig, setConfig, setField, resetConfig } =
     useProjectConfigState()
 
   const metadataReady = metadataQuery.data?.ok === true
-  const availableDependencies = useMemo(() => {
+  const availableDependencies = (() => {
     const metadataResult = metadataQuery.data
 
     if (!metadataResult || !metadataResult.ok) {
@@ -78,22 +54,26 @@ export function WorkspacePage() {
     }
 
     return metadataResult.metadata.dependencies
-  }, [metadataQuery.data])
+  })()
 
-  const metadataErrorMessage = useMemo(() => {
-    const metadataResult = metadataQuery.data
-
-    if (metadataResult && !metadataResult.ok) {
-      return metadataResult.error.message
+  const metadataStatus: MetadataStatus = (() => {
+    if (metadataQuery.isLoading) {
+      return { type: 'loading' }
     }
 
-    return undefined
-  }, [metadataQuery.data])
-  const metadataDrivenOptions = useMemo(
-    () => getMetadataDrivenConfigOptions(metadataQuery.data),
-    [metadataQuery.data],
-  )
-  const metadataStatusMessage = useMemo(() => {
+    if (metadataQuery.isError || !metadataReady) {
+      const metadataResult = metadataQuery.data
+      const message = metadataResult && !metadataResult.ok
+        ? metadataResult.error.message
+        : undefined
+
+      return { type: 'error', message }
+    }
+
+    return { type: 'ready' }
+  })()
+  const metadataDrivenOptions = getMetadataDrivenConfigOptions(metadataQuery.data)
+  const metadataStatusMessage = (() => {
     if (metadataQuery.isLoading) {
       return undefined
     }
@@ -110,28 +90,28 @@ export function WorkspacePage() {
     }
 
     return undefined
-  }, [metadataQuery.data, metadataQuery.isError, metadataQuery.isLoading])
+  })()
   const dependencyBrowser = useDependencyBrowser(availableDependencies)
-  const resolvedPresets = useMemo(
-    () => resolveCuratedPresets(availableDependencies),
-    [availableDependencies],
-  )
+  const resolvedPresets = resolveCuratedPresets(availableDependencies)
   const {
     restoredSnapshot,
     hasShareToken,
     createShareUrl,
     clearShareTokenFromUrl,
   } = useShareableConfig()
-  const [selectedPreviewFilePath, setSelectedPreviewFilePath] = useState<string | null>(null)
-  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
-  const [appliedPresetDependencyIds, setAppliedPresetDependencyIds] = useState<string[]>([])
-  const [selectedAiExtraIds, setSelectedAiExtraIds] = useState<AiExtraId[]>([])
-  const [aiExtrasTarget, setAiExtrasTarget] = useState<AiExtrasTarget>(
-    DEFAULT_AI_EXTRAS_TARGET,
-  )
-  const [agentsMdPreferences, setAgentsMdPreferences] = useState<AgentsMdPreferences>(
-    DEFAULT_AGENTS_MD_PREFERENCES,
-  )
+  const presetSelection = usePresetSelection({
+    resolvedPresets,
+    getSelectedDependencyIds: () => dependencyBrowser.selectedDependencyIds,
+    setSelectedDependencyIds: dependencyBrowser.setSelectedDependencyIds,
+  })
+  const aiExtras = useAiExtrasState()
+  const preview = usePreviewState({
+    config: projectConfig,
+    selectedDependencyIds: dependencyBrowser.selectedDependencyIds,
+    selectedAiExtraIds: aiExtras.selectedAiExtraIds,
+    agentsMdPreferences: aiExtras.agentsMdPreferences,
+    aiExtrasTarget: aiExtras.aiExtrasTarget,
+  })
   const [dependenciesOpen, setDependenciesOpen] = useState(true)
   const [publishDialogOpen, setPublishDialogOpen] = useState(false)
   const hasAppliedSharedSnapshotRef = useRef(false)
@@ -140,58 +120,6 @@ export function WorkspacePage() {
   if (initialSessionConfigRef.current === null) {
     initialSessionConfigRef.current = projectConfig
   }
-  const dependencyDiffBaselinePreviewQuery = useProjectPreview({
-    config: DEFAULT_PROJECT_CONFIG,
-    selectedDependencyIds: [],
-    selectedAiExtraIds,
-    agentsMdPreferences,
-    aiExtrasTarget,
-  })
-  const projectPreviewQuery = useProjectPreview({
-    config: projectConfig,
-    selectedDependencyIds: dependencyBrowser.selectedDependencyIds,
-    selectedAiExtraIds,
-    agentsMdPreferences,
-    aiExtrasTarget,
-  })
-
-  const dependencyDiff = useMemo(
-    () =>
-      resolveDependencyPreviewDiff(
-        dependencyDiffBaselinePreviewQuery.data,
-        projectPreviewQuery.data,
-      ),
-    [dependencyDiffBaselinePreviewQuery.data, projectPreviewQuery.data],
-  )
-  const previewResult = projectPreviewQuery.data
-  const previewFiles = previewResult?.ok ? previewResult.snapshot.files : undefined
-  const previewFileMap = useMemo(() => {
-    const map = new Map<string, PreviewSnapshotFile>()
-
-    for (const file of previewFiles ?? []) {
-      map.set(file.path, file)
-    }
-
-    return map
-  }, [previewFiles])
-  const previewErrorMessage =
-    previewResult && !previewResult.ok
-      ? previewResult.error.message
-      : projectPreviewQuery.error
-        ? projectPreviewQuery.error.message
-        : undefined
-  const selectedPreviewFile = useMemo(
-    () =>
-      selectedPreviewFilePath
-        ? previewFileMap.get(selectedPreviewFilePath) ?? null
-        : null,
-    [previewFileMap, selectedPreviewFilePath],
-  )
-  const previewFileDiffByPath = useMemo(() => dependencyDiff?.files, [dependencyDiff])
-  const selectedFileDiff =
-    selectedPreviewFilePath && dependencyDiff
-      ? dependencyDiff.files[selectedPreviewFilePath] ?? null
-      : null
 
   useEffect(() => {
     if (hasAppliedSharedSnapshotRef.current || !hasShareToken) {
@@ -207,9 +135,9 @@ export function WorkspacePage() {
 
     void setConfig(restoredSnapshot.config, { persistToUrl: false })
     dependencyBrowser.setSelectedDependencyIds(restoredSnapshot.selectedDependencyIds)
-    setSelectedAiExtraIds(restoredSnapshot.selectedAiExtraIds)
-    setAgentsMdPreferences(restoredSnapshot.agentsMdPreferences)
-    setAiExtrasTarget(normalizeAiExtrasTarget(restoredSnapshot.aiExtrasTarget))
+    aiExtras.setSelectedAiExtraIds(restoredSnapshot.selectedAiExtraIds)
+    aiExtras.setAgentsMdPreferences(restoredSnapshot.agentsMdPreferences)
+    aiExtras.setAiExtrasTarget(normalizeAiExtrasTarget(restoredSnapshot.aiExtrasTarget))
 
     clearShareTokenFromUrl()
   }, [
@@ -218,148 +146,24 @@ export function WorkspacePage() {
     hasShareToken,
     restoredSnapshot,
     setConfig,
-    setAiExtrasTarget,
-    setAgentsMdPreferences,
-    setSelectedAiExtraIds,
+    aiExtras,
   ])
 
-  useEffect(() => {
-    if (!selectedPreviewFilePath || !previewFiles) {
-      return
-    }
+  const handleConfigChange = (nextConfig: ProjectConfig, options?: ProjectConfigUpdateOptions) => {
+    void setConfig(nextConfig, options)
+  }
 
-    const fileStillExists = previewFiles.some((file) => file.path === selectedPreviewFilePath)
+  const handleFieldChange = (field: keyof ProjectConfig, value: string) => {
+    void setField(field, value)
+  }
 
-    if (!fileStillExists) {
-      setSelectedPreviewFilePath(null)
-    }
-  }, [previewFiles, selectedPreviewFilePath])
-
-  const handleConfigChange = useCallback(
-    (nextConfig: ProjectConfig, options?: ProjectConfigUpdateOptions) => {
-      void setConfig(nextConfig, options)
-    },
-    [setConfig],
-  )
-
-  const handleFieldChange = useCallback(
-    (field: keyof ProjectConfig, value: string) => {
-      void setField(field, value)
-    },
-    [setField],
-  )
-
-  const handleResetConfig = useCallback(() => {
+  const handleResetConfig = () => {
     void resetConfig()
-  }, [resetConfig])
+  }
 
-  const handleSearchTermChange = useCallback(
-    (value: string) => {
-      dependencyBrowser.setSearchTerm(value)
-    },
-    [dependencyBrowser],
-  )
-
-  const handleSelectPreset = useCallback(
-    (presetId: string) => {
-      const currentSelectedDependencyIds = dependencyBrowser.selectedDependencyIds
-      const appliedDependencySet = new Set(appliedPresetDependencyIds)
-      const baseDependencySelection =
-        appliedDependencySet.size === 0
-          ? currentSelectedDependencyIds
-          : currentSelectedDependencyIds.filter(
-              (dependencyId) => !appliedDependencySet.has(dependencyId),
-            )
-
-      if (selectedPresetId === presetId) {
-        setSelectedPresetId(null)
-        setAppliedPresetDependencyIds([])
-        dependencyBrowser.setSelectedDependencyIds(baseDependencySelection)
-        return
-      }
-
-      const result = applyCuratedPreset(baseDependencySelection, presetId, resolvedPresets)
-
-      if (!result.ok) {
-        return
-      }
-
-      const baseDependencySet = new Set(baseDependencySelection)
-      const nextAppliedPresetDependencyIds = result.nextSelectedDependencyIds.filter(
-        (dependencyId) => !baseDependencySet.has(dependencyId),
-      )
-
-      setSelectedPresetId(presetId)
-      setAppliedPresetDependencyIds(nextAppliedPresetDependencyIds)
-      dependencyBrowser.setSelectedDependencyIds(result.nextSelectedDependencyIds)
-    },
-    [appliedPresetDependencyIds, dependencyBrowser, resolvedPresets, selectedPresetId],
-  )
-  const handleToggleAgentsMdEnabled = useCallback(() => {
-    setSelectedAiExtraIds((currentIds) => {
-      if (currentIds.includes('agents-md')) {
-        return currentIds.filter((currentId) => currentId !== 'agents-md')
-      }
-
-      return normalizeSelectedAiExtraIds([...currentIds, 'agents-md'])
-    })
-  }, [])
-  const handleToggleAiSkill = useCallback((skillId: AiSkillExtraId) => {
-    setSelectedAiExtraIds((currentIds) => {
-      if (currentIds.includes(skillId)) {
-        return normalizeSelectedAiExtraIds(
-          currentIds.filter((currentId) => currentId !== skillId),
-        )
-      }
-
-      return normalizeSelectedAiExtraIds([...currentIds, skillId])
-    })
-  }, [])
-  const handleToggleAllAiPowerUp = useCallback(() => {
-    const allAiPowerUpSelected = areAllAiPowerUpOptionsEnabled(
-      selectedAiExtraIds,
-      agentsMdPreferences,
-    )
-
-    if (allAiPowerUpSelected) {
-      setSelectedAiExtraIds([])
-      setAgentsMdPreferences(setAllAgentsMdPreferences(false))
-      return
-    }
-
-    setSelectedAiExtraIds(getAllAiExtraIds())
-    setAgentsMdPreferences(setAllAgentsMdPreferences(true))
-  }, [agentsMdPreferences, selectedAiExtraIds])
-  const handleToggleAgentsMdGuidance = useCallback((guidanceId: AgentsMdGuidanceId) => {
-    const preferenceIds = getAgentsMdPreferenceIdsByGuidance(guidanceId)
-
-    setAgentsMdPreferences((currentPreferences) => {
-      const shouldEnable = preferenceIds.some((preferenceId) => !currentPreferences[preferenceId])
-      const nextPreferences: Partial<AgentsMdPreferences> = { ...currentPreferences }
-
-      for (const preferenceId of preferenceIds) {
-        nextPreferences[preferenceId] = shouldEnable
-      }
-
-      return normalizeAgentsMdPreferences(nextPreferences)
-    })
-  }, [])
-  const handleToggleAgentsMdPreference = useCallback(
-    (preferenceId: keyof AgentsMdPreferences) => {
-      setAgentsMdPreferences((currentPreferences) =>
-        normalizeAgentsMdPreferences({
-          ...currentPreferences,
-          [preferenceId]: !currentPreferences[preferenceId],
-        }),
-      )
-    },
-    [],
-  )
-  const handleChangeAiExtrasTarget = useCallback((nextTarget: AiExtrasTarget) => {
-    setAiExtrasTarget((currentTarget) =>
-      currentTarget === nextTarget ? currentTarget : nextTarget,
-    )
-  }, [])
+  const handleSearchTermChange = (value: string) => {
+    dependencyBrowser.setSearchTerm(value)
+  }
 
   const metadataUnavailable = metadataQuery.isLoading || metadataQuery.isError || !metadataReady
 
@@ -377,12 +181,6 @@ export function WorkspacePage() {
     }
   }, [])
 
-  const handleRetryPreview = useCallback(() => {
-    void projectPreviewQuery.refetch()
-  }, [projectPreviewQuery.refetch])
-  const handleSelectPreviewFile = useCallback((path: string | null) => {
-    setSelectedPreviewFilePath(path)
-  }, [])
   const resetBaselineConfig =
     restoredSnapshot?.config ?? initialSessionConfigRef.current ?? projectConfig
   const hasConfigChanges = !isProjectConfigEqual(projectConfig, resetBaselineConfig)
@@ -399,12 +197,7 @@ export function WorkspacePage() {
         </button>
       </div>
 
-      <DependencyBrowserStatus
-        isLoading={metadataQuery.isLoading}
-        isError={metadataQuery.isError}
-        metadataReady={metadataReady}
-        message={metadataErrorMessage}
-      />
+      <DependencyBrowserStatus status={metadataStatus} />
 
       <div className="mt-3">
         <DependencyBrowser
@@ -413,7 +206,6 @@ export function WorkspacePage() {
           onSearchTermChange={handleSearchTermChange}
           selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
           onToggleDependency={dependencyBrowser.toggleDependency}
-          hasMetadata={metadataReady}
           disabled={metadataUnavailable}
         />
       </div>
@@ -473,8 +265,8 @@ export function WorkspacePage() {
             <section className="space-y-4">
               <PresetLayoutSurface
                 presets={resolvedPresets}
-                selectedPresetId={selectedPresetId}
-                onSelectPreset={handleSelectPreset}
+                selectedPresetId={presetSelection.selectedPresetId}
+                onSelectPreset={presetSelection.selectPreset}
                 availableDependencies={availableDependencies}
                 metadataAvailable={metadataReady}
                 selectedDependencyCount={dependencyBrowser.selectedDependencyCount}
@@ -482,15 +274,15 @@ export function WorkspacePage() {
               />
               <Suspense fallback={<FeaturePanelFallback label="Loading AI extras..." />}>
                 <AiExtrasPanel
-                  selectedAiExtraIds={selectedAiExtraIds}
-                  aiExtrasTarget={aiExtrasTarget}
-                  agentsMdPreferences={agentsMdPreferences}
-                  onChangeAiExtrasTarget={handleChangeAiExtrasTarget}
-                  onToggleAllAiPowerUp={handleToggleAllAiPowerUp}
-                  onToggleAgentsMdEnabled={handleToggleAgentsMdEnabled}
-                  onToggleAgentsMdGuidance={handleToggleAgentsMdGuidance}
-                  onToggleAgentsMdPreference={handleToggleAgentsMdPreference}
-                  onToggleAiSkill={handleToggleAiSkill}
+                  selectedAiExtraIds={aiExtras.selectedAiExtraIds}
+                  aiExtrasTarget={aiExtras.aiExtrasTarget}
+                  agentsMdPreferences={aiExtras.agentsMdPreferences}
+                  onChangeAiExtrasTarget={aiExtras.changeAiExtrasTarget}
+                  onToggleAllAiPowerUp={aiExtras.toggleAllAiPowerUp}
+                  onToggleAgentsMdEnabled={aiExtras.toggleAgentsMdEnabled}
+                  onToggleAgentsMdGuidance={aiExtras.toggleAgentsMdGuidance}
+                  onToggleAgentsMdPreference={aiExtras.toggleAgentsMdPreference}
+                  onToggleAiSkill={aiExtras.toggleAiSkill}
                 />
               </Suspense>
 
@@ -508,29 +300,29 @@ export function WorkspacePage() {
 
               <div className={`grid h-[760px] grid-cols-1 gap-4 md:h-[820px] lg:h-[560px] ${previewLayoutClass}`}>
                 <PreviewExplorerPanel
-                  files={previewFiles}
-                  isLoading={projectPreviewQuery.isPending}
-                  errorMessage={previewErrorMessage}
-                  selectedFilePath={selectedPreviewFilePath}
-                  onSelectFile={handleSelectPreviewFile}
-                  fileDiffByPath={previewFileDiffByPath}
-                  onRetry={handleRetryPreview}
+                  files={preview.files}
+                  isLoading={preview.isLoading}
+                  errorMessage={preview.errorMessage}
+                  selectedFilePath={preview.selectedFilePath}
+                  onSelectFile={preview.selectFile}
+                  fileDiffByPath={preview.fileDiffByPath}
+                  onRetry={preview.retryPreview}
                 />
 
                 <PreviewContentPanel
-                  file={selectedPreviewFile}
-                  isLoading={projectPreviewQuery.isPending}
-                  diff={selectedFileDiff}
-                  onRetry={handleRetryPreview}
+                  file={preview.selectedFile}
+                  isLoading={preview.isLoading}
+                  diff={preview.selectedFileDiff}
+                  onRetry={preview.retryPreview}
                 />
               </div>
 
               <WorkspaceFinalizePanel
                 config={projectConfig}
                 selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
-                selectedAiExtraIds={selectedAiExtraIds}
-                agentsMdPreferences={agentsMdPreferences}
-                aiExtrasTarget={aiExtrasTarget}
+                selectedAiExtraIds={aiExtras.selectedAiExtraIds}
+                agentsMdPreferences={aiExtras.agentsMdPreferences}
+                aiExtrasTarget={aiExtras.aiExtrasTarget}
                 createShareUrl={createShareUrl}
                 onPublish={() => setPublishDialogOpen(true)}
               />
@@ -545,9 +337,9 @@ export function WorkspacePage() {
               onClose={() => setPublishDialogOpen(false)}
               config={projectConfig}
               selectedDependencyIds={dependencyBrowser.selectedDependencyIds}
-              selectedAiExtraIds={selectedAiExtraIds}
-              agentsMdPreferences={agentsMdPreferences}
-              aiExtrasTarget={aiExtrasTarget}
+              selectedAiExtraIds={aiExtras.selectedAiExtraIds}
+              agentsMdPreferences={aiExtras.agentsMdPreferences}
+              aiExtrasTarget={aiExtras.aiExtrasTarget}
             />
           </Suspense>
         ) : null}
@@ -560,114 +352,4 @@ function replaceSearchParams(params: URLSearchParams) {
   const queryString = params.toString()
   const nextUrl = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname
   window.history.replaceState({}, '', nextUrl)
-}
-
-function FeaturePanelFallback({ label }: { label: string }) {
-  return (
-    <div className="rounded-xl border bg-[var(--card)] px-3 py-2 text-xs text-[var(--muted-foreground)]">
-      {label}
-    </div>
-  )
-}
-
-function isProjectConfigEqual(left: ProjectConfig, right: ProjectConfig): boolean {
-  return (
-    left.group === right.group &&
-    left.artifact === right.artifact &&
-    left.name === right.name &&
-    left.description === right.description &&
-    left.packageName === right.packageName &&
-    left.javaVersion === right.javaVersion &&
-    left.springBootVersion === right.springBootVersion &&
-    left.buildTool === right.buildTool &&
-    left.language === right.language &&
-    left.packaging === right.packaging
-  )
-}
-
-type PreviewExplorerPanelProps = {
-  files: PreviewSnapshotFile[] | undefined
-  isLoading: boolean
-  errorMessage?: string
-  selectedFilePath: string | null
-  onSelectFile: (path: string | null) => void
-  fileDiffByPath?: Record<string, PreviewFileDiff>
-  onRetry: () => void
-}
-
-const PreviewExplorerPanel = memo(function PreviewExplorerPanel({
-  files,
-  isLoading,
-  errorMessage,
-  selectedFilePath,
-  onSelectFile,
-  fileDiffByPath,
-  onRetry,
-}: PreviewExplorerPanelProps) {
-  return (
-    <Suspense fallback={<FeaturePanelFallback label="Loading preview explorer..." />}>
-      <PreviewFileTree
-        files={files}
-        isLoading={isLoading}
-        errorMessage={errorMessage}
-        selectedFilePath={selectedFilePath}
-        onSelectFile={onSelectFile}
-        fileDiffByPath={fileDiffByPath}
-        onRetry={onRetry}
-      />
-    </Suspense>
-  )
-})
-
-type PreviewContentPanelProps = {
-  file: PreviewSnapshotFile | null
-  isLoading: boolean
-  diff: PreviewFileDiff | null
-  onRetry: () => void
-}
-
-const PreviewContentPanel = memo(function PreviewContentPanel({
-  file,
-  isLoading,
-  diff,
-  onRetry,
-}: PreviewContentPanelProps) {
-  return (
-    <Suspense fallback={<FeaturePanelFallback label="Loading file viewer..." />}>
-      <FileContentViewer
-        file={file}
-        isLoading={isLoading}
-        diff={diff}
-        onRetry={onRetry}
-      />
-    </Suspense>
-  )
-})
-
-type DependencyBrowserStatusProps = {
-  isLoading: boolean
-  isError: boolean
-  metadataReady: boolean
-  message?: string
-}
-
-function DependencyBrowserStatus({
-  isLoading,
-  isError,
-  metadataReady,
-  message,
-}: DependencyBrowserStatusProps) {
-  if (isLoading) {
-    return null
-  }
-
-  if (isError || (!metadataReady && Boolean(message))) {
-    return (
-      <div className="mt-3 rounded-lg border border-red-400/80 bg-red-100 px-3 py-2 text-xs text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100">
-        {message ?? 'Dependency metadata is unavailable. Dependency selection is disabled.'}
-      </div>
-    )
-  }
-
-  return null
 }

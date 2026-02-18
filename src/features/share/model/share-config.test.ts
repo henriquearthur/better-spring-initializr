@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { AI_SKILL_OPTIONS } from '@/features/ai-extras/model/ai-extras'
 import { DEFAULT_PROJECT_CONFIG } from '@/shared/lib/project-config'
+
 import { decodeShareConfig, encodeShareConfig } from './share-config'
 
 const primarySkill = AI_SKILL_OPTIONS[0]

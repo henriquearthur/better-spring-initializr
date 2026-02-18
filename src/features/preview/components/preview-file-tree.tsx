@@ -1,9 +1,9 @@
 import { File, FolderClosed, FolderOpen, RotateCcw, Search, X } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  Tree as Arborist,
   type NodeApi,
   type NodeRendererProps,
+  Tree as Arborist,
 } from 'react-arborist'
 
 import type { PreviewFileDiff } from '@/features/preview/model/preview-diff'
@@ -37,16 +37,13 @@ export function PreviewFileTree({
   const [searchTerm, setSearchTerm] = useState('')
   const [viewportElement, setViewportElement] = useState<HTMLDivElement | null>(null)
   const [treeHeight, setTreeHeight] = useState(FALLBACK_TREE_HEIGHT)
-  const treeData = useMemo(() => buildPreviewTree(files ?? []), [files])
+  const treeData = buildPreviewTree(files ?? [])
   const normalizedSearch = searchTerm.trim().toLocaleLowerCase()
   const hasSearchTerm = normalizedSearch.length > 0
-  const setViewportRef = useCallback((element: HTMLDivElement | null) => {
+  const setViewportRef = (element: HTMLDivElement | null) => {
     setViewportElement(element)
-  }, [])
-  const hasMatchingNodes = useMemo(
-    () => (hasSearchTerm ? countSearchMatches(treeData, normalizedSearch) > 0 : true),
-    [hasSearchTerm, normalizedSearch, treeData],
-  )
+  }
+  const hasMatchingNodes = hasSearchTerm ? countSearchMatches(treeData, normalizedSearch) > 0 : true
 
   useEffect(() => {
     if (!viewportElement) {

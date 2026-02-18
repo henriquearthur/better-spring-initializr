@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import type { PreviewSnapshotFile } from './preview-tree'
 import { computePreviewDiff } from './preview-diff'
+import type { PreviewSnapshotFile } from './preview-tree'
 
 function makeFile(partial: Partial<PreviewSnapshotFile> & { path: string }): PreviewSnapshotFile {
   return {

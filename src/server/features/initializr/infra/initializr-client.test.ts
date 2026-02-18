@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
+
 import {
-  InitializrClientError,
   fetchInitializrMetadata,
+  InitializrClientError,
   normalizeInitializrMetadata,
 } from './initializr-client'
 

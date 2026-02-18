@@ -1,11 +1,12 @@
-import { defineConfig, type Plugin } from 'vite'
+import { fileURLToPath, URL } from 'node:url'
+
+import tailwindcss from '@tailwindcss/vite'
 import { devtools } from '@tanstack/devtools-vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
-import viteTsConfigPaths from 'vite-tsconfig-paths'
-import { fileURLToPath, URL } from 'node:url'
-import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
+import { defineConfig, type Plugin } from 'vite'
+import viteTsConfigPaths from 'vite-tsconfig-paths'
 
 function createClientNodePolyfillPlugin(): Plugin {
   const polyfills = new Map<string, string>([
@@ -52,7 +53,11 @@ const config = defineConfig(() => {
       }),
       tailwindcss(),
       tanstackStart(),
-      viteReact(),
+      viteReact({
+        babel: {
+          plugins: [['babel-plugin-react-compiler']],
+        },
+      }),
     ],
   }
 })
