@@ -25,6 +25,7 @@ import {
   type PushProjectToGitHubInput,
   type PushProjectToGitHubResponse,
 } from '@/server/features/github/functions/push-project-to-github'
+import { cacheGitHubOAuthResumeSnapshot } from '@/features/github/model/github-oauth-resume'
 
 type GitHubPublishDialogProps = {
   open: boolean
@@ -174,6 +175,14 @@ export function GitHubPublishDialog({
         return
       }
 
+      cacheGitHubOAuthResumeSnapshot({
+        config,
+        selectedDependencyIds,
+        selectedAiExtraIds,
+        agentsMdPreferences,
+        aiExtrasTarget,
+      })
+
       window.location.assign(response.authorizationUrl)
     } catch {
       setFeedback({
@@ -181,7 +190,13 @@ export function GitHubPublishDialog({
         message: 'Unable to start GitHub authorization right now. Please try again.',
       })
     }
-  }, [])
+  }, [
+    agentsMdPreferences,
+    aiExtrasTarget,
+    config,
+    selectedAiExtraIds,
+    selectedDependencyIds,
+  ])
 
   const handleDisconnect = useCallback(async () => {
     setFeedback(null)
