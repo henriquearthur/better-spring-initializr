@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import type { InitializrDependency } from '@/shared/lib/project-config/initializr-metadata'
 import {
   filterDependencyGroups,
   groupDependenciesByCategory,
   replaceDependencySelection,
   toggleDependencySelection,
 } from '@/features/dependencies/model/dependency-browser'
+import type { InitializrDependency } from '@/shared/lib/project-config/initializr-metadata'
 
 const dependencyFixture: InitializrDependency[] = [
   {

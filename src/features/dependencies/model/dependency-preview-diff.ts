@@ -1,10 +1,9 @@
-import type { ProjectPreviewResponse } from '@/server/features/initializr/functions/get-project-preview'
-
 import {
   computePreviewDiff,
   type PreviewSnapshotDiff,
 } from '@/features/preview/model/preview-diff'
 import type { PreviewSnapshotFile } from '@/features/preview/model/preview-tree'
+import type { ProjectPreviewResponse } from '@/server/features/initializr/functions/get-project-preview'
 
 const POM_XML_PATH = 'pom.xml'
 

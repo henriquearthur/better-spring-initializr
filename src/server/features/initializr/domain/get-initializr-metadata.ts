@@ -1,13 +1,13 @@
+import type { InitializrMetadataResponse } from '../functions/get-initializr-metadata'
 import {
-  InitializrClientError,
   fetchInitializrMetadata,
+  InitializrClientError,
 } from '../infra/initializr-client'
 import {
-  METADATA_CACHE_TTL_MS,
   getCachedMetadata,
+  METADATA_CACHE_TTL_MS,
   setCachedMetadata,
 } from '../infra/metadata-cache'
-import type { InitializrMetadataResponse } from '../functions/get-initializr-metadata'
 
 export async function executeGetInitializrMetadata(): Promise<InitializrMetadataResponse> {
   const cached = getCachedMetadata()

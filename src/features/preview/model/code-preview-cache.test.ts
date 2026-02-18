@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import type { BuiltinLanguage, ThemedToken } from 'shiki'
+import { describe, expect, it } from 'vitest'
 
 import { createCodePreviewCache } from './code-preview-cache'
 

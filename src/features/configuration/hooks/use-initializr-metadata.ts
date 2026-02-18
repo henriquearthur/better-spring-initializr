@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+
 import { getInitializrMetadata } from '@/server/features/initializr/functions/get-initializr-metadata'
 
 export function useInitializrMetadata() {

@@ -1,10 +1,10 @@
+import type { HighlighterGeneric } from '@shikijs/types'
 import { useEffect, useRef, useState } from 'react'
 import type { BuiltinLanguage, ThemedToken } from 'shiki'
-import type { HighlighterGeneric } from '@shikijs/types'
 
 import {
-  codePreviewCache,
   type CodePreviewCache,
+  codePreviewCache,
   type HighlightTokenCacheKey,
 } from '@/features/preview/model/code-preview-cache'
 import { inferCodePreviewLanguage } from '@/features/preview/model/code-preview-language'

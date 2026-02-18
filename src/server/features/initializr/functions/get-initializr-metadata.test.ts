@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import * as initializrClient from '../infra/initializr-client'
 import { clearMetadataCache } from '../infra/metadata-cache'
 import { getInitializrMetadataFromBff } from './get-initializr-metadata'

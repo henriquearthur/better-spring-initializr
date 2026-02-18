@@ -3,13 +3,13 @@ import { useEffect, useState } from 'react'
 
 import {
   completeGitHubOAuth,
-  disconnectGitHubOAuth,
-  getGitHubOAuthSession,
-  startGitHubOAuth,
   type CompleteGitHubOAuthResponse,
+  disconnectGitHubOAuth,
   type DisconnectGitHubOAuthResponse,
-  type GitHubOAuthSessionSummary,
+  getGitHubOAuthSession,
   type GetGitHubOAuthSessionResponse,
+  type GitHubOAuthSessionSummary,
+  startGitHubOAuth,
   type StartGitHubOAuthResponse,
 } from '@/server/features/github/functions/github-oauth'
 

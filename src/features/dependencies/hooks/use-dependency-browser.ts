@@ -1,13 +1,13 @@
 import { useState } from 'react'
 
-import type { InitializrDependency } from '@/shared/lib/project-config/initializr-metadata'
 import {
+  type DependencyGroup,
   filterDependencyGroups,
   groupDependenciesByCategory,
   replaceDependencySelection,
   toggleDependencySelection,
-  type DependencyGroup,
 } from '@/features/dependencies/model/dependency-browser'
+import type { InitializrDependency } from '@/shared/lib/project-config/initializr-metadata'
 
 export type UseDependencyBrowserResult = {
   groupedDependencyCategories: DependencyGroup[]

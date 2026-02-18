@@ -1,15 +1,16 @@
 import JSZip from 'jszip'
 
 import {
-  normalizeAgentsMdPreferences,
-  normalizeAiExtrasTarget,
-  normalizeSelectedAiExtraIds,
   type AgentsMdPreferences,
   type AiExtraId,
   type AiExtrasTarget,
+  normalizeAgentsMdPreferences,
+  normalizeAiExtrasTarget,
+  normalizeSelectedAiExtraIds,
 } from '@/features/ai-extras/model/ai-extras'
-import { normalizeSpringBootVersionForBuildTool } from '@/shared/lib/project-config/initializr-generate-params'
 import type { ProjectConfig } from '@/shared/lib/project-config'
+import { normalizeSpringBootVersionForBuildTool } from '@/shared/lib/project-config/initializr-generate-params'
+
 import { augmentGeneratedProjectWithAiExtras } from './augment-generated-project-with-ai-extras'
 
 const INITIALIZR_PROJECT_URL = 'https://start.spring.io/starter.zip'

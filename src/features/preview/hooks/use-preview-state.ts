@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 
 import type { AgentsMdPreferences, AiExtrasTarget } from '@/features/ai-extras/model/ai-extras'
 import { resolveDependencyPreviewDiff } from '@/features/dependencies/model/dependency-preview-diff'
+import { useProjectPreview } from '@/features/preview/hooks/use-project-preview'
 import { type PreviewFileDiff } from '@/features/preview/model/preview-diff'
 import type { PreviewSnapshotFile } from '@/features/preview/model/preview-tree'
-import { useProjectPreview } from '@/features/preview/hooks/use-project-preview'
 import { DEFAULT_PROJECT_CONFIG, type ProjectConfig } from '@/shared/lib/project-config'
 
 type UsePreviewStateInput = {

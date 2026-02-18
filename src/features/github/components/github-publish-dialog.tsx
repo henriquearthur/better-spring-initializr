@@ -11,13 +11,13 @@ import {
 import { useEffect, useRef, useState } from 'react'
 
 import type { AgentsMdPreferences, AiExtraId, AiExtrasTarget } from '@/features/ai-extras/model/ai-extras'
-import type { ProjectConfig } from '@/shared/lib/project-config'
+import { cacheGitHubOAuthResumeSnapshot } from '@/features/github/model/github-oauth-resume'
 import {
   disconnectGitHubOAuth,
-  getGitHubOAuthSession,
-  startGitHubOAuth,
   type DisconnectGitHubOAuthResponse,
+  getGitHubOAuthSession,
   type GetGitHubOAuthSessionResponse,
+  startGitHubOAuth,
   type StartGitHubOAuthResponse,
 } from '@/server/features/github/functions/github-oauth'
 import {
@@ -25,7 +25,7 @@ import {
   type PushProjectToGitHubInput,
   type PushProjectToGitHubResponse,
 } from '@/server/features/github/functions/push-project-to-github'
-import { cacheGitHubOAuthResumeSnapshot } from '@/features/github/model/github-oauth-resume'
+import type { ProjectConfig } from '@/shared/lib/project-config'
 
 type GitHubPublishDialogProps = {
   open: boolean

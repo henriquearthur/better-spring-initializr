@@ -2,13 +2,13 @@ import { Check, Copy, Download, Github, LoaderCircle, Rocket, TriangleAlert } fr
 import { useState } from 'react'
 
 import type { AgentsMdPreferences, AiExtraId, AiExtrasTarget } from '@/features/ai-extras/model/ai-extras'
-import type { ProjectConfig } from '@/shared/lib/project-config'
 import type { ShareConfigSnapshot } from '@/features/share/model/share-config'
 import {
   downloadInitializrProject,
   type DownloadInitializrProjectInput,
   type DownloadInitializrProjectResponse,
 } from '@/server/features/initializr/functions/download-initializr-project'
+import type { ProjectConfig } from '@/shared/lib/project-config'
 
 type WorkspaceFinalizePanelProps = {
   config: ProjectConfig

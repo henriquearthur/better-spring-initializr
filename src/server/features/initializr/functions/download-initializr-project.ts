@@ -1,12 +1,12 @@
 import { createServerFn } from '@tanstack/react-start'
 
 import {
-  normalizeAgentsMdPreferences,
-  normalizeAiExtrasTarget,
-  normalizeSelectedAiExtraIds,
   type AgentsMdPreferences,
   type AiExtraId,
   type AiExtrasTarget,
+  normalizeAgentsMdPreferences,
+  normalizeAiExtrasTarget,
+  normalizeSelectedAiExtraIds,
 } from '@/features/ai-extras/model/ai-extras'
 import {
   normalizeStringArray,
@@ -14,6 +14,7 @@ import {
   projectConfigSchema,
   z,
 } from '@/server/shared/validation'
+
 import { executeDownloadInitializrProject } from '../domain/download-initializr-project'
 
 export type DownloadInitializrProjectInput = {

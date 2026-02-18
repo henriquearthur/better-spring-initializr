@@ -1,5 +1,9 @@
 import {
+  type AgentsMdPreferences,
   AI_SKILL_OPTIONS,
+  type AiExtrasTarget,
+  type AiSkillExtraId,
+  type AiSkillOption,
   buildAgentsMdMarkdown,
   getAiSkillOption,
   isAiSkillExtraId,
@@ -8,10 +12,6 @@ import {
   normalizeSelectedAiExtraIds,
   resolveAgentsMdFilePaths,
   resolveAiSkillsRootPaths,
-  type AgentsMdPreferences,
-  type AiExtrasTarget,
-  type AiSkillExtraId,
-  type AiSkillOption,
 } from '@/features/ai-extras/model/ai-extras'
 import type { ProjectConfig } from '@/shared/lib/project-config'
 

@@ -1,23 +1,23 @@
 import { createServerFn } from '@tanstack/react-start'
 
 import {
+  type AgentsMdPreferences,
   normalizeAgentsMdPreferences,
   normalizeAiExtrasTarget,
   normalizeSelectedAiExtraIds,
-  type AgentsMdPreferences,
 } from '@/features/ai-extras/model/ai-extras'
-
-import {
-  type GeneratedProjectFile,
-  type ProjectPreviewInput,
-} from '../infra/initializr-preview-client'
 import {
   normalizeStringArray,
   parsePayload,
   projectConfigSchema,
   z,
 } from '@/server/shared/validation'
+
 import { executeGetProjectPreview } from '../domain/get-project-preview'
+import {
+  type GeneratedProjectFile,
+  type ProjectPreviewInput,
+} from '../infra/initializr-preview-client'
 
 export type ProjectPreviewSuccess = {
   ok: true

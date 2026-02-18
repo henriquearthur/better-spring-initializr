@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import type { ProjectPreviewResponse } from '@/server/features/initializr/functions/get-project-preview'
-import type { PreviewSnapshotFile } from './preview-tree'
+
 import { resolveDependencyPreviewDiff } from './dependency-preview-diff'
+import type { PreviewSnapshotFile } from './preview-tree'
 
 function makeFile(partial: Partial<PreviewSnapshotFile> & { path: string }): PreviewSnapshotFile {
   return {

@@ -1,9 +1,9 @@
 import { File, FolderClosed, FolderOpen, RotateCcw, Search, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
-  Tree as Arborist,
   type NodeApi,
   type NodeRendererProps,
+  Tree as Arborist,
 } from 'react-arborist'
 
 import type { PreviewFileDiff } from '@/features/preview/model/preview-diff'

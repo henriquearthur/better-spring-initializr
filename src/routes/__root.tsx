@@ -1,9 +1,9 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TanStackDevtools } from '@tanstack/react-devtools'
-import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createRootRoute,HeadContent, Scripts } from '@tanstack/react-router'
+import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { Analytics } from '@vercel/analytics/react'
+import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
 
 import { ThemeProvider } from '../shared/ui/theme/theme-provider'
 import appCss from '../styles/app.css?url'

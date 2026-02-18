@@ -4,16 +4,16 @@ import {
   type InitializrGenerationInput,
 } from '@/shared/lib/project-config/initializr-generate-params'
 
-import {
-  InitializrGenerateClientError,
-  fetchInitializrZip,
-} from '../infra/initializr-generate-client'
-import { augmentGeneratedProjectWithAiExtras } from '../infra/augment-generated-project-with-ai-extras'
 import type {
   DownloadInitializrProjectError,
   DownloadInitializrProjectInput,
   DownloadInitializrProjectResponse,
 } from '../functions/download-initializr-project'
+import { augmentGeneratedProjectWithAiExtras } from '../infra/augment-generated-project-with-ai-extras'
+import {
+  fetchInitializrZip,
+  InitializrGenerateClientError,
+} from '../infra/initializr-generate-client'
 
 export async function executeDownloadInitializrProject(
   input: DownloadInitializrProjectInput,

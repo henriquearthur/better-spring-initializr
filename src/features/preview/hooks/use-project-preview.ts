@@ -1,18 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
 
 import {
+  type AgentsMdPreferences,
+  type AiExtrasTarget,
   normalizeAgentsMdPreferences,
   normalizeAiExtrasTarget,
   normalizeSelectedAiExtraIds,
-  type AgentsMdPreferences,
-  type AiExtrasTarget,
 } from '@/features/ai-extras/model/ai-extras'
-import type { ProjectConfig } from '@/shared/lib/project-config'
-import { useDebouncedValue } from '@/shared/lib/debounce'
 import {
   getProjectPreview,
   type ProjectPreviewResponse,
 } from '@/server/features/initializr/functions/get-project-preview'
+import { useDebouncedValue } from '@/shared/lib/debounce'
+import type { ProjectConfig } from '@/shared/lib/project-config'
 
 type UseProjectPreviewInput = {
   config: ProjectConfig

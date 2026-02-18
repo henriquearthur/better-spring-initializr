@@ -1,4 +1,5 @@
 import { FlaskConical, Github } from 'lucide-react'
+
 import { ThemeToggle } from '@/shared/ui/theme/theme-toggle'
 
 export function WorkspaceHeader() {

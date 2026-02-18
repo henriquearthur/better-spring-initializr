@@ -5,10 +5,10 @@ import { DEFAULT_AGENTS_MD_PREFERENCES } from '@/features/ai-extras/model/ai-ext
 import { DEFAULT_PROJECT_CONFIG } from '@/shared/lib/project-config'
 
 import {
-  GitHubPublishDialog,
   getActiveFlowStep,
   getRepositoryNameError,
   getStepState,
+  GitHubPublishDialog,
 } from './github-publish-dialog'
 
 describe('GitHubPublishDialog', () => {

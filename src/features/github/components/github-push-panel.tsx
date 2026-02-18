@@ -5,7 +5,6 @@ import {
   DEFAULT_AGENTS_MD_PREFERENCES,
   DEFAULT_AI_EXTRAS_TARGET,
 } from '@/features/ai-extras/model/ai-extras'
-import type { ProjectConfig } from '@/shared/lib/project-config'
 import {
   getGitHubOAuthSession,
   type GetGitHubOAuthSessionResponse,
@@ -15,6 +14,7 @@ import {
   type PushProjectToGitHubInput,
   type PushProjectToGitHubResponse,
 } from '@/server/features/github/functions/push-project-to-github'
+import type { ProjectConfig } from '@/shared/lib/project-config'
 
 type GitHubPushPanelProps = {
   config: ProjectConfig

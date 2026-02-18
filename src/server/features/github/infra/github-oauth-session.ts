@@ -1,7 +1,8 @@
 import { clearSession, getSession, useSession } from '@tanstack/react-start/server'
 
-import type { GitHubOAuthIdentity, GitHubOAuthToken } from './github-oauth-client'
 import { requireEnvironmentVariableMinLength } from '@/server/shared/config'
+
+import type { GitHubOAuthIdentity, GitHubOAuthToken } from './github-oauth-client'
 
 const GITHUB_OAUTH_STATE_COOKIE_NAME = 'github_oauth_state'
 const GITHUB_OAUTH_SESSION_COOKIE_NAME = 'github_oauth_session'

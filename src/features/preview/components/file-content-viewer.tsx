@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from 'react'
 import type { ThemedToken } from 'shiki'
 
 import {
-  useCodePreviewEngine,
   type CodePreviewEngineResult,
+  useCodePreviewEngine,
 } from '@/features/preview/hooks/use-code-preview-engine'
-import type { PreviewFileDiff, PreviewRemovedLine } from '@/features/preview/model/preview-diff'
 import { formatCodePreviewLanguageLabel } from '@/features/preview/model/code-preview-language'
+import type { PreviewFileDiff, PreviewRemovedLine } from '@/features/preview/model/preview-diff'
 import type { PreviewSnapshotFile } from '@/features/preview/model/preview-tree'
 
 const VIEWER_ROW_HEIGHT = 26

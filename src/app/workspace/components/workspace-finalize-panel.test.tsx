@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_AGENTS_MD_PREFERENCES } from '@/features/ai-extras/model/ai-extras'
 import { DEFAULT_PROJECT_CONFIG } from '@/shared/lib/project-config'
 
-import { WorkspaceFinalizePanel, getBuildToolLabel } from './workspace-finalize-panel'
+import { getBuildToolLabel,WorkspaceFinalizePanel } from './workspace-finalize-panel'
 
 describe('WorkspaceFinalizePanel', () => {
   it('renders finalize panel with primary actions and contextual metadata', () => {

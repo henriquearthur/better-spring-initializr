@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { CURATED_PRESETS } from '@/features/presets/model/curated-presets'
 import type { InitializrDependency } from '@/shared/lib/project-config/initializr-metadata'
+
 import { PresetLayoutSurface } from './preset-layout-surface'
 
 const availableDependenciesFixture: InitializrDependency[] = [

@@ -1,8 +1,8 @@
-import { Suspense, lazy } from 'react'
+import { lazy,Suspense } from 'react'
 
-import { FeaturePanelFallback } from '@/shared/ui/feature-panel-fallback'
 import { type PreviewFileDiff } from '@/features/preview/model/preview-diff'
 import type { PreviewSnapshotFile } from '@/features/preview/model/preview-tree'
+import { FeaturePanelFallback } from '@/shared/ui/feature-panel-fallback'
 
 const PreviewFileTree = lazy(async () => {
   const module = await import('@/features/preview/components/preview-file-tree')
