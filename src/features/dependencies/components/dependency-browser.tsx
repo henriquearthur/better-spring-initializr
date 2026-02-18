@@ -1,5 +1,5 @@
 import { ChevronDown, Search, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import type { DependencyGroup } from '@/features/dependencies/model/dependency-browser'
 
@@ -20,7 +20,7 @@ export function DependencyBrowser({
   onToggleDependency,
   disabled = false,
 }: DependencyBrowserProps) {
-  const selectedIdSet = new Set(selectedDependencyIds)
+  const selectedIdSet = useMemo(() => new Set(selectedDependencyIds), [selectedDependencyIds])
   const normalizedSearch = searchTerm.trim()
   const hasAnyDependencies = dependencyGroups.length > 0
   const dependencyById = new Map(

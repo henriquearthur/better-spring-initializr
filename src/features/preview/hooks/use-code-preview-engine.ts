@@ -1,5 +1,5 @@
 import type { HighlighterGeneric } from '@shikijs/types'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { BuiltinLanguage, ThemedToken } from 'shiki'
 
 import {
@@ -175,10 +175,13 @@ export function useCodePreviewEngine({
   const resolvedCache = cache ?? codePreviewCache
   const resolvedHighlighter = highlighter ?? defaultHighlighter
   const resolvedScheduler = scheduler ?? scheduleWhenIdle
-  const resolvedPolicy = {
-    ...DEFAULT_HIGHLIGHT_POLICY,
-    ...policy,
-  }
+  const resolvedPolicy = useMemo(
+    () => ({
+      ...DEFAULT_HIGHLIGHT_POLICY,
+      ...policy,
+    }),
+    [policy],
+  )
 
   const theme = isDarkMode ? SHIKI_DARK_THEME : SHIKI_LIGHT_THEME
   const language = inferCodePreviewLanguage(file?.path)

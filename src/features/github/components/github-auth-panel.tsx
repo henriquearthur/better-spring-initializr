@@ -31,23 +31,22 @@ export function GitHubAuthPanel() {
   const organizationCount = session?.organizations?.length ?? 0
   const organizationLabel = `${organizationCount} org${organizationCount === 1 ? '' : 's'}`
 
-  const refreshSession = async () => {
-    const response = await invokeGetGitHubOAuthSession()
-
-    if (!response.ok) {
-      setSession({ connected: false })
-      setFeedback({
-        tone: 'error',
-        message: response.error.message,
-      })
-      return
-    }
-
-    setSession(response.session)
-  }
-
   useEffect(() => {
     let isMounted = true
+    const refreshSession = async () => {
+      const response = await invokeGetGitHubOAuthSession()
+
+      if (!response.ok) {
+        setSession({ connected: false })
+        setFeedback({
+          tone: 'error',
+          message: response.error.message,
+        })
+        return
+      }
+
+      setSession(response.session)
+    }
 
     const load = async () => {
       try {
@@ -107,7 +106,7 @@ export function GitHubAuthPanel() {
     return () => {
       isMounted = false
     }
-  }, [refreshSession])
+  }, [])
 
   const handleConnect = async () => {
     if (isConnecting || isDisconnecting) {
