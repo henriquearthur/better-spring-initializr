@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 
 import {
+  buildGitHubOAuthWorkspaceRedirectPath,
+  consumeGitHubOAuthResumeShareToken,
+} from '@/features/github/model/github-oauth-resume'
+import {
   completeGitHubOAuth,
   type CompleteGitHubOAuthResponse,
 } from '@/server/features/github/functions/github-oauth'
@@ -35,18 +39,44 @@ function GitHubOAuthCallbackRoute() {
         if (!mounted) return
 
         if (response.ok) {
-          window.location.assign('/?github=connected')
+          const shareToken = consumeGitHubOAuthResumeShareToken()
+          const redirectPath = buildGitHubOAuthWorkspaceRedirectPath(
+            'connected',
+            shareToken,
+          )
+
+          window.location.assign(redirectPath)
         } else {
           setError(response.error.message)
           setTimeout(() => {
-            if (mounted) window.location.assign('/?github=error')
+            if (!mounted) {
+              return
+            }
+
+            const shareToken = consumeGitHubOAuthResumeShareToken()
+            const redirectPath = buildGitHubOAuthWorkspaceRedirectPath(
+              'error',
+              shareToken,
+            )
+
+            window.location.assign(redirectPath)
           }, 2000)
         }
       } catch {
         if (!mounted) return
         setError('Unable to complete GitHub authorization.')
         setTimeout(() => {
-          if (mounted) window.location.assign('/?github=error')
+          if (!mounted) {
+            return
+          }
+
+          const shareToken = consumeGitHubOAuthResumeShareToken()
+          const redirectPath = buildGitHubOAuthWorkspaceRedirectPath(
+            'error',
+            shareToken,
+          )
+
+          window.location.assign(redirectPath)
         }, 2000)
       }
     }
