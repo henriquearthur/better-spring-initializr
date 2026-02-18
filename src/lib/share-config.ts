@@ -1,4 +1,5 @@
 import {
+  DEFAULT_AI_EXTRAS_TARGET,
   normalizeAgentsMdPreferences,
   normalizeAiExtrasTarget,
   normalizeSelectedAiExtraIds,
@@ -22,6 +23,7 @@ type ShareConfigV1Payload = {
   selectedDependencyIds: string[]
   selectedAiExtraIds?: string[]
   agentsMdPreferences?: Partial<AgentsMdPreferences>
+  aiAgentId?: string
   aiExtrasTarget?: AiExtrasTarget
 }
 
@@ -84,7 +86,10 @@ export function decodeShareConfig(token: string): ShareConfigSnapshot | null {
       ? (parsedPayload.agentsMdPreferences as Partial<AgentsMdPreferences>)
       : undefined,
   )
-  const aiExtrasTarget = normalizeAiExtrasTarget(parsedPayload.aiExtrasTarget)
+  const aiExtrasTarget =
+    typeof parsedPayload.aiExtrasTarget === 'string'
+      ? normalizeAiExtrasTarget(parsedPayload.aiExtrasTarget)
+      : resolveLegacyAiExtrasTarget(parsedPayload.aiAgentId)
 
   return {
     config,
@@ -93,6 +98,20 @@ export function decodeShareConfig(token: string): ShareConfigSnapshot | null {
     agentsMdPreferences,
     aiExtrasTarget,
   }
+}
+
+function resolveLegacyAiExtrasTarget(aiAgentId: unknown): AiExtrasTarget {
+  if (typeof aiAgentId !== 'string') {
+    return DEFAULT_AI_EXTRAS_TARGET
+  }
+
+  const normalizedAgentId = aiAgentId.trim().toLowerCase()
+
+  if (normalizedAgentId === 'claude-code') {
+    return 'claude'
+  }
+
+  return DEFAULT_AI_EXTRAS_TARGET
 }
 
 function normalizeSelectedDependencyIds(selectedDependencyIds: string[]): string[] {

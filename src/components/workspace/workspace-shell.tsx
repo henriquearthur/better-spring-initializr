@@ -11,16 +11,16 @@ import { useProjectPreview } from '@/hooks/use-project-preview'
 import { useShareableConfig } from '@/hooks/use-shareable-config'
 import {
   normalizeAgentsMdPreferences,
-  normalizeAiExtrasTarget,
   getAgentsMdPreferenceIdsByGuidance,
   DEFAULT_AGENTS_MD_PREFERENCES,
   DEFAULT_AI_EXTRAS_TARGET,
+  normalizeAiExtrasTarget,
   normalizeSelectedAiExtraIds,
   type AgentsMdGuidanceId,
   type AgentsMdPreferences,
-  type AiExtrasTarget,
   type AiSkillExtraId,
   type AiExtraId,
+  type AiExtrasTarget,
 } from '@/lib/ai-extras'
 import { applyCuratedPreset, resolveCuratedPresets } from '@/lib/curated-presets'
 import { type PreviewFileDiff } from '@/lib/preview-diff'
@@ -91,7 +91,6 @@ export function WorkspaceShell() {
   if (initialSessionConfigRef.current === null) {
     initialSessionConfigRef.current = projectConfig
   }
-
   const dependencyDiffBaselinePreviewQuery = useProjectPreview({
     config: DEFAULT_PROJECT_CONFIG,
     selectedDependencyIds: [],
@@ -382,7 +381,7 @@ export function WorkspaceShell() {
       {dependenciesOpen ? dependencyBrowserContent : null}
     </section>
   )
-  const previewLayoutClass = 'xl:grid-cols-[320px_minmax(0,1fr)]'
+  const previewLayoutClass = 'lg:grid-cols-[320px_minmax(0,1fr)]'
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -437,7 +436,7 @@ export function WorkspaceShell() {
                 </div>
               </div>
 
-              <div className={`grid h-[760px] grid-cols-1 gap-4 md:h-[820px] xl:h-[560px] ${previewLayoutClass}`}>
+              <div className={`grid h-[760px] grid-cols-1 gap-4 md:h-[820px] lg:h-[560px] ${previewLayoutClass}`}>
                 <PreviewExplorerPanel
                   files={previewFiles}
                   isLoading={projectPreviewQuery.isPending}

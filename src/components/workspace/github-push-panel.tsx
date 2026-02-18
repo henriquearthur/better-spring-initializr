@@ -1,7 +1,10 @@
 import { Check, ExternalLink, Github, LoaderCircle, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { DEFAULT_AGENTS_MD_PREFERENCES, DEFAULT_AI_EXTRAS_TARGET } from '@/lib/ai-extras'
+import {
+  DEFAULT_AGENTS_MD_PREFERENCES,
+  DEFAULT_AI_EXTRAS_TARGET,
+} from '@/lib/ai-extras'
 import type { ProjectConfig } from '@/lib/project-config'
 import {
   getGitHubOAuthSession,

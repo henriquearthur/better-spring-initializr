@@ -3,7 +3,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { AI_SKILL_OPTIONS } from '@/lib/ai-extras'
+import { AI_SKILL_OPTIONS, type AgentsMdPreferences, type AiExtrasTarget } from '@/lib/ai-extras'
 
 import { AiExtrasPanel } from './ai-extras-panel'
 
@@ -13,11 +13,139 @@ if (!primarySkill) {
   throw new Error('Expected at least one AI skill in the catalog.')
 }
 
+const defaultPreferences: AgentsMdPreferences = {
+  includeFeatureBranchesGuidance: true,
+  includeConventionalCommitsGuidance: true,
+  includePullRequestsGuidance: true,
+  includeRunRelevantTestsGuidance: true,
+  includeTaskScopeDisciplineGuidance: true,
+}
+
 afterEach(() => {
   cleanup()
 })
 
+type RenderOptions = {
+  selectedAiExtraIds?: string[]
+  aiExtrasTarget?: AiExtrasTarget
+  agentsMdPreferences?: AgentsMdPreferences
+  onChangeAiExtrasTarget?: ReturnType<typeof vi.fn>
+  onToggleAgentsMdEnabled?: ReturnType<typeof vi.fn>
+  onToggleAgentsMdGuidance?: ReturnType<typeof vi.fn>
+  onToggleAgentsMdPreference?: ReturnType<typeof vi.fn>
+  onToggleAiSkill?: ReturnType<typeof vi.fn>
+}
+
+function renderAiExtrasPanel(options: RenderOptions = {}) {
+  const onChangeAiExtrasTarget = options.onChangeAiExtrasTarget ?? vi.fn()
+  const onToggleAgentsMdEnabled = options.onToggleAgentsMdEnabled ?? vi.fn()
+  const onToggleAgentsMdGuidance = options.onToggleAgentsMdGuidance ?? vi.fn()
+  const onToggleAgentsMdPreference = options.onToggleAgentsMdPreference ?? vi.fn()
+  const onToggleAiSkill = options.onToggleAiSkill ?? vi.fn()
+
+  render(
+    <AiExtrasPanel
+      selectedAiExtraIds={options.selectedAiExtraIds ?? []}
+      aiExtrasTarget={options.aiExtrasTarget ?? 'agents'}
+      agentsMdPreferences={options.agentsMdPreferences ?? defaultPreferences}
+      onChangeAiExtrasTarget={onChangeAiExtrasTarget}
+      onToggleAgentsMdEnabled={onToggleAgentsMdEnabled}
+      onToggleAgentsMdGuidance={onToggleAgentsMdGuidance}
+      onToggleAgentsMdPreference={onToggleAgentsMdPreference}
+      onToggleAiSkill={onToggleAiSkill}
+    />,
+  )
+
+  return {
+    onChangeAiExtrasTarget,
+    onToggleAgentsMdEnabled,
+    onToggleAgentsMdGuidance,
+    onToggleAgentsMdPreference,
+    onToggleAiSkill,
+  }
+}
+
+function expandPanel() {
+  const disclosure = screen.getByTestId('ai-extras-disclosure')
+  const summary = disclosure.querySelector('summary')
+
+  if (!summary) {
+    throw new Error('Expected AI extras disclosure summary to exist.')
+  }
+
+  fireEvent.click(summary)
+}
+
+function collapsePanel() {
+  const disclosure = screen.getByTestId('ai-extras-disclosure')
+  const summary = disclosure.querySelector('summary')
+
+  if (!summary) {
+    throw new Error('Expected AI extras disclosure summary to exist.')
+  }
+
+  fireEvent.click(summary)
+}
+
 describe('AiExtrasPanel', () => {
+  it('starts collapsed without the old summary line', () => {
+    renderAiExtrasPanel({
+      selectedAiExtraIds: ['agents-md', primarySkill.id],
+      aiExtrasTarget: 'claude',
+    })
+
+    const disclosure = screen.getByTestId('ai-extras-disclosure') as HTMLDetailsElement
+    const summary = disclosure.querySelector('summary')
+    const summaryText = summary?.textContent ?? ''
+
+    expect(disclosure.open).toBe(false)
+    expect(summary?.getAttribute('aria-controls')).toBe('ai-extras-panel-content')
+    expect(summary?.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.getByText('Show options')).toBeTruthy()
+    expect(summaryText.includes('File: CLAUDE.md')).toBe(false)
+    expect(summaryText.includes('Guidance: On')).toBe(false)
+    expect(summaryText.includes('Skills: 1 selected')).toBe(false)
+  })
+
+  it('expands and collapses through the toggle button', () => {
+    renderAiExtrasPanel()
+    const disclosure = screen.getByTestId('ai-extras-disclosure') as HTMLDetailsElement
+
+    expandPanel()
+
+    expect(disclosure.open).toBe(true)
+    expect(disclosure.querySelector('summary')?.getAttribute('aria-expanded')).toBe('true')
+
+    collapsePanel()
+
+    expect(disclosure.open).toBe(false)
+    expect(disclosure.querySelector('summary')?.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('keeps selected values after collapsing and expanding again', () => {
+    renderAiExtrasPanel({
+      selectedAiExtraIds: ['agents-md', primarySkill.id],
+      aiExtrasTarget: 'agents',
+    })
+
+    expandPanel()
+
+    let includeAgentsCheckbox = screen.getByLabelText('Include AGENTS.md') as HTMLInputElement
+    let primarySkillCheckbox = screen.getByLabelText(primarySkill.label) as HTMLInputElement
+
+    expect(includeAgentsCheckbox.checked).toBe(true)
+    expect(primarySkillCheckbox.checked).toBe(true)
+
+    collapsePanel()
+    expandPanel()
+
+    includeAgentsCheckbox = screen.getByLabelText('Include AGENTS.md') as HTMLInputElement
+    primarySkillCheckbox = screen.getByLabelText(primarySkill.label) as HTMLInputElement
+
+    expect(includeAgentsCheckbox.checked).toBe(true)
+    expect(primarySkillCheckbox.checked).toBe(true)
+  })
+
   it('keeps guidance and skills independent and triggers dedicated callbacks', () => {
     const onChangeAiExtrasTarget = vi.fn()
     const onToggleAgentsMdEnabled = vi.fn()
@@ -25,24 +153,24 @@ describe('AiExtrasPanel', () => {
     const onToggleAgentsMdPreference = vi.fn()
     const onToggleAiSkill = vi.fn()
 
-    render(
-      <AiExtrasPanel
-        selectedAiExtraIds={['agents-md']}
-        aiExtrasTarget="agents"
-        agentsMdPreferences={{
-          includeFeatureBranchesGuidance: true,
-          includeConventionalCommitsGuidance: false,
-          includePullRequestsGuidance: true,
-          includeRunRelevantTestsGuidance: true,
-          includeTaskScopeDisciplineGuidance: false,
-        }}
-        onChangeAiExtrasTarget={onChangeAiExtrasTarget}
-        onToggleAgentsMdEnabled={onToggleAgentsMdEnabled}
-        onToggleAgentsMdGuidance={onToggleAgentsMdGuidance}
-        onToggleAgentsMdPreference={onToggleAgentsMdPreference}
-        onToggleAiSkill={onToggleAiSkill}
-      />,
-    )
+    renderAiExtrasPanel({
+      selectedAiExtraIds: ['agents-md'],
+      aiExtrasTarget: 'agents',
+      agentsMdPreferences: {
+        includeFeatureBranchesGuidance: true,
+        includeConventionalCommitsGuidance: false,
+        includePullRequestsGuidance: true,
+        includeRunRelevantTestsGuidance: true,
+        includeTaskScopeDisciplineGuidance: false,
+      },
+      onChangeAiExtrasTarget,
+      onToggleAgentsMdEnabled,
+      onToggleAgentsMdGuidance,
+      onToggleAgentsMdPreference,
+      onToggleAiSkill,
+    })
+
+    expandPanel()
 
     expect(screen.getByText('GIT GUIDELINES')).toBeTruthy()
     expect(screen.getByText('DELIVERY GUIDELINES')).toBeTruthy()
@@ -66,33 +194,27 @@ describe('AiExtrasPanel', () => {
   })
 
   it('enables AGENTS.md when a child guideline is toggled while parent is disabled', () => {
-    const onChangeAiExtrasTarget = vi.fn()
     const onToggleAgentsMdEnabled = vi.fn()
-    const onToggleAgentsMdGuidance = vi.fn()
     const onToggleAgentsMdPreference = vi.fn()
-    const onToggleAiSkill = vi.fn()
+    const onToggleAgentsMdGuidance = vi.fn()
 
-    render(
-      <AiExtrasPanel
-        selectedAiExtraIds={[]}
-        aiExtrasTarget="agents"
-        agentsMdPreferences={{
-          includeFeatureBranchesGuidance: false,
-          includeConventionalCommitsGuidance: false,
-          includePullRequestsGuidance: false,
-          includeRunRelevantTestsGuidance: false,
-          includeTaskScopeDisciplineGuidance: false,
-        }}
-        onChangeAiExtrasTarget={onChangeAiExtrasTarget}
-        onToggleAgentsMdEnabled={onToggleAgentsMdEnabled}
-        onToggleAgentsMdGuidance={onToggleAgentsMdGuidance}
-        onToggleAgentsMdPreference={onToggleAgentsMdPreference}
-        onToggleAiSkill={onToggleAiSkill}
-      />,
-    )
+    renderAiExtrasPanel({
+      selectedAiExtraIds: [],
+      aiExtrasTarget: 'agents',
+      agentsMdPreferences: {
+        includeFeatureBranchesGuidance: false,
+        includeConventionalCommitsGuidance: false,
+        includePullRequestsGuidance: false,
+        includeRunRelevantTestsGuidance: false,
+        includeTaskScopeDisciplineGuidance: false,
+      },
+      onToggleAgentsMdEnabled,
+      onToggleAgentsMdGuidance,
+      onToggleAgentsMdPreference,
+    })
 
-    const featureBranchOptions = screen.getAllByLabelText('Feature branches')
-    fireEvent.click(featureBranchOptions[featureBranchOptions.length - 1]!)
+    expandPanel()
+    fireEvent.click(screen.getByLabelText('Feature branches'))
 
     expect(onToggleAgentsMdEnabled).toHaveBeenCalledTimes(1)
     expect(onToggleAgentsMdPreference).toHaveBeenCalledWith('includeFeatureBranchesGuidance')
@@ -102,97 +224,37 @@ describe('AiExtrasPanel', () => {
   it('changes selected target through compact selector', () => {
     const onChangeAiExtrasTarget = vi.fn()
 
-    render(
-      <AiExtrasPanel
-        selectedAiExtraIds={[]}
-        aiExtrasTarget="agents"
-        agentsMdPreferences={{
-          includeFeatureBranchesGuidance: true,
-          includeConventionalCommitsGuidance: true,
-          includePullRequestsGuidance: true,
-          includeRunRelevantTestsGuidance: true,
-          includeTaskScopeDisciplineGuidance: true,
-        }}
-        onChangeAiExtrasTarget={onChangeAiExtrasTarget}
-        onToggleAgentsMdEnabled={() => undefined}
-        onToggleAgentsMdGuidance={() => undefined}
-        onToggleAgentsMdPreference={() => undefined}
-        onToggleAiSkill={() => undefined}
-      />,
-    )
+    renderAiExtrasPanel({
+      selectedAiExtraIds: [],
+      aiExtrasTarget: 'agents',
+      onChangeAiExtrasTarget,
+    })
 
+    expandPanel()
     fireEvent.click(screen.getByLabelText('Generate CLAUDE.md'))
 
     expect(onChangeAiExtrasTarget).toHaveBeenCalledWith('claude')
   })
 
-  it('uses CLAUDE paths when target is claude', () => {
-    render(
-      <AiExtrasPanel
-        selectedAiExtraIds={['agents-md', primarySkill.id]}
-        aiExtrasTarget="claude"
-        agentsMdPreferences={{
-          includeFeatureBranchesGuidance: true,
-          includeConventionalCommitsGuidance: true,
-          includePullRequestsGuidance: true,
-          includeRunRelevantTestsGuidance: true,
-          includeTaskScopeDisciplineGuidance: true,
-        }}
-        onChangeAiExtrasTarget={() => undefined}
-        onToggleAgentsMdEnabled={() => undefined}
-        onToggleAgentsMdGuidance={() => undefined}
-        onToggleAgentsMdPreference={() => undefined}
-        onToggleAiSkill={() => undefined}
-      />,
-    )
+  it('shows claude paths when target is claude', () => {
+    renderAiExtrasPanel({
+      selectedAiExtraIds: ['agents-md', primarySkill.id],
+      aiExtrasTarget: 'claude',
+    })
+
+    expandPanel()
 
     expect(screen.getByLabelText('Include CLAUDE.md')).toBeTruthy()
     expect(screen.getByText('.claude/skills')).toBeTruthy()
   })
 
-  it('uses .agents paths for agents target', () => {
-    render(
-      <AiExtrasPanel
-        selectedAiExtraIds={['agents-md', primarySkill.id]}
-        aiExtrasTarget="agents"
-        agentsMdPreferences={{
-          includeFeatureBranchesGuidance: true,
-          includeConventionalCommitsGuidance: true,
-          includePullRequestsGuidance: true,
-          includeRunRelevantTestsGuidance: true,
-          includeTaskScopeDisciplineGuidance: true,
-        }}
-        onChangeAiExtrasTarget={() => undefined}
-        onToggleAgentsMdEnabled={() => undefined}
-        onToggleAgentsMdGuidance={() => undefined}
-        onToggleAgentsMdPreference={() => undefined}
-        onToggleAiSkill={() => undefined}
-      />,
-    )
-
-    expect(screen.getByLabelText('Include AGENTS.md')).toBeTruthy()
-    expect(screen.getByText('.agents/skills')).toBeTruthy()
-  })
-
   it('shows combined paths when target is both', () => {
-    render(
-      <AiExtrasPanel
-        selectedAiExtraIds={['agents-md', primarySkill.id]}
-        aiExtrasTarget="both"
-        agentsMdPreferences={{
-          includeFeatureBranchesGuidance: true,
-          includeConventionalCommitsGuidance: true,
-          includePullRequestsGuidance: true,
-          includeRunRelevantTestsGuidance: true,
-          includeTaskScopeDisciplineGuidance: true,
-        }}
-        onChangeAiExtrasTarget={() => undefined}
-        onToggleAgentsMdEnabled={() => undefined}
-        onToggleAgentsMdGuidance={() => undefined}
-        onToggleAgentsMdPreference={() => undefined}
-        onToggleAiSkill={() => undefined}
-      />,
-    )
+    renderAiExtrasPanel({
+      selectedAiExtraIds: ['agents-md', primarySkill.id],
+      aiExtrasTarget: 'both',
+    })
+
+    expandPanel()
 
     expect(screen.getByLabelText('Include AGENTS.md + CLAUDE.md')).toBeTruthy()
     expect(screen.getByText('.agents/skills + .claude/skills')).toBeTruthy()
