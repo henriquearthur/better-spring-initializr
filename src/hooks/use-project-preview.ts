@@ -1,6 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 
+import {
+  normalizeAgentsMdPreferences,
+  normalizeAiExtrasTarget,
+  normalizeSelectedAiExtraIds,
+  type AgentsMdPreferences,
+  type AiExtrasTarget,
+} from '@/lib/ai-extras'
 import type { ProjectConfig } from '@/lib/project-config'
 import {
   getProjectPreview,
@@ -10,6 +17,9 @@ import {
 type UseProjectPreviewInput = {
   config: ProjectConfig
   selectedDependencyIds: string[]
+  selectedAiExtraIds: string[]
+  agentsMdPreferences: AgentsMdPreferences
+  aiExtrasTarget: AiExtrasTarget
 }
 
 const PREVIEW_REFRESH_DEBOUNCE_MS = 350
@@ -30,8 +40,17 @@ export function useProjectPreview(input: UseProjectPreviewInput) {
     () => ({
       config: input.config,
       selectedDependencyIds: Array.from(new Set(input.selectedDependencyIds)).sort(),
+      selectedAiExtraIds: normalizeSelectedAiExtraIds(input.selectedAiExtraIds),
+      agentsMdPreferences: normalizeAgentsMdPreferences(input.agentsMdPreferences),
+      aiExtrasTarget: normalizeAiExtrasTarget(input.aiExtrasTarget),
     }),
-    [input.config, input.selectedDependencyIds],
+    [
+      input.config,
+      input.selectedAiExtraIds,
+      input.agentsMdPreferences,
+      input.selectedDependencyIds,
+      input.aiExtrasTarget,
+    ],
   )
 
   const debouncedInput = useDebouncedValue(normalizedInput, PREVIEW_REFRESH_DEBOUNCE_MS)

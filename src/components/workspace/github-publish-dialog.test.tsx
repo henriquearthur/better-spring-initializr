@@ -1,6 +1,7 @@
 import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
+import { DEFAULT_AGENTS_MD_PREFERENCES } from '@/lib/ai-extras'
 import { DEFAULT_PROJECT_CONFIG } from '@/lib/project-config'
 
 import {
@@ -18,6 +19,9 @@ describe('GitHubPublishDialog', () => {
         onClose={() => undefined}
         config={DEFAULT_PROJECT_CONFIG}
         selectedDependencyIds={[]}
+        selectedAiExtraIds={[]}
+        agentsMdPreferences={DEFAULT_AGENTS_MD_PREFERENCES}
+        aiExtrasTarget="agents"
       />,
     )
 

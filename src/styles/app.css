@@ -181,6 +181,7 @@ button:disabled,
     @apply px-3 py-3;
     cursor: text;
     user-select: text;
+    contain: paint;
   }
 
   .preview-tree-scroll,
@@ -286,6 +287,294 @@ button:disabled,
 
   .finalize-feedback-error {
     @apply border-red-400/80 bg-red-100 text-red-950 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-100;
+  }
+
+  .ai-extras-panel {
+    @apply relative overflow-hidden rounded-xl border p-3;
+    background: linear-gradient(
+      130deg,
+      color-mix(in oklab, oklch(0.58 0.19 305) 12%, var(--card)) 0%,
+      color-mix(in oklab, var(--card) 88%, var(--muted)) 100%
+    );
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 34%, var(--interactive-border));
+    box-shadow: 0 10px 28px -24px color-mix(in oklab, oklch(0.58 0.19 305) 58%, transparent);
+  }
+
+  .ai-extras-panel::after {
+    content: '';
+    position: absolute;
+    right: -34px;
+    top: -42px;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: color-mix(in oklab, oklch(0.58 0.19 305) 24%, transparent);
+    filter: blur(28px);
+    pointer-events: none;
+    opacity: 0.75;
+  }
+
+  .ai-extras-disclosure {
+    @apply relative z-10;
+  }
+
+  .ai-extras-disclosure-summary {
+    @apply list-none cursor-pointer;
+  }
+
+  .ai-extras-disclosure-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .ai-extras-disclosure-summary:focus-visible {
+    outline: none;
+  }
+
+  .ai-extras-panel-header {
+    @apply relative z-10 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between;
+  }
+
+  .ai-extras-expand-toggle {
+    @apply inline-flex h-7 shrink-0 items-center gap-1.5 self-start rounded-full border px-2.5 text-[11px] font-semibold transition;
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 50%, var(--interactive-border));
+    background: color-mix(in oklab, oklch(0.58 0.19 305) 12%, var(--card));
+    color: color-mix(in oklab, var(--foreground) 82%, oklch(0.58 0.19 305));
+  }
+
+  .ai-extras-disclosure-summary:hover .ai-extras-expand-toggle {
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 62%, var(--interactive-border));
+    background: color-mix(in oklab, oklch(0.58 0.19 305) 18%, var(--card));
+  }
+
+  .ai-extras-disclosure-summary:focus-visible .ai-extras-expand-toggle {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, oklch(0.58 0.19 305) 26%, transparent);
+  }
+
+  .ai-extras-expand-label-open {
+    display: none;
+  }
+
+  .ai-extras-expand-icon {
+    transform: rotate(-90deg);
+  }
+
+  .ai-extras-disclosure[open] .ai-extras-expand-label-open {
+    display: inline;
+  }
+
+  .ai-extras-disclosure[open] .ai-extras-expand-label-closed {
+    display: none;
+  }
+
+  .ai-extras-disclosure[open] .ai-extras-expand-icon {
+    transform: rotate(0deg);
+  }
+
+  .ai-extras-content {
+    @apply relative z-10 mt-2 space-y-2;
+  }
+
+  .ai-extras-target-compact {
+    @apply inline-flex flex-wrap items-center gap-1 rounded-lg border px-1 py-0.5;
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 42%, var(--interactive-border));
+    background: color-mix(in oklab, oklch(0.58 0.19 305) 10%, var(--card));
+  }
+
+  .ai-extras-target-compact-label {
+    @apply px-1 text-[9px] font-semibold uppercase tracking-[0.12em];
+    color: color-mix(in oklab, var(--foreground) 68%, oklch(0.58 0.19 305));
+  }
+
+  .ai-extras-target-chip {
+    @apply h-5 rounded-full border px-2 text-[10px] font-semibold transition;
+    cursor: pointer;
+    border-color: color-mix(in oklab, var(--interactive-border) 88%, transparent);
+    background: color-mix(in oklab, var(--card) 90%, var(--muted));
+    color: var(--muted-foreground);
+  }
+
+  .ai-extras-target-chip:hover {
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 46%, var(--interactive-border));
+    color: var(--foreground);
+  }
+
+  .ai-extras-target-chip-selected {
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 62%, var(--interactive-border));
+    background: color-mix(in oklab, oklch(0.58 0.19 305) 18%, var(--card));
+    color: color-mix(in oklab, var(--foreground) 90%, oklch(0.58 0.19 305));
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, oklch(0.58 0.19 305) 34%, transparent);
+  }
+
+  .ai-extras-target-chip:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, oklch(0.58 0.19 305) 22%, transparent);
+  }
+
+  .ai-extras-panel-badge {
+    @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em];
+    color: color-mix(in oklab, var(--foreground) 78%, oklch(0.58 0.19 305));
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 44%, var(--interactive-border));
+    background: color-mix(in oklab, oklch(0.58 0.19 305) 13%, var(--card));
+  }
+
+  .ai-extra-option {
+    @apply block rounded-lg border p-2.5 transition;
+    border-color: color-mix(in oklab, var(--interactive-border) 88%, transparent);
+    background: color-mix(in oklab, var(--card) 88%, var(--muted));
+  }
+
+  .ai-extra-option:hover {
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 48%, var(--interactive-border));
+    transform: translateY(-1px);
+  }
+
+  .ai-extra-option-selected {
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 62%, var(--interactive-border));
+    background: color-mix(in oklab, oklch(0.58 0.19 305) 14%, var(--card));
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, oklch(0.58 0.19 305) 38%, transparent);
+  }
+
+  .ai-extras-toggle-grid {
+    @apply grid gap-2.5 md:grid-cols-2;
+  }
+
+  .ai-extras-detail-grid {
+    @apply mt-2 grid gap-2 lg:grid-cols-2;
+  }
+
+  .ai-extras-customization {
+    @apply rounded-lg border p-2;
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 30%, var(--interactive-border));
+    background: color-mix(in oklab, oklch(0.58 0.19 305) 8%, var(--card));
+  }
+
+  .ai-extras-customization-disabled {
+    opacity: 0.65;
+  }
+
+  .ai-extra-preference-option {
+    @apply block rounded-md border p-2;
+    border-color: color-mix(in oklab, var(--interactive-border) 82%, transparent);
+    background: color-mix(in oklab, var(--card) 88%, var(--muted));
+  }
+
+  .ai-extra-parent-option {
+    @apply block rounded-lg border p-2 transition;
+    min-width: 0;
+    cursor: pointer;
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 42%, var(--interactive-border));
+    background: linear-gradient(
+      132deg,
+      color-mix(in oklab, oklch(0.58 0.19 305) 14%, var(--card)) 0%,
+      color-mix(in oklab, var(--card) 86%, var(--muted)) 100%
+    );
+    box-shadow: 0 10px 22px -22px color-mix(in oklab, oklch(0.58 0.19 305) 58%, transparent);
+  }
+
+  .ai-extra-parent-option:hover {
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 56%, var(--interactive-border));
+    transform: translateY(-1px);
+  }
+
+  .ai-extra-option-disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
+  }
+
+  .ai-extra-option-disabled:hover {
+    transform: none;
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 42%, var(--interactive-border));
+  }
+
+  .ai-extra-guidance-group {
+    @apply rounded-md border p-2;
+    border-color: color-mix(in oklab, oklch(0.58 0.19 305) 28%, var(--interactive-border));
+    background: color-mix(in oklab, oklch(0.58 0.19 305) 6%, var(--card));
+  }
+
+  .ai-extra-guidance-heading {
+    @apply inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em];
+    color: color-mix(in oklab, var(--foreground) 76%, oklch(0.58 0.19 305));
+  }
+
+  .ai-extra-child-option {
+    padding: 0.4rem 0.55rem;
+    border-radius: 0.45rem;
+    cursor: pointer;
+    border-color: color-mix(in oklab, var(--interactive-border) 90%, transparent);
+    background: color-mix(in oklab, var(--card) 90%, var(--muted));
+    box-shadow: inset 2px 0 0 color-mix(in oklab, oklch(0.58 0.19 305) 28%, transparent);
+  }
+
+  .ai-extra-checkbox-row {
+    @apply flex min-w-0 items-start gap-2.5;
+    cursor: pointer;
+  }
+
+  .ai-extra-checkbox-row-compact {
+    @apply items-center gap-2;
+  }
+
+  .ai-extra-checkbox-row-disabled {
+    cursor: not-allowed;
+  }
+
+  .ai-extra-checkbox-input {
+    @apply sr-only;
+  }
+
+  .ai-extra-checkbox-indicator {
+    @apply mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border transition;
+    border-color: color-mix(in oklab, oklch(0.62 0.22 305) 76%, transparent);
+    background: color-mix(in oklab, oklch(0.62 0.22 305) 14%, var(--card));
+    color: var(--accent-foreground);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, oklch(0.78 0.12 305) 55%, transparent);
+  }
+
+  .dark .ai-extra-checkbox-indicator {
+    border-color: color-mix(in oklab, oklch(0.72 0.2 305) 88%, transparent);
+    background: color-mix(in oklab, oklch(0.62 0.22 305) 24%, var(--card));
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, oklch(0.62 0.22 305) 34%, transparent);
+  }
+
+  .ai-extra-checkbox-row-compact .ai-extra-checkbox-indicator {
+    margin-top: 0;
+    height: 0.875rem;
+    width: 0.875rem;
+  }
+
+  .ai-extra-checkbox-input:focus-visible + .ai-extra-checkbox-indicator {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 28%, transparent);
+  }
+
+  .ai-extra-checkbox-input:checked + .ai-extra-checkbox-indicator {
+    border-color: color-mix(in oklab, oklch(0.64 0.22 305) 90%, transparent);
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, oklch(0.66 0.24 305) 92%, white 8%) 0%,
+      color-mix(in oklab, oklch(0.54 0.2 305) 92%, black 8%) 100%
+    );
+    box-shadow: 0 6px 14px -10px color-mix(in oklab, oklch(0.58 0.21 305) 85%, transparent);
+  }
+
+  .ai-extra-checkbox-check {
+    opacity: 0;
+    transform: scale(0.7);
+    transition: opacity 120ms ease, transform 120ms ease;
+  }
+
+  .ai-extra-checkbox-input:checked + .ai-extra-checkbox-indicator .ai-extra-checkbox-check {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .ai-extra-checkbox-input:disabled + .ai-extra-checkbox-indicator,
+  .ai-extra-checkbox-row-disabled .ai-extra-checkbox-indicator {
+    border-color: color-mix(in oklab, var(--interactive-border) 92%, transparent);
+    background: color-mix(in oklab, var(--card) 86%, var(--muted));
+    opacity: 0.75;
   }
 
   .github-publish-dialog {

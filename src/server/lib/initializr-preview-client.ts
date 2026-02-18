@@ -1,13 +1,25 @@
 import JSZip from 'jszip'
 
+import {
+  normalizeAgentsMdPreferences,
+  normalizeAiExtrasTarget,
+  normalizeSelectedAiExtraIds,
+  type AgentsMdPreferences,
+  type AiExtraId,
+  type AiExtrasTarget,
+} from '@/lib/ai-extras'
 import { normalizeSpringBootVersionForBuildTool } from '@/lib/initializr-generate-params'
 import type { ProjectConfig } from '@/lib/project-config'
+import { augmentGeneratedProjectWithAiExtras } from './augment-generated-project-with-ai-extras'
 
 const INITIALIZR_PROJECT_URL = 'https://start.spring.io/starter.zip'
 
 export type ProjectPreviewInput = {
   config: ProjectConfig
   selectedDependencyIds: string[]
+  selectedAiExtraIds: AiExtraId[]
+  agentsMdPreferences: AgentsMdPreferences
+  aiExtrasTarget: AiExtrasTarget
 }
 
 export type GeneratedProjectFile = {
@@ -45,6 +57,9 @@ export async function fetchInitializrProjectPreview(
   const dependencies = Array.from(
     new Set(options.selectedDependencyIds.map((dependencyId) => dependencyId.trim())),
   ).filter(Boolean)
+  const selectedAiExtraIds = normalizeSelectedAiExtraIds(options.selectedAiExtraIds)
+  const agentsMdPreferences = normalizeAgentsMdPreferences(options.agentsMdPreferences)
+  const aiExtrasTarget = normalizeAiExtrasTarget(options.aiExtrasTarget)
 
   let response = await requestPreviewArchive({
     fetchImpl,
@@ -75,7 +90,16 @@ export async function fetchInitializrProjectPreview(
   let zip: JSZip
 
   try {
-    zip = await JSZip.loadAsync(await response.arrayBuffer())
+    const archiveBytes = new Uint8Array(await response.arrayBuffer())
+    const augmentedBytes = await augmentGeneratedProjectWithAiExtras({
+      archiveBytes,
+      config: options.config,
+      selectedAiExtraIds,
+      agentsMdPreferences,
+      aiExtrasTarget,
+    })
+
+    zip = await JSZip.loadAsync(augmentedBytes)
   } catch {
     throw new InitializrPreviewClientError(
       'Spring Initializr preview archive could not be decoded.',

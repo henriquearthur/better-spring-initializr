@@ -1,0 +1,7 @@
+{
+  "id": "skill-jpa-patterns",
+  "label": "JPA Patterns",
+  "description": "Use JPA and Hibernate patterns to avoid common pitfalls such as N+1 queries and lazy loading issues.",
+  "directoryName": "jpa-patterns",
+  "sortOrder": 30
+}

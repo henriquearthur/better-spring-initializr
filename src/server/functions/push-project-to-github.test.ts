@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { DEFAULT_AGENTS_MD_PREFERENCES } from '@/lib/ai-extras'
+
 import * as githubRepositoryClient from '../lib/github-repository-client'
 import * as oauthSession from '../lib/github-oauth-session.server'
 import * as unpackProject from '../lib/unpack-generated-project'
@@ -52,6 +54,9 @@ describe('pushProjectToGitHubFromBff', () => {
     const response = await pushProjectToGitHubFromBff({
       config: configFixture,
       selectedDependencyIds: ['web'],
+      selectedAiExtraIds: [],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'agents',
       owner: 'octocat',
       repositoryName: 'demo-repo',
       visibility: 'private',
@@ -73,6 +78,9 @@ describe('pushProjectToGitHubFromBff', () => {
     const response = await pushProjectToGitHubFromBff({
       config: configFixture,
       selectedDependencyIds: ['web'],
+      selectedAiExtraIds: [],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'agents',
       owner: 'octocat',
       repositoryName: 'bad repo name',
       visibility: 'private',
@@ -91,14 +99,16 @@ describe('pushProjectToGitHubFromBff', () => {
 
   it('creates repository, pushes initial commit, and returns repository URL', async () => {
     vi.spyOn(oauthSession, 'getGitHubSessionCookie').mockResolvedValue(sessionFixture)
-    vi.spyOn(downloadProject, 'downloadInitializrProjectFromBff').mockResolvedValue({
-      ok: true,
-      archive: {
-        base64: 'UEsDBA==',
-        contentType: 'application/zip',
-        filename: 'demo.zip',
-      },
-    })
+    const downloadSpy = vi
+      .spyOn(downloadProject, 'downloadInitializrProjectFromBff')
+      .mockResolvedValue({
+        ok: true,
+        archive: {
+          base64: 'UEsDBA==',
+          contentType: 'application/zip',
+          filename: 'demo.zip',
+        },
+      })
     vi.spyOn(unpackProject, 'unpackGeneratedProjectZip').mockResolvedValue([
       {
         path: 'README.md',
@@ -121,11 +131,33 @@ describe('pushProjectToGitHubFromBff', () => {
     const response = await pushProjectToGitHubFromBff({
       config: configFixture,
       selectedDependencyIds: ['web', 'data-jpa'],
+      selectedAiExtraIds: ['agents-md', 'skill-security-audit'],
+      agentsMdPreferences: {
+        includeFeatureBranchesGuidance: true,
+        includeConventionalCommitsGuidance: false,
+        includePullRequestsGuidance: true,
+        includeRunRelevantTestsGuidance: true,
+        includeTaskScopeDisciplineGuidance: false,
+      },
+      aiExtrasTarget: 'both',
       owner: 'acme-inc',
       repositoryName: 'demo-service',
       visibility: 'public',
     })
 
+    expect(downloadSpy).toHaveBeenCalledWith({
+      config: configFixture,
+      selectedDependencyIds: ['web', 'data-jpa'],
+      selectedAiExtraIds: ['agents-md', 'skill-security-audit'],
+      agentsMdPreferences: {
+        includeFeatureBranchesGuidance: true,
+        includeConventionalCommitsGuidance: false,
+        includePullRequestsGuidance: true,
+        includeRunRelevantTestsGuidance: true,
+        includeTaskScopeDisciplineGuidance: false,
+      },
+      aiExtrasTarget: 'both',
+    })
     expect(createInitialCommitSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         owner: 'acme-inc',
@@ -177,6 +209,9 @@ describe('pushProjectToGitHubFromBff', () => {
     const response = await pushProjectToGitHubFromBff({
       config: configFixture,
       selectedDependencyIds: ['web', 'data-jpa'],
+      selectedAiExtraIds: [],
+      agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
+      aiExtrasTarget: 'agents',
       owner: 'acme-inc',
       repositoryName: 'demo-service',
       visibility: 'public',

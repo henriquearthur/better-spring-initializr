@@ -1,0 +1,7 @@
+{
+  "id": "skill-java-code-review",
+  "label": "Java Code Review",
+  "description": "Run a systematic Java code review checklist focused on quality, safety, and correctness.",
+  "directoryName": "java-code-review",
+  "sortOrder": 10
+}

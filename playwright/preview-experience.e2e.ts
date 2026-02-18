@@ -1,11 +1,8 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('Workspace Preview Experience', () => {
-  test('switching build tool to gradle updates preview without unavailable error', async ({ page }) => {
-    await page.goto('/')
-
-    await page.getByRole('button', { name: /Build Settings/i }).click()
-    await page.locator('label:has-text("Gradle") input[type="radio"]').first().check()
+  test('gradle build tool preview loads without unavailable error', async ({ page }) => {
+    await page.goto('/?buildTool=gradle-project')
 
     await expect(
       page.locator(

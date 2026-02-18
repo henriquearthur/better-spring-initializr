@@ -1,6 +1,14 @@
 import { createServerFn } from '@tanstack/react-start'
 
 import {
+  normalizeAgentsMdPreferences,
+  normalizeAiExtrasTarget,
+  normalizeSelectedAiExtraIds,
+  type AgentsMdPreferences,
+  type AiExtraId,
+  type AiExtrasTarget,
+} from '@/lib/ai-extras'
+import {
   buildInitializrGenerateParams,
   type InitializrGenerateParamEntry,
   type InitializrGenerationInput,
@@ -10,6 +18,7 @@ import {
   InitializrGenerateClientError,
   fetchInitializrZip,
 } from '../lib/initializr-generate-client'
+import { augmentGeneratedProjectWithAiExtras } from '../lib/augment-generated-project-with-ai-extras'
 
 export type DownloadInitializrProjectInput = {
   config: {
@@ -25,6 +34,9 @@ export type DownloadInitializrProjectInput = {
     packaging: 'jar' | 'war'
   }
   selectedDependencyIds: string[]
+  selectedAiExtraIds: AiExtraId[]
+  agentsMdPreferences: AgentsMdPreferences
+  aiExtrasTarget: AiExtrasTarget
 }
 
 export type DownloadInitializrProjectSuccess = {
@@ -70,11 +82,18 @@ export async function downloadInitializrProjectFromBff(
 
       archive = await fetchInitializrZip({ params: stripParam(params, 'bootVersion') })
     }
+    const archiveBytes = await augmentGeneratedProjectWithAiExtras({
+      archiveBytes: archive.bytes,
+      config: input.config,
+      selectedAiExtraIds: input.selectedAiExtraIds,
+      agentsMdPreferences: input.agentsMdPreferences,
+      aiExtrasTarget: input.aiExtrasTarget,
+    })
 
     return {
       ok: true,
       archive: {
-        base64: encodeBytesToBase64(archive.bytes),
+        base64: encodeBytesToBase64(archiveBytes),
         contentType: archive.contentType,
         filename: archive.suggestedFilename,
       },
@@ -163,6 +182,20 @@ function normalizeDownloadInput(input: unknown): DownloadInitializrProjectInput 
       (dependencyId): dependencyId is string =>
         typeof dependencyId === 'string' && dependencyId.trim().length > 0,
     ),
+    selectedAiExtraIds: normalizeSelectedAiExtraIds(
+      Array.isArray(input.selectedAiExtraIds)
+        ? input.selectedAiExtraIds.filter(
+            (extraId): extraId is string =>
+              typeof extraId === 'string' && extraId.trim().length > 0,
+          )
+        : [],
+    ),
+    agentsMdPreferences: normalizeAgentsMdPreferences(
+      isObject(input.agentsMdPreferences)
+        ? (input.agentsMdPreferences as Partial<AgentsMdPreferences>)
+        : undefined,
+    ),
+    aiExtrasTarget: normalizeAiExtrasTarget(input.aiExtrasTarget),
   }
 }
 

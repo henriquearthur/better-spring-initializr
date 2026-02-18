@@ -167,8 +167,13 @@ function VirtualizedCodeView({ viewerLines }: { viewerLines: ViewerLine[] }) {
     <div
       ref={scrollRef}
       data-testid="preview-code-pane"
-      className="preview-code-pane relative min-h-0 flex-1 overflow-auto"
+      className="preview-code-pane relative min-h-0 flex-1 overflow-auto isolate"
     >
+      <div
+        aria-hidden="true"
+        data-testid="preview-gutter-mask"
+        className="pointer-events-none absolute inset-y-3 left-3 z-20 w-[4.5rem] border-r bg-[var(--card)]"
+      />
       <div
         style={{
           height: `${rowVirtualizer.getTotalSize()}px`,
@@ -190,7 +195,7 @@ function VirtualizedCodeView({ viewerLines }: { viewerLines: ViewerLine[] }) {
               className="absolute inset-x-0"
               style={{
                 height: `${virtualRow.size}px`,
-                transform: `translateY(${virtualRow.start}px)`,
+                top: `${virtualRow.start}px`,
               }}
             >
               {line.kind === 'removed' ? (
@@ -214,10 +219,10 @@ function VirtualizedCodeView({ viewerLines }: { viewerLines: ViewerLine[] }) {
 function RemovedLineRow({ line }: { line: PreviewRemovedLine }) {
   return (
     <div className="grid h-[26px] min-w-full grid-cols-[4.5rem_minmax(0,1fr)] items-center bg-red-500/10 font-mono text-sm leading-6 [tab-size:2]">
-      <span className="sticky left-0 z-10 h-full border-r bg-red-500/10 px-2 text-right text-xs text-red-700 dark:text-red-300">
+      <span className="sticky left-0 z-30 h-full border-r bg-[var(--card)] px-2 text-right text-xs text-red-700 dark:text-red-300">
         -{line.lineNumber}
       </span>
-      <span className="whitespace-pre px-4 text-red-800 dark:text-red-100">
+      <span className="relative z-0 overflow-hidden whitespace-pre px-4 text-red-800 dark:text-red-100">
         {line.content || ' '}
       </span>
     </div>
@@ -239,16 +244,16 @@ function CurrentLineRow({ lineNumber, added, plainText, tokens }: CurrentLineRow
       }`}
     >
       <span
-        className={`sticky left-0 z-10 h-full border-r px-2 text-right text-xs ${
+        className={`sticky left-0 z-30 h-full border-r bg-[var(--card)] px-2 text-right text-xs ${
           added
-            ? 'bg-emerald-500/10 text-emerald-900 dark:text-emerald-300'
-            : 'bg-[var(--card)] text-[var(--muted-foreground)]'
+            ? 'text-emerald-900 dark:text-emerald-300'
+            : 'text-[var(--muted-foreground)]'
         }`}
       >
         {added ? '+' : ''}
         {lineNumber}
       </span>
-      <span className="whitespace-pre px-4">
+      <span className="relative z-0 overflow-hidden whitespace-pre px-4">
         {tokens && tokens.length > 0 ? (
           tokens.map((token, tokenIndex) => (
             <span

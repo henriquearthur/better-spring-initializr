@@ -1,6 +1,13 @@
 import { createServerFn } from '@tanstack/react-start'
 
 import {
+  normalizeAgentsMdPreferences,
+  normalizeAiExtrasTarget,
+  normalizeSelectedAiExtraIds,
+  type AgentsMdPreferences,
+} from '@/lib/ai-extras'
+
+import {
   InitializrPreviewClientError,
   fetchInitializrProjectPreview,
   type GeneratedProjectFile,
@@ -95,6 +102,20 @@ function normalizePreviewInput(input: unknown): ProjectPreviewInput {
       (dependencyId): dependencyId is string =>
         typeof dependencyId === 'string' && dependencyId.trim().length > 0,
     ),
+    selectedAiExtraIds: normalizeSelectedAiExtraIds(
+      Array.isArray(input.selectedAiExtraIds)
+        ? input.selectedAiExtraIds.filter(
+            (extraId): extraId is string =>
+              typeof extraId === 'string' && extraId.trim().length > 0,
+          )
+        : [],
+    ),
+    agentsMdPreferences: normalizeAgentsMdPreferences(
+      isObject(input.agentsMdPreferences)
+        ? (input.agentsMdPreferences as Partial<AgentsMdPreferences>)
+        : undefined,
+    ),
+    aiExtrasTarget: normalizeAiExtrasTarget(input.aiExtrasTarget),
   }
 }
 

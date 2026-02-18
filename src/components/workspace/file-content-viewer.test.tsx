@@ -3,6 +3,7 @@ import type { ThemedToken } from 'shiki'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { CodePreviewEngineResult } from '@/hooks/use-code-preview-engine'
+import type { PreviewFileDiff } from '@/lib/preview-diff'
 import type { PreviewSnapshotFile } from '@/lib/preview-tree'
 
 const { useCodePreviewEngineMock } = vi.hoisted(() => ({
@@ -66,6 +67,7 @@ describe('FileContentViewer', () => {
     )
 
     expect(html).toContain('data-testid="preview-code-pane"')
+    expect(html).toContain('data-testid="preview-gutter-mask"')
     expect(html).toContain('class Demo {}')
     expect(html).toContain('Highlighting...')
   })
@@ -119,5 +121,28 @@ describe('FileContentViewer', () => {
 
     expect(html).toContain('*.log')
     expect(html).not.toContain('Syntax highlighting unavailable. Showing plain text.')
+  })
+
+  it('renders an opaque line-number gutter for added lines', () => {
+    useCodePreviewEngineMock.mockReturnValue(buildEngineResult({ status: 'done' }))
+    const diff: PreviewFileDiff = {
+      path: fileFixture.path,
+      changeType: 'modified',
+      binary: false,
+      lineDiff: {
+        added: [1],
+        removed: [],
+      },
+    }
+
+    const html = renderToString(
+      <FileContentViewer
+        file={fileFixture}
+        isLoading={false}
+        diff={diff}
+      />,
+    )
+
+    expect(html).toContain('sticky left-0 z-30 h-full border-r bg-[var(--card)]')
   })
 })

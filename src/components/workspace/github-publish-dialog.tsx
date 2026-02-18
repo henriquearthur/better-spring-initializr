@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import type { AgentsMdPreferences, AiExtraId, AiExtrasTarget } from '@/lib/ai-extras'
 import type { ProjectConfig } from '@/lib/project-config'
 import {
   disconnectGitHubOAuth,
@@ -30,6 +31,9 @@ type GitHubPublishDialogProps = {
   onClose: () => void
   config: ProjectConfig
   selectedDependencyIds: string[]
+  selectedAiExtraIds: AiExtraId[]
+  agentsMdPreferences: AgentsMdPreferences
+  aiExtrasTarget: AiExtrasTarget
 }
 
 type DialogPhase = 'loading' | 'connect' | 'configure' | 'pushing' | 'done'
@@ -59,6 +63,9 @@ export function GitHubPublishDialog({
   onClose,
   config,
   selectedDependencyIds,
+  selectedAiExtraIds,
+  agentsMdPreferences,
+  aiExtrasTarget,
 }: GitHubPublishDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [phase, setPhase] = useState<DialogPhase>('loading')
@@ -210,6 +217,9 @@ export function GitHubPublishDialog({
         data: {
           config,
           selectedDependencyIds,
+          selectedAiExtraIds,
+          agentsMdPreferences,
+          aiExtrasTarget,
           owner,
           repositoryName: trimmedRepositoryName,
           visibility,
@@ -233,7 +243,17 @@ export function GitHubPublishDialog({
       })
       setPhase('configure')
     }
-  }, [config, owner, repositoryNameError, selectedDependencyIds, trimmedRepositoryName, visibility])
+  }, [
+    config,
+    owner,
+    repositoryNameError,
+    agentsMdPreferences,
+    aiExtrasTarget,
+    selectedAiExtraIds,
+    selectedDependencyIds,
+    trimmedRepositoryName,
+    visibility,
+  ])
 
   return (
     <dialog

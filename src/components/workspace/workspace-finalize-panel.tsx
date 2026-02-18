@@ -1,6 +1,7 @@
 import { Check, Copy, Download, Github, LoaderCircle, Rocket, TriangleAlert } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 
+import type { AgentsMdPreferences, AiExtraId, AiExtrasTarget } from '@/lib/ai-extras'
 import type { ProjectConfig } from '@/lib/project-config'
 import type { ShareConfigSnapshot } from '@/lib/share-config'
 import {
@@ -12,6 +13,9 @@ import {
 type WorkspaceFinalizePanelProps = {
   config: ProjectConfig
   selectedDependencyIds: string[]
+  selectedAiExtraIds: AiExtraId[]
+  agentsMdPreferences: AgentsMdPreferences
+  aiExtrasTarget: AiExtrasTarget
   createShareUrl: (snapshot: ShareConfigSnapshot) => string
   onPublish?: () => void
 }
@@ -26,6 +30,9 @@ type FeedbackState =
 export function WorkspaceFinalizePanel({
   config,
   selectedDependencyIds,
+  selectedAiExtraIds,
+  agentsMdPreferences,
+  aiExtrasTarget,
   createShareUrl,
   onPublish,
 }: WorkspaceFinalizePanelProps) {
@@ -34,8 +41,22 @@ export function WorkspaceFinalizePanel({
   const [feedback, setFeedback] = useState<FeedbackState>(null)
 
   const shareUrl = useMemo(
-    () => createShareUrl({ config, selectedDependencyIds }),
-    [config, createShareUrl, selectedDependencyIds],
+    () =>
+      createShareUrl({
+        config,
+        selectedDependencyIds,
+        selectedAiExtraIds,
+        agentsMdPreferences,
+        aiExtrasTarget,
+      }),
+    [
+      agentsMdPreferences,
+      aiExtrasTarget,
+      config,
+      createShareUrl,
+      selectedAiExtraIds,
+      selectedDependencyIds,
+    ],
   )
 
   const isBusy = isDownloading || isCopying
@@ -55,6 +76,9 @@ export function WorkspaceFinalizePanel({
         data: {
           config,
           selectedDependencyIds,
+          selectedAiExtraIds,
+          agentsMdPreferences,
+          aiExtrasTarget,
         },
       })
 
@@ -80,7 +104,14 @@ export function WorkspaceFinalizePanel({
     } finally {
       setIsDownloading(false)
     }
-  }, [config, isDownloading, selectedDependencyIds])
+  }, [
+    agentsMdPreferences,
+    aiExtrasTarget,
+    config,
+    isDownloading,
+    selectedAiExtraIds,
+    selectedDependencyIds,
+  ])
 
   const handleCopyShareLink = useCallback(async () => {
     if (isCopying || !shareUrl) {

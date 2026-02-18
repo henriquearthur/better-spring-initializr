@@ -1,5 +1,14 @@
 import { createServerFn } from '@tanstack/react-start'
 
+import {
+  normalizeAgentsMdPreferences,
+  normalizeAiExtrasTarget,
+  normalizeSelectedAiExtraIds,
+  type AgentsMdPreferences,
+  type AiExtraId,
+  type AiExtrasTarget,
+} from '@/lib/ai-extras'
+
 import type { DownloadInitializrProjectInput } from './download-initializr-project'
 import { downloadInitializrProjectFromBff } from './download-initializr-project'
 import {
@@ -16,6 +25,9 @@ import {
 export type PushProjectToGitHubInput = {
   config: DownloadInitializrProjectInput['config']
   selectedDependencyIds: string[]
+  selectedAiExtraIds: AiExtraId[]
+  agentsMdPreferences: AgentsMdPreferences
+  aiExtrasTarget: AiExtrasTarget
   owner: string
   repositoryName: string
   visibility: GitHubRepositoryVisibility
@@ -74,6 +86,7 @@ export async function pushProjectToGitHubFromBff(
     repositoryName,
     visibility: input.visibility,
     selectedDependencyCount: input.selectedDependencyIds.length,
+    selectedAiExtraCount: input.selectedAiExtraIds.length,
     sessionUser: session.user.login,
   }
   const allowedOwners = new Set([
@@ -116,6 +129,9 @@ export async function pushProjectToGitHubFromBff(
   const downloadResponse = await downloadInitializrProjectFromBff({
     config: input.config,
     selectedDependencyIds: input.selectedDependencyIds,
+    selectedAiExtraIds: input.selectedAiExtraIds,
+    agentsMdPreferences: input.agentsMdPreferences,
+    aiExtrasTarget: input.aiExtrasTarget,
   })
 
   if (!downloadResponse.ok) {
@@ -342,6 +358,20 @@ function normalizePushInput(input: unknown): PushProjectToGitHubInput {
       (dependencyId): dependencyId is string =>
         typeof dependencyId === 'string' && dependencyId.trim().length > 0,
     ),
+    selectedAiExtraIds: normalizeSelectedAiExtraIds(
+      Array.isArray(input.selectedAiExtraIds)
+        ? input.selectedAiExtraIds.filter(
+            (extraId): extraId is string =>
+              typeof extraId === 'string' && extraId.trim().length > 0,
+          )
+        : [],
+    ),
+    agentsMdPreferences: normalizeAgentsMdPreferences(
+      isObject(input.agentsMdPreferences)
+        ? (input.agentsMdPreferences as Partial<AgentsMdPreferences>)
+        : undefined,
+    ),
+    aiExtrasTarget: normalizeAiExtrasTarget(input.aiExtrasTarget),
     owner: input.owner,
     repositoryName: input.repositoryName,
     visibility: input.visibility,

@@ -1,0 +1,7 @@
+{
+  "id": "skill-test-quality",
+  "label": "Test Quality",
+  "description": "Write high-quality JUnit 5 tests with AssertJ and maintainable testing practices.",
+  "directoryName": "test-quality",
+  "sortOrder": 40
+}
