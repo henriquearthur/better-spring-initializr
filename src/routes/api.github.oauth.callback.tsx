@@ -4,7 +4,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import {
   completeGitHubOAuth,
   type CompleteGitHubOAuthResponse,
-} from '@/server/functions/github-oauth'
+} from '@/server/features/github/functions/github-oauth'
 
 export const Route = createFileRoute('/api/github/oauth/callback')({
   component: GitHubOAuthCallbackRoute,

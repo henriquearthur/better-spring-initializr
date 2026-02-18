@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { WorkspaceShell } from '../components/workspace/workspace-shell'
+import { WorkspacePage } from '@/app/workspace/workspace-page'
 
 export const Route = createFileRoute('/')({ component: App })
 
 function App() {
-  return <WorkspaceShell />
+  return <WorkspacePage />
 }

@@ -32,6 +32,16 @@ It helps you configure your project, understand generated changes in real time, 
 - Vitest + Testing Library
 - Playwright
 
+## Architecture
+
+The app follows `App + Features + Shared + Server Features`:
+
+- `src/app/`: app-level composition containers (route-facing orchestration only)
+- `src/features/*`: client features split by `components`, `hooks`, and `model`
+- `src/shared/*`: shared UI and library utilities
+- `src/server/features/*`: backend features split by `functions`, `domain`, and `infra`
+- `src/server/shared/*`: server-wide `config`, `validation`, `result`, and `observability`
+
 ## How to Run This Project
 
 ```bash
@@ -59,3 +69,14 @@ How to contribute:
 3. Keep ids unique and kebab-case.
 4. Use `sortOrder` to control card order in the UI.
 5. Open a pull request with your changes.
+
+## Validation Checklist
+
+Before opening a PR:
+
+```bash
+npm run lint
+npm run test
+npm run build
+npm run test:e2e
+```

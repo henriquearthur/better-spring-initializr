@@ -5,7 +5,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools'
 import { NuqsAdapter } from 'nuqs/adapters/tanstack-router'
 import { Analytics } from '@vercel/analytics/react'
 
-import { ThemeProvider } from '../components/theme/theme-provider'
+import { ThemeProvider } from '../shared/ui/theme/theme-provider'
 import appCss from '../styles/app.css?url'
 
 const THEME_BOOTSTRAP_SCRIPT = `
