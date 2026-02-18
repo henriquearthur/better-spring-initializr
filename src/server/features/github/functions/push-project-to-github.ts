@@ -140,6 +140,7 @@ export async function pushProjectToGitHubFromBff(
     selectedAiExtraIds: input.selectedAiExtraIds,
     agentsMdPreferences: input.agentsMdPreferences,
     aiExtrasTarget: input.aiExtrasTarget,
+    generationSource: 'github-push',
   })
 
   if (!downloadResponse.ok) {

@@ -33,7 +33,10 @@ describe('downloadInitializrProjectFromBff', () => {
     vi.restoreAllMocks()
   })
 
-  it('returns encoded archive metadata and builds params for upstream ZIP request', async () => {
+  it('returns encoded archive metadata, builds params, and logs start/success events', async () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     const fetchSpy = vi
       .spyOn(generateClient, 'fetchInitializrZip')
       .mockResolvedValue({
@@ -69,9 +72,53 @@ describe('downloadInitializrProjectFromBff', () => {
         filename: 'demo.zip',
       },
     })
+
+    const startedLog = findStructuredLogByEvent(infoSpy.mock.calls, 'project_generation_started')
+    expect(startedLog.scope).toBe('server.initializr.download')
+    expect(startedLog.context).toMatchObject({
+      generationSource: 'manual-download',
+      group: 'com.example',
+      artifact: 'demo',
+      name: 'demo',
+      packageName: 'com.example.demo',
+      buildTool: 'maven-project',
+      language: 'java',
+      packaging: 'jar',
+      javaVersion: '21',
+      springBootVersion: '3.4.0',
+      selectedDependencyCount: 2,
+      selectedAiExtraCount: 0,
+      aiExtrasTarget: 'agents',
+    })
+
+    const successLog = findStructuredLogByEvent(infoSpy.mock.calls, 'project_generation_succeeded')
+    expect(successLog.scope).toBe('server.initializr.download')
+    expect(successLog.context).toMatchObject({
+      generationSource: 'manual-download',
+      group: 'com.example',
+      artifact: 'demo',
+      name: 'demo',
+      packageName: 'com.example.demo',
+      buildTool: 'maven-project',
+      language: 'java',
+      packaging: 'jar',
+      javaVersion: '21',
+      springBootVersion: '3.4.0',
+      selectedDependencyCount: 2,
+      selectedAiExtraCount: 0,
+      aiExtrasTarget: 'agents',
+      archiveFilename: 'demo.zip',
+      archiveSizeBytes: 4,
+    })
+    expect(typeof successLog.context.durationMs).toBe('number')
+    expect(successLog.context.durationMs).toBeGreaterThanOrEqual(0)
+    expect(warnSpy).not.toHaveBeenCalled()
+    expect(errorSpy).not.toHaveBeenCalled()
   })
 
-  it('returns sanitized, retryable error response when upstream client fails', async () => {
+  it('returns sanitized, retryable error response and logs failure details when upstream client fails', async () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     vi.spyOn(generateClient, 'fetchInitializrZip').mockRejectedValue(
       new InitializrGenerateClientError('upstream status 500 with details', 'UPSTREAM_ERROR', 500),
     )
@@ -93,9 +140,40 @@ describe('downloadInitializrProjectFromBff', () => {
         retryable: true,
       },
     })
+
+    const startedLog = findStructuredLogByEvent(infoSpy.mock.calls, 'project_generation_started')
+    expect(startedLog.scope).toBe('server.initializr.download')
+    expect(startedLog.context).toMatchObject({
+      generationSource: 'manual-download',
+      group: 'com.example',
+      artifact: 'demo',
+      selectedDependencyCount: 1,
+      selectedAiExtraCount: 0,
+      aiExtrasTarget: 'agents',
+    })
+
+    const failedLog = findStructuredLogByEvent(errorSpy.mock.calls, 'project_generation_failed')
+    expect(failedLog.scope).toBe('server.initializr.download')
+    expect(failedLog.context).toMatchObject({
+      generationSource: 'manual-download',
+      group: 'com.example',
+      artifact: 'demo',
+      selectedDependencyCount: 1,
+      selectedAiExtraCount: 0,
+      aiExtrasTarget: 'agents',
+      error: {
+        name: 'InitializrGenerateClientError',
+        code: 'UPSTREAM_ERROR',
+        status: 500,
+        message: 'upstream status 500 with details',
+      },
+    })
+    expect(typeof failedLog.context.durationMs).toBe('number')
+    expect(failedLog.context.durationMs).toBeGreaterThanOrEqual(0)
   })
 
-  it('retries once without bootVersion when first archive request fails', async () => {
+  it('retries once without bootVersion and logs retry event when first archive request fails', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const fetchSpy = vi
       .spyOn(generateClient, 'fetchInitializrZip')
       .mockRejectedValueOnce(
@@ -136,6 +214,26 @@ describe('downloadInitializrProjectFromBff', () => {
         base64: 'UEsDBA==',
         contentType: 'application/zip',
         filename: 'demo.zip',
+      },
+    })
+
+    const retryLog = findStructuredLogByEvent(
+      warnSpy.mock.calls,
+      'project_generation_retry_without_boot_version',
+    )
+    expect(retryLog.scope).toBe('server.initializr.download')
+    expect(retryLog.context).toMatchObject({
+      generationSource: 'manual-download',
+      group: 'com.example',
+      artifact: 'demo',
+      buildTool: 'gradle-project',
+      springBootVersion: '3.5.10.RELEASE',
+      selectedDependencyCount: 1,
+      error: {
+        name: 'InitializrGenerateClientError',
+        code: 'UPSTREAM_ERROR',
+        status: 500,
+        message: 'upstream rejected version',
       },
     })
   })
@@ -340,4 +438,32 @@ async function readArchiveFileContent(archiveBase64: string, normalizedPath: str
   }
 
   return matchedEntry.async('text')
+}
+
+type StructuredLogPayload = {
+  level: 'info' | 'warn' | 'error'
+  scope: string
+  message: string
+  timestamp: string
+  context: Record<string, unknown>
+}
+
+function findStructuredLogByEvent(calls: unknown[][], event: string): StructuredLogPayload {
+  const payload = calls
+    .map(([serialized]) => parseStructuredLog(serialized))
+    .find((entry) => entry.context['event'] === event)
+
+  if (!payload) {
+    throw new Error(`Expected log event "${event}"`)
+  }
+
+  return payload
+}
+
+function parseStructuredLog(serialized: unknown): StructuredLogPayload {
+  if (typeof serialized !== 'string') {
+    throw new Error('Expected structured log payload to be a JSON string')
+  }
+
+  return JSON.parse(serialized) as StructuredLogPayload
 }

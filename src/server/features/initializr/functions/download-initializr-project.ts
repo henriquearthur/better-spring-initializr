@@ -34,6 +34,7 @@ export type DownloadInitializrProjectInput = {
   selectedAiExtraIds: AiExtraId[]
   agentsMdPreferences: AgentsMdPreferences
   aiExtrasTarget: AiExtrasTarget
+  generationSource?: 'manual-download' | 'github-push'
 }
 
 export type DownloadInitializrProjectSuccess = {
@@ -77,6 +78,7 @@ function normalizeDownloadInput(input: unknown): DownloadInitializrProjectInput 
       selectedAiExtraIds: z.array(z.string()).optional(),
       agentsMdPreferences: z.record(z.string(), z.boolean()).optional(),
       aiExtrasTarget: z.string().optional(),
+      generationSource: z.enum(['manual-download', 'github-push']).optional(),
     }),
     input,
     'Invalid download input payload.',
@@ -92,5 +94,6 @@ function normalizeDownloadInput(input: unknown): DownloadInitializrProjectInput 
       parsed.agentsMdPreferences as Partial<AgentsMdPreferences> | undefined,
     ),
     aiExtrasTarget: normalizeAiExtrasTarget(parsed.aiExtrasTarget),
+    generationSource: parsed.generationSource ?? 'manual-download',
   }
 }

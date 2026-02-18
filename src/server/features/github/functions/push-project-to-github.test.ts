@@ -157,6 +157,7 @@ describe('pushProjectToGitHubFromBff', () => {
         includeTaskScopeDisciplineGuidance: false,
       },
       aiExtrasTarget: 'both',
+      generationSource: 'github-push',
     })
     expect(createInitialCommitSpy).toHaveBeenCalledWith(
       expect.objectContaining({
