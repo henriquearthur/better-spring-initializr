@@ -3,9 +3,11 @@
 ## Project Structure & Module Organization
 Core app code lives in `src/`:
 - `src/routes/`: file-based TanStack routes (including API route handlers like `api.github.oauth.callback.tsx`).
-- `src/components/`: UI components, with workspace features under `src/components/workspace/`.
-- `src/hooks/` and `src/lib/`: shared client logic and utilities.
-- `src/server/functions/` and `src/server/lib/`: server functions and backend integrations (Spring Initializr + GitHub APIs).
+- `src/app/`: app-level composition and route-facing orchestration.
+- `src/features/*`: feature slices organized by `components`, `hooks`, and `model`.
+- `src/shared/`: shared UI and client utilities (`shared/ui`, `shared/lib`).
+- `src/server/features/*`: backend slices organized by `functions`, `domain`, and `infra`.
+- `src/server/shared/`: backend shared utilities (`config`, `validation`, `result`, `observability`).
 - `src/styles/`: global styles.
 
 Tests are mostly colocated as `*.test.ts` / `*.test.tsx`. End-to-end tests live in `playwright/*.e2e.ts`. Static assets are in `public/`.
@@ -15,6 +17,7 @@ Tests are mostly colocated as `*.test.ts` / `*.test.tsx`. End-to-end tests live 
 - `npm run dev`: start local dev server on `http://localhost:3000`.
 - `npm run build`: production build with Vite.
 - `npm run preview`: serve the production build locally.
+- `npm run lint`: run ESLint rules (hooks/import order/boundaries).
 - `npm run test`: run Vitest unit/integration tests.
 - `npm run test:e2e`: run Playwright flows (auto-starts `npm run dev`).
 
@@ -32,6 +35,7 @@ Do not hand-edit generated router artifacts such as `src/routeTree.gen.ts`.
 Write unit tests with Vitest and Testing Library; keep tests near the source module when possible. Name files `*.test.ts` or `*.test.tsx`. Keep browser/user-flow scenarios in Playwright and name them `*.e2e.ts`.
 
 Before opening a PR, run:
+- `npm run lint`
 - `npm run test`
 - `npm run test:e2e` (for UI or flow changes)
 
