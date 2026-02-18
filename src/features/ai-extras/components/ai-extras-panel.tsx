@@ -4,16 +4,17 @@ import type { MouseEvent } from 'react'
 import {
   AGENTS_MD_GUIDANCE_OPTIONS,
   AGENTS_MD_PREFERENCE_OPTIONS,
+  type AgentsMdGuidanceId,
+  type AgentsMdPreferences,
   AI_EXTRAS_TARGET_OPTIONS,
   AI_SKILL_OPTIONS,
+  type AiExtrasTarget,
+  type AiSkillExtraId,
+  areAllAiPowerUpOptionsEnabled,
   getSelectedAiSkillExtraIds,
   isAgentsMdGuidanceEnabled,
   resolveAgentsMdFilePaths,
   resolveAiSkillsRootPaths,
-  type AgentsMdGuidanceId,
-  type AgentsMdPreferences,
-  type AiExtrasTarget,
-  type AiSkillExtraId,
 } from '@/features/ai-extras/model/ai-extras'
 
 const GUIDANCE_SECTION_LABELS: Record<AgentsMdGuidanceId, string> = {
@@ -28,6 +29,7 @@ type AiExtrasPanelProps = {
   aiExtrasTarget: AiExtrasTarget
   agentsMdPreferences: AgentsMdPreferences
   onChangeAiExtrasTarget: (target: AiExtrasTarget) => void
+  onToggleAllAiPowerUp: () => void
   onToggleAgentsMdEnabled: () => void
   onToggleAgentsMdGuidance: (guidanceId: AgentsMdGuidanceId) => void
   onToggleAgentsMdPreference: (preferenceId: keyof AgentsMdPreferences) => void
@@ -39,6 +41,7 @@ export function AiExtrasPanel({
   aiExtrasTarget,
   agentsMdPreferences,
   onChangeAiExtrasTarget,
+  onToggleAllAiPowerUp,
   onToggleAgentsMdEnabled,
   onToggleAgentsMdGuidance,
   onToggleAgentsMdPreference,
@@ -50,6 +53,10 @@ export function AiExtrasPanel({
   const guidanceFilePaths = resolveAgentsMdFilePaths(aiExtrasTarget)
   const guidanceFileLabel = guidanceFilePaths.join(' + ')
   const skillsRootPaths = resolveAiSkillsRootPaths(aiExtrasTarget)
+  const allAiPowerUpSelected = areAllAiPowerUpOptionsEnabled(
+    selectedAiExtraIds,
+    agentsMdPreferences,
+  )
 
   const handleToggleChildPreference = (preferenceId: keyof AgentsMdPreferences) => {
     if (!agentsMdEnabled) {
@@ -125,6 +132,16 @@ export function AiExtrasPanel({
                 </button>
               )
             })}
+          </div>
+
+          <div className={`ai-extra-parent-option mt-2 ${allAiPowerUpSelected ? 'ai-extra-option-selected' : ''}`}>
+            <AiExtrasCheckbox
+              id="ai-power-up-toggle-all"
+              checked={allAiPowerUpSelected}
+              onChange={onToggleAllAiPowerUp}
+              label="Include all guidance and skills"
+              description="One-click toggle for guidance files, all guidance modules, and all available skills."
+            />
           </div>
 
           <div className="ai-extras-detail-grid">

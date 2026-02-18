@@ -3,7 +3,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { AI_SKILL_OPTIONS, type AgentsMdPreferences, type AiExtrasTarget } from '@/features/ai-extras/model/ai-extras'
+import { type AgentsMdPreferences, AI_SKILL_OPTIONS, type AiExtrasTarget } from '@/features/ai-extras/model/ai-extras'
 
 import { AiExtrasPanel } from './ai-extras-panel'
 
@@ -30,6 +30,7 @@ type RenderOptions = {
   aiExtrasTarget?: AiExtrasTarget
   agentsMdPreferences?: AgentsMdPreferences
   onChangeAiExtrasTarget?: ReturnType<typeof vi.fn>
+  onToggleAllAiPowerUp?: ReturnType<typeof vi.fn>
   onToggleAgentsMdEnabled?: ReturnType<typeof vi.fn>
   onToggleAgentsMdGuidance?: ReturnType<typeof vi.fn>
   onToggleAgentsMdPreference?: ReturnType<typeof vi.fn>
@@ -38,6 +39,7 @@ type RenderOptions = {
 
 function renderAiExtrasPanel(options: RenderOptions = {}) {
   const onChangeAiExtrasTarget = options.onChangeAiExtrasTarget ?? vi.fn()
+  const onToggleAllAiPowerUp = options.onToggleAllAiPowerUp ?? vi.fn()
   const onToggleAgentsMdEnabled = options.onToggleAgentsMdEnabled ?? vi.fn()
   const onToggleAgentsMdGuidance = options.onToggleAgentsMdGuidance ?? vi.fn()
   const onToggleAgentsMdPreference = options.onToggleAgentsMdPreference ?? vi.fn()
@@ -49,6 +51,7 @@ function renderAiExtrasPanel(options: RenderOptions = {}) {
       aiExtrasTarget={options.aiExtrasTarget ?? 'agents'}
       agentsMdPreferences={options.agentsMdPreferences ?? defaultPreferences}
       onChangeAiExtrasTarget={onChangeAiExtrasTarget}
+      onToggleAllAiPowerUp={onToggleAllAiPowerUp}
       onToggleAgentsMdEnabled={onToggleAgentsMdEnabled}
       onToggleAgentsMdGuidance={onToggleAgentsMdGuidance}
       onToggleAgentsMdPreference={onToggleAgentsMdPreference}
@@ -58,6 +61,7 @@ function renderAiExtrasPanel(options: RenderOptions = {}) {
 
   return {
     onChangeAiExtrasTarget,
+    onToggleAllAiPowerUp,
     onToggleAgentsMdEnabled,
     onToggleAgentsMdGuidance,
     onToggleAgentsMdPreference,
@@ -88,6 +92,19 @@ function collapsePanel() {
 }
 
 describe('AiExtrasPanel', () => {
+  it('renders include-all toggle and triggers dedicated callback', () => {
+    const onToggleAllAiPowerUp = vi.fn()
+
+    renderAiExtrasPanel({
+      onToggleAllAiPowerUp,
+    })
+
+    expandPanel()
+    fireEvent.click(screen.getByLabelText('Include all guidance and skills'))
+
+    expect(onToggleAllAiPowerUp).toHaveBeenCalledTimes(1)
+  })
+
   it('starts collapsed without the old summary line', () => {
     renderAiExtrasPanel({
       selectedAiExtraIds: ['agents-md', primarySkill.id],
@@ -258,5 +275,43 @@ describe('AiExtrasPanel', () => {
 
     expect(screen.getByLabelText('Include AGENTS.md + CLAUDE.md')).toBeTruthy()
     expect(screen.getByText('.agents/skills + .claude/skills')).toBeTruthy()
+  })
+
+  it('shows include-all toggle as checked when all guidance and skills are selected', () => {
+    renderAiExtrasPanel({
+      selectedAiExtraIds: ['agents-md', ...AI_SKILL_OPTIONS.map((skill) => skill.id)],
+      agentsMdPreferences: defaultPreferences,
+    })
+
+    expandPanel()
+
+    const includeAllToggle = screen.getByLabelText(
+      'Include all guidance and skills',
+    ) as HTMLInputElement
+    expect(includeAllToggle.checked).toBe(true)
+  })
+
+  it('shows include-all toggle as unchecked when a skill or guidance preference is missing', () => {
+    const selectedAiExtraIds = ['agents-md', ...AI_SKILL_OPTIONS.map((skill) => skill.id)]
+    const selectedAiExtraIdsMissingOneSkill = selectedAiExtraIds.slice(
+      0,
+      selectedAiExtraIds.length - 1,
+    )
+    const incompletePreferences: AgentsMdPreferences = {
+      ...defaultPreferences,
+      includeConventionalCommitsGuidance: false,
+    }
+
+    renderAiExtrasPanel({
+      selectedAiExtraIds: selectedAiExtraIdsMissingOneSkill,
+      agentsMdPreferences: incompletePreferences,
+    })
+
+    expandPanel()
+
+    const includeAllToggle = screen.getByLabelText(
+      'Include all guidance and skills',
+    ) as HTMLInputElement
+    expect(includeAllToggle.checked).toBe(false)
   })
 })

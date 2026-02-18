@@ -169,6 +169,34 @@ export const AGENTS_MD_PREFERENCE_MARKDOWN_LINES: Readonly<
     '- Keep changes within the requested scope and avoid unrelated rewrites.',
 }
 
+export function getAllAiExtraIds(): AiExtraId[] {
+  return normalizeSelectedAiExtraIds(['agents-md', ...AI_SKILL_OPTIONS.map((option) => option.id)])
+}
+
+export function isAllAgentsMdGuidanceEnabled(preferences: AgentsMdPreferences): boolean {
+  return AGENTS_MD_PREFERENCE_OPTIONS.every((option) => preferences[option.id])
+}
+
+export function areAllAiPowerUpOptionsEnabled(
+  selectedAiExtraIds: string[],
+  preferences: AgentsMdPreferences,
+): boolean {
+  const selectedIdSet = new Set(normalizeSelectedAiExtraIds(selectedAiExtraIds))
+  const allExtraIdsSelected = getAllAiExtraIds().every((extraId) => selectedIdSet.has(extraId))
+
+  return allExtraIdsSelected && isAllAgentsMdGuidanceEnabled(preferences)
+}
+
+export function setAllAgentsMdPreferences(enabled: boolean): AgentsMdPreferences {
+  const nextPreferences: Partial<AgentsMdPreferences> = {}
+
+  for (const option of AGENTS_MD_PREFERENCE_OPTIONS) {
+    nextPreferences[option.id] = enabled
+  }
+
+  return normalizeAgentsMdPreferences(nextPreferences)
+}
+
 export function normalizeSelectedAiExtraIds(ids: string[]): AiExtraId[] {
   return Array.from(
     new Set(ids.map((id) => id.trim()).filter((id): id is AiExtraId => AI_EXTRA_ID_SET.has(id as AiExtraId))),
