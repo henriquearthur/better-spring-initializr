@@ -1,41 +1,44 @@
 import { ChevronDown } from 'lucide-react'
-import { Suspense, lazy, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { useDependencyBrowser } from '@/features/dependencies/hooks/use-dependency-browser'
-import { useInitializrMetadata } from '@/features/configuration/hooks/use-initializr-metadata'
+import { WorkspaceFinalizePanel } from '@/app/workspace/components/workspace-finalize-panel'
+import { WorkspaceHeader } from '@/app/workspace/components/workspace-header'
 import {
-  useProjectConfigState,
-  type ProjectConfigUpdateOptions,
-} from '@/features/configuration/hooks/use-project-config-state'
-import { useProjectPreview } from '@/features/preview/hooks/use-project-preview'
-import { useShareableConfig } from '@/features/share/hooks/use-shareable-config'
-import {
-  normalizeAgentsMdPreferences,
-  getAgentsMdPreferenceIdsByGuidance,
-  DEFAULT_AGENTS_MD_PREFERENCES,
-  DEFAULT_AI_EXTRAS_TARGET,
-  normalizeAiExtrasTarget,
-  normalizeSelectedAiExtraIds,
   type AgentsMdGuidanceId,
   type AgentsMdPreferences,
-  type AiSkillExtraId,
   type AiExtraId,
   type AiExtrasTarget,
+  type AiSkillExtraId,
+  areAllAiPowerUpOptionsEnabled,
+  DEFAULT_AGENTS_MD_PREFERENCES,
+  DEFAULT_AI_EXTRAS_TARGET,
+  getAgentsMdPreferenceIdsByGuidance,
+  getAllAiExtraIds,
+  normalizeAgentsMdPreferences,
+  normalizeAiExtrasTarget,
+  normalizeSelectedAiExtraIds,
+  setAllAgentsMdPreferences,
 } from '@/features/ai-extras/model/ai-extras'
+import { ConfigurationSidebar } from '@/features/configuration/components/configuration-sidebar'
+import { useInitializrMetadata } from '@/features/configuration/hooks/use-initializr-metadata'
+import {
+  type ProjectConfigUpdateOptions,
+  useProjectConfigState,
+} from '@/features/configuration/hooks/use-project-config-state'
+import { DependencyBrowser } from '@/features/dependencies/components/dependency-browser'
+import { useDependencyBrowser } from '@/features/dependencies/hooks/use-dependency-browser'
+import { resolveDependencyPreviewDiff } from '@/features/dependencies/model/dependency-preview-diff'
+import { PresetLayoutSurface } from '@/features/presets/components/preset-layout-surface'
 import { applyCuratedPreset, resolveCuratedPresets } from '@/features/presets/model/curated-presets'
+import { useProjectPreview } from '@/features/preview/hooks/use-project-preview'
 import { type PreviewFileDiff } from '@/features/preview/model/preview-diff'
+import type { PreviewSnapshotFile } from '@/features/preview/model/preview-tree'
+import { useShareableConfig } from '@/features/share/hooks/use-shareable-config'
 import {
   DEFAULT_PROJECT_CONFIG,
   getMetadataDrivenConfigOptions,
   type ProjectConfig,
 } from '@/shared/lib/project-config'
-import { resolveDependencyPreviewDiff } from '@/features/dependencies/model/dependency-preview-diff'
-import type { PreviewSnapshotFile } from '@/features/preview/model/preview-tree'
-import { WorkspaceFinalizePanel } from '@/app/workspace/components/workspace-finalize-panel'
-import { WorkspaceHeader } from '@/app/workspace/components/workspace-header'
-import { ConfigurationSidebar } from '@/features/configuration/components/configuration-sidebar'
-import { DependencyBrowser } from '@/features/dependencies/components/dependency-browser'
-import { PresetLayoutSurface } from '@/features/presets/components/preset-layout-surface'
 
 const AiExtrasPanel = lazy(async () => {
   const module = await import('@/features/ai-extras/components/ai-extras-panel')
@@ -312,6 +315,21 @@ export function WorkspacePage() {
       return normalizeSelectedAiExtraIds([...currentIds, skillId])
     })
   }, [])
+  const handleToggleAllAiPowerUp = useCallback(() => {
+    const allAiPowerUpSelected = areAllAiPowerUpOptionsEnabled(
+      selectedAiExtraIds,
+      agentsMdPreferences,
+    )
+
+    if (allAiPowerUpSelected) {
+      setSelectedAiExtraIds([])
+      setAgentsMdPreferences(setAllAgentsMdPreferences(false))
+      return
+    }
+
+    setSelectedAiExtraIds(getAllAiExtraIds())
+    setAgentsMdPreferences(setAllAgentsMdPreferences(true))
+  }, [agentsMdPreferences, selectedAiExtraIds])
   const handleToggleAgentsMdGuidance = useCallback((guidanceId: AgentsMdGuidanceId) => {
     const preferenceIds = getAgentsMdPreferenceIdsByGuidance(guidanceId)
 
@@ -468,6 +486,7 @@ export function WorkspacePage() {
                   aiExtrasTarget={aiExtrasTarget}
                   agentsMdPreferences={agentsMdPreferences}
                   onChangeAiExtrasTarget={handleChangeAiExtrasTarget}
+                  onToggleAllAiPowerUp={handleToggleAllAiPowerUp}
                   onToggleAgentsMdEnabled={handleToggleAgentsMdEnabled}
                   onToggleAgentsMdGuidance={handleToggleAgentsMdGuidance}
                   onToggleAgentsMdPreference={handleToggleAgentsMdPreference}
