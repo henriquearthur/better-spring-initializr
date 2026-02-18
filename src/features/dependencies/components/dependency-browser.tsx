@@ -1,5 +1,5 @@
 import { ChevronDown, Search, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { DependencyGroup } from '@/features/dependencies/model/dependency-browser'
 
@@ -9,7 +9,6 @@ type DependencyBrowserProps = {
   onSearchTermChange: (value: string) => void
   selectedDependencyIds: string[]
   onToggleDependency: (dependencyId: string) => void
-  hasMetadata: boolean
   disabled?: boolean
 }
 
@@ -19,20 +18,15 @@ export function DependencyBrowser({
   onSearchTermChange,
   selectedDependencyIds,
   onToggleDependency,
-  hasMetadata,
   disabled = false,
 }: DependencyBrowserProps) {
-  const selectedIdSet = useMemo(() => new Set(selectedDependencyIds), [selectedDependencyIds])
+  const selectedIdSet = new Set(selectedDependencyIds)
   const normalizedSearch = searchTerm.trim()
   const hasAnyDependencies = dependencyGroups.length > 0
-  const dependencyById = useMemo(
-    () =>
-      new Map(
-        dependencyGroups.flatMap((group) =>
-          group.dependencies.map((dependency) => [dependency.id, dependency] as const),
-        ),
-      ),
-    [dependencyGroups],
+  const dependencyById = new Map(
+    dependencyGroups.flatMap((group) =>
+      group.dependencies.map((dependency) => [dependency.id, dependency] as const),
+    ),
   )
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
 
@@ -71,18 +65,14 @@ export function DependencyBrowser({
     })
   }, [dependencyGroups, normalizedSearch, selectedIdSet])
 
-  const selectedDependencyItems = useMemo(
-    () =>
-      selectedDependencyIds.map((dependencyId) => {
-        const dependency = dependencyById.get(dependencyId)
+  const selectedDependencyItems = selectedDependencyIds.map((dependencyId) => {
+    const dependency = dependencyById.get(dependencyId)
 
-        return {
-          id: dependencyId,
-          name: dependency?.name ?? dependencyId,
-        }
-      }),
-    [dependencyById, selectedDependencyIds],
-  )
+    return {
+      id: dependencyId,
+      name: dependency?.name ?? dependencyId,
+    }
+  })
 
   const toggleCategory = (category: string) => {
     setExpandedCategories((current) => {
@@ -137,7 +127,7 @@ export function DependencyBrowser({
         </div>
       ) : null}
 
-      {hasMetadata && !hasAnyDependencies ? (
+      {!disabled && !hasAnyDependencies ? (
         <EmptyState
           title="No dependencies match your search"
           description={
@@ -148,7 +138,7 @@ export function DependencyBrowser({
         />
       ) : null}
 
-      {hasMetadata && hasAnyDependencies ? (
+      {!disabled && hasAnyDependencies ? (
         <div className="space-y-3">
           {dependencyGroups.map((group) => {
             const isExpanded = expandedCategories.has(group.category)

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import type { InitializrDependency } from '@/shared/lib/project-config/initializr-metadata'
 import {
@@ -28,34 +28,25 @@ export function useDependencyBrowser(
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedDependencyIds, setSelectedDependencyIds] = useState<string[]>([])
 
-  const groupedDependencyCategories = useMemo(
-    () => groupDependenciesByCategory(dependencies),
-    [dependencies],
-  )
+  const groupedDependencyCategories = groupDependenciesByCategory(dependencies)
 
-  const filteredDependencyCategories = useMemo(
-    () => filterDependencyGroups(groupedDependencyCategories, searchTerm),
-    [groupedDependencyCategories, searchTerm],
-  )
+  const filteredDependencyCategories = filterDependencyGroups(groupedDependencyCategories, searchTerm)
 
-  const toggleDependency = useCallback((dependencyId: string) => {
+  const toggleDependency = (dependencyId: string) => {
     setSelectedDependencyIds((currentSelection) =>
       toggleDependencySelection(currentSelection, dependencyId),
     )
-  }, [])
+  }
 
-  const setSelectedDependencies = useCallback((dependencyIds: string[]) => {
+  const setSelectedDependencies = (dependencyIds: string[]) => {
     setSelectedDependencyIds(replaceDependencySelection(dependencyIds))
-  }, [])
+  }
 
-  const clearSelectedDependencies = useCallback(() => {
+  const clearSelectedDependencies = () => {
     setSelectedDependencyIds([])
-  }, [])
+  }
 
-  const isDependencySelected = useCallback(
-    (dependencyId: string) => selectedDependencyIds.includes(dependencyId),
-    [selectedDependencyIds],
-  )
+  const isDependencySelected = (dependencyId: string) => selectedDependencyIds.includes(dependencyId)
 
   return {
     groupedDependencyCategories,

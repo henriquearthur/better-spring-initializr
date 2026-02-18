@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
 
 import {
   normalizeAgentsMdPreferences,
@@ -37,22 +36,13 @@ export function useProjectPreview(input: UseProjectPreviewInput) {
       data: UseProjectPreviewInput
     }) => Promise<ProjectPreviewResponse>
 
-  const normalizedInput = useMemo(
-    () => ({
-      config: input.config,
-      selectedDependencyIds: Array.from(new Set(input.selectedDependencyIds)).sort(),
-      selectedAiExtraIds: normalizeSelectedAiExtraIds(input.selectedAiExtraIds),
-      agentsMdPreferences: normalizeAgentsMdPreferences(input.agentsMdPreferences),
-      aiExtrasTarget: normalizeAiExtrasTarget(input.aiExtrasTarget),
-    }),
-    [
-      input.config,
-      input.selectedAiExtraIds,
-      input.agentsMdPreferences,
-      input.selectedDependencyIds,
-      input.aiExtrasTarget,
-    ],
-  )
+  const normalizedInput = {
+    config: input.config,
+    selectedDependencyIds: Array.from(new Set(input.selectedDependencyIds)).sort(),
+    selectedAiExtraIds: normalizeSelectedAiExtraIds(input.selectedAiExtraIds),
+    agentsMdPreferences: normalizeAgentsMdPreferences(input.agentsMdPreferences),
+    aiExtrasTarget: normalizeAiExtrasTarget(input.aiExtrasTarget),
+  }
 
   const debouncedInput = useDebouncedValue(normalizedInput, PREVIEW_REFRESH_DEBOUNCE_MS)
 

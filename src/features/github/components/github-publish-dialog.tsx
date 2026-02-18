@@ -8,7 +8,7 @@ import {
   TriangleAlert,
   X,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import type { AgentsMdPreferences, AiExtraId, AiExtrasTarget } from '@/features/ai-extras/model/ai-extras'
 import type { ProjectConfig } from '@/shared/lib/project-config'
@@ -157,14 +157,11 @@ export function GitHubPublishDialog({
   }, [open, config.artifact])
 
   const trimmedRepositoryName = repositoryName.trim()
-  const repositoryNameError = useMemo(
-    () => getRepositoryNameError(trimmedRepositoryName),
-    [trimmedRepositoryName],
-  )
+  const repositoryNameError = getRepositoryNameError(trimmedRepositoryName)
 
   const activeFlowStep = getActiveFlowStep(phase)
 
-  const handleConnect = useCallback(async () => {
+  const handleConnect = async () => {
     setFeedback(null)
 
     try {
@@ -190,15 +187,9 @@ export function GitHubPublishDialog({
         message: 'Unable to start GitHub authorization right now. Please try again.',
       })
     }
-  }, [
-    agentsMdPreferences,
-    aiExtrasTarget,
-    config,
-    selectedAiExtraIds,
-    selectedDependencyIds,
-  ])
+  }
 
-  const handleDisconnect = useCallback(async () => {
+  const handleDisconnect = async () => {
     setFeedback(null)
 
     try {
@@ -219,9 +210,9 @@ export function GitHubPublishDialog({
         message: 'Unable to disconnect GitHub right now. Please try again.',
       })
     }
-  }, [])
+  }
 
-  const handlePush = useCallback(async () => {
+  const handlePush = async () => {
     if (repositoryNameError || !owner) return
 
     setPhase('pushing')
@@ -258,17 +249,7 @@ export function GitHubPublishDialog({
       })
       setPhase('configure')
     }
-  }, [
-    config,
-    owner,
-    repositoryNameError,
-    agentsMdPreferences,
-    aiExtrasTarget,
-    selectedAiExtraIds,
-    selectedDependencyIds,
-    trimmedRepositoryName,
-    visibility,
-  ])
+  }
 
   return (
     <dialog

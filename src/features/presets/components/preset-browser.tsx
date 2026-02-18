@@ -1,5 +1,3 @@
-import { useMemo } from 'react'
-
 import type { CuratedPreset } from '@/features/presets/model/curated-presets'
 import type { InitializrDependency } from '@/shared/lib/project-config/initializr-metadata'
 
@@ -22,18 +20,14 @@ export function PresetBrowser({
   metadataAvailable,
   disabled = false,
 }: PresetBrowserProps) {
-  const dependencyById = useMemo(
-    () =>
-      new Map(
-        availableDependencies.map((dependency) => [
-          dependency.id,
-          {
-            id: dependency.id,
-            name: dependency.name,
-          },
-        ]),
-      ),
-    [availableDependencies],
+  const dependencyById = new Map(
+    availableDependencies.map((dependency) => [
+      dependency.id,
+      {
+        id: dependency.id,
+        name: dependency.name,
+      },
+    ]),
   )
 
   return (

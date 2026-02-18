@@ -1,6 +1,7 @@
 import js from '@eslint/js'
 import tsParser from '@typescript-eslint/parser'
 import tsPlugin from '@typescript-eslint/eslint-plugin'
+import reactCompiler from 'eslint-plugin-react-compiler'
 import reactHooks from 'eslint-plugin-react-hooks'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 
@@ -26,6 +27,7 @@ export default [
     plugins: {
       '@typescript-eslint': tsPlugin,
       'react-hooks': reactHooks,
+      'react-compiler': reactCompiler,
       'simple-import-sort': simpleImportSort,
     },
     rules: {
@@ -41,6 +43,7 @@ export default [
     rules: {
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+      'react-compiler/react-compiler': 'error',
     },
   },
   {

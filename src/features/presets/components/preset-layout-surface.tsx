@@ -1,5 +1,5 @@
 import { LayoutPanelTop } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import type { CuratedPreset } from '@/features/presets/model/curated-presets'
 import type { InitializrDependency } from '@/shared/lib/project-config/initializr-metadata'
@@ -25,26 +25,22 @@ export function PresetLayoutSurface({
 }: PresetLayoutSurfaceProps) {
   const [detailsOpen, setDetailsOpen] = useState(false)
 
-  const activePreset = useMemo(() => {
+  const activePreset = (() => {
     if (!selectedPresetId) {
       return null
     }
 
     return presets.find((preset) => preset.id === selectedPresetId) ?? null
-  }, [presets, selectedPresetId])
+  })()
 
-  const dependencyById = useMemo(
-    () =>
-      new Map(
-        availableDependencies.map((dependency) => [
-          dependency.id,
-          {
-            id: dependency.id,
-            name: dependency.name,
-          },
-        ]),
-      ),
-    [availableDependencies],
+  const dependencyById = new Map(
+    availableDependencies.map((dependency) => [
+      dependency.id,
+      {
+        id: dependency.id,
+        name: dependency.name,
+      },
+    ]),
   )
 
   if (presets.length === 0) {

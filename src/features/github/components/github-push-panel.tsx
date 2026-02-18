@@ -1,5 +1,5 @@
 import { Check, ExternalLink, Github, LoaderCircle, TriangleAlert } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   DEFAULT_AGENTS_MD_PREFERENCES,
@@ -96,7 +96,7 @@ export function GitHubPushPanel({ config, selectedDependencyIds }: GitHubPushPan
   }, [config.artifact])
 
   const trimmedRepositoryName = repositoryName.trim()
-  const repositoryNameError = useMemo(() => {
+  const repositoryNameError = (() => {
     if (trimmedRepositoryName.length === 0) {
       return 'Repository name is required.'
     }
@@ -111,9 +111,9 @@ export function GitHubPushPanel({ config, selectedDependencyIds }: GitHubPushPan
     }
 
     return null
-  }, [trimmedRepositoryName])
+  })()
 
-  const handlePush = useCallback(async () => {
+  const handlePush = async () => {
     if (isPushing || !connected || !owner || repositoryNameError) {
       return
     }
@@ -158,16 +158,7 @@ export function GitHubPushPanel({ config, selectedDependencyIds }: GitHubPushPan
     } finally {
       setIsPushing(false)
     }
-  }, [
-    config,
-    connected,
-    isPushing,
-    owner,
-    repositoryNameError,
-    selectedDependencyIds,
-    trimmedRepositoryName,
-    visibility,
-  ])
+  }
 
   if (isLoadingSession || !connected) {
     return null

@@ -260,6 +260,21 @@ function normalizeStringUnion<TValue extends string>(
   return value as TValue
 }
 
+export function isProjectConfigEqual(left: ProjectConfig, right: ProjectConfig): boolean {
+  return (
+    left.group === right.group &&
+    left.artifact === right.artifact &&
+    left.name === right.name &&
+    left.description === right.description &&
+    left.packageName === right.packageName &&
+    left.javaVersion === right.javaVersion &&
+    left.springBootVersion === right.springBootVersion &&
+    left.buildTool === right.buildTool &&
+    left.language === right.language &&
+    left.packaging === right.packaging
+  )
+}
+
 export type {
   InitializrDependency,
   InitializrMetadata,

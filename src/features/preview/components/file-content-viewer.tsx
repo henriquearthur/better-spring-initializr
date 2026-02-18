@@ -1,6 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { RotateCcw } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ThemedToken } from 'shiki'
 
 import {
@@ -9,7 +9,6 @@ import {
 } from '@/features/preview/hooks/use-code-preview-engine'
 import type { PreviewFileDiff, PreviewRemovedLine } from '@/features/preview/model/preview-diff'
 import { formatCodePreviewLanguageLabel } from '@/features/preview/model/code-preview-language'
-import { ENABLE_PREVIEW_ENGINE_V2 } from '@/lib/feature-flags'
 import type { PreviewSnapshotFile } from '@/features/preview/model/preview-tree'
 
 const VIEWER_ROW_HEIGHT = 26
@@ -37,19 +36,7 @@ type ViewerLine =
       tokens: ThemedToken[] | null
     }
 
-export function FileContentViewer(props: FileContentViewerProps) {
-  if (!ENABLE_PREVIEW_ENGINE_V2) {
-    return <FileContentViewerLegacy {...props} />
-  }
-
-  return <FileContentViewerV2 {...props} />
-}
-
-function FileContentViewerLegacy(props: FileContentViewerProps) {
-  return <FileContentViewerV2 {...props} />
-}
-
-function FileContentViewerV2({ file, isLoading, diff, onRetry }: FileContentViewerProps) {
+export function FileContentViewer({ file, isLoading, diff, onRetry }: FileContentViewerProps) {
   const isDarkMode = useIsDarkMode()
   const preview = useCodePreviewEngine({
     file,
@@ -86,15 +73,11 @@ type ContentPanelProps = {
 }
 
 function ContentPanel({ file, diff, preview, onRetry }: ContentPanelProps) {
-  const viewerLines = useMemo(
-    () =>
-      buildViewerLines({
-        plainTextLines: preview.lines,
-        tokenLines: preview.tokenLines,
-        diff,
-      }),
-    [diff, preview.lines, preview.tokenLines],
-  )
+  const viewerLines = buildViewerLines({
+    plainTextLines: preview.lines,
+    tokenLines: preview.tokenLines,
+    diff,
+  })
 
   const languageLabel = formatCodePreviewLanguageLabel(preview.language)
   const footerTone = preview.status === 'failed' ? 'warning' : 'muted'

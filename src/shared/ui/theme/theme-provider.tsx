@@ -1,8 +1,7 @@
 import {
   createContext,
-  useContext,
+  use,
   useEffect,
-  useMemo,
   useState,
   type ReactNode,
 } from 'react'
@@ -48,19 +47,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, theme)
   }, [theme])
 
-  const value = useMemo(
-    () => ({
-      theme,
-      setTheme,
-    }),
-    [theme],
-  )
+  const value = {
+    theme,
+    setTheme,
+  }
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext)
+  const context = use(ThemeContext)
 
   if (!context) {
     throw new Error('useTheme must be used inside ThemeProvider')
