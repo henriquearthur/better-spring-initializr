@@ -56,6 +56,11 @@ Then open: `http://localhost:3000`
 This project is open source and evolving.  
 If you find an issue or have a feature idea, open an issue in this repository.
 
+## Credits
+
+Extra AI skills used in this project were adapted from
+[`decebals/claude-code-java`](https://github.com/decebals/claude-code-java).
+
 ## Contributing to Presets
 
 Curated presets are data-driven and live in:
