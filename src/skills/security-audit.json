@@ -1,0 +1,7 @@
+{
+  "id": "skill-security-audit",
+  "label": "Security Audit",
+  "description": "Review Java code against OWASP risks, secure coding practices, and vulnerability hotspots.",
+  "directoryName": "security-audit",
+  "sortOrder": 50
+}

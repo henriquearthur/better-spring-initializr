@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import JSZip from 'jszip'
 
-import { DEFAULT_AGENTS_MD_PREFERENCES } from '@/lib/ai-extras'
+import { AI_SKILL_OPTIONS, DEFAULT_AGENTS_MD_PREFERENCES } from '@/lib/ai-extras'
 import type { ProjectConfig } from '@/lib/project-config'
 import {
   fetchInitializrProjectPreview,
@@ -19,6 +19,12 @@ const baseConfig: ProjectConfig = {
   buildTool: 'gradle-project',
   language: 'java',
   packaging: 'jar',
+}
+
+const primarySkill = AI_SKILL_OPTIONS[0]
+
+if (!primarySkill) {
+  throw new Error('Expected at least one AI skill in the catalog.')
 }
 
 describe('fetchInitializrProjectPreview', () => {
@@ -135,7 +141,7 @@ describe('fetchInitializrProjectPreview', () => {
     const files = await fetchInitializrProjectPreview({
       config: baseConfig,
       selectedDependencyIds: [],
-      selectedAiExtraIds: ['agents-md', 'skill-security-audit'],
+      selectedAiExtraIds: ['agents-md', primarySkill.id],
       agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
       aiExtrasTarget: 'agents',
       fetch: fetchMock as typeof fetch,
@@ -144,7 +150,7 @@ describe('fetchInitializrProjectPreview', () => {
     const paths = files.map((file) => file.path)
 
     expect(paths).toContain('AGENTS.md')
-    expect(paths).toContain('.agents/skills/security-audit/SKILL.md')
+    expect(paths).toContain(`.agents/skills/${primarySkill.directoryName}/SKILL.md`)
   })
 
   it('includes CLAUDE.md and .claude skills for claude target', async () => {
@@ -160,7 +166,7 @@ describe('fetchInitializrProjectPreview', () => {
     const files = await fetchInitializrProjectPreview({
       config: baseConfig,
       selectedDependencyIds: [],
-      selectedAiExtraIds: ['agents-md', 'skill-security-audit'],
+      selectedAiExtraIds: ['agents-md', primarySkill.id],
       agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
       aiExtrasTarget: 'claude',
       fetch: fetchMock as typeof fetch,
@@ -169,9 +175,9 @@ describe('fetchInitializrProjectPreview', () => {
     const paths = files.map((file) => file.path)
 
     expect(paths).toContain('CLAUDE.md')
-    expect(paths).toContain('.claude/skills/security-audit/SKILL.md')
+    expect(paths).toContain(`.claude/skills/${primarySkill.directoryName}/SKILL.md`)
     expect(paths).not.toContain('AGENTS.md')
-    expect(paths).not.toContain('.agents/skills/security-audit/SKILL.md')
+    expect(paths).not.toContain(`.agents/skills/${primarySkill.directoryName}/SKILL.md`)
   })
 
   it('duplicates files across both targets when target is both', async () => {
@@ -187,7 +193,7 @@ describe('fetchInitializrProjectPreview', () => {
     const files = await fetchInitializrProjectPreview({
       config: baseConfig,
       selectedDependencyIds: [],
-      selectedAiExtraIds: ['agents-md', 'skill-security-audit'],
+      selectedAiExtraIds: ['agents-md', primarySkill.id],
       agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
       aiExtrasTarget: 'both',
       fetch: fetchMock as typeof fetch,
@@ -197,8 +203,8 @@ describe('fetchInitializrProjectPreview', () => {
 
     expect(paths).toContain('AGENTS.md')
     expect(paths).toContain('CLAUDE.md')
-    expect(paths).toContain('.agents/skills/security-audit/SKILL.md')
-    expect(paths).toContain('.claude/skills/security-audit/SKILL.md')
+    expect(paths).toContain(`.agents/skills/${primarySkill.directoryName}/SKILL.md`)
+    expect(paths).toContain(`.claude/skills/${primarySkill.directoryName}/SKILL.md`)
   })
 })
 

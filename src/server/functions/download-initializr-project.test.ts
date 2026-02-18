@@ -1,7 +1,7 @@
 import JSZip from 'jszip'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { DEFAULT_AGENTS_MD_PREFERENCES } from '@/lib/ai-extras'
+import { AI_SKILL_OPTIONS, DEFAULT_AGENTS_MD_PREFERENCES } from '@/lib/ai-extras'
 
 import * as generateClient from '../lib/initializr-generate-client'
 import {
@@ -20,6 +20,12 @@ const configFixture = {
   buildTool: 'maven-project' as const,
   language: 'java' as const,
   packaging: 'jar' as const,
+}
+
+const primarySkill = AI_SKILL_OPTIONS[0]
+
+if (!primarySkill) {
+  throw new Error('Expected at least one AI skill in the catalog.')
 }
 
 describe('downloadInitializrProjectFromBff', () => {
@@ -208,7 +214,7 @@ describe('downloadInitializrProjectFromBff', () => {
     const result = await downloadInitializrProjectFromBff({
       config: configFixture,
       selectedDependencyIds: ['web'],
-      selectedAiExtraIds: ['skill-java-code-review'],
+      selectedAiExtraIds: [primarySkill.id],
       agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
       aiExtrasTarget: 'agents',
     })
@@ -221,7 +227,9 @@ describe('downloadInitializrProjectFromBff', () => {
 
     const archiveFiles = await listArchiveFiles(result.archive.base64)
 
-    expect(archiveFiles).toContain('.agents/skills/java-code-review/SKILL.md')
+    expect(archiveFiles).toContain(
+      `.agents/skills/${primarySkill.directoryName}/SKILL.md`,
+    )
   })
 
   it('injects CLAUDE.md and .claude skills when target is claude', async () => {
@@ -234,7 +242,7 @@ describe('downloadInitializrProjectFromBff', () => {
     const result = await downloadInitializrProjectFromBff({
       config: configFixture,
       selectedDependencyIds: ['web'],
-      selectedAiExtraIds: ['agents-md', 'skill-java-code-review'],
+      selectedAiExtraIds: ['agents-md', primarySkill.id],
       agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
       aiExtrasTarget: 'claude',
     })
@@ -248,9 +256,13 @@ describe('downloadInitializrProjectFromBff', () => {
     const archiveFiles = await listArchiveFiles(result.archive.base64)
 
     expect(archiveFiles).toContain('CLAUDE.md')
-    expect(archiveFiles).toContain('.claude/skills/java-code-review/SKILL.md')
+    expect(archiveFiles).toContain(
+      `.claude/skills/${primarySkill.directoryName}/SKILL.md`,
+    )
     expect(archiveFiles).not.toContain('AGENTS.md')
-    expect(archiveFiles).not.toContain('.agents/skills/java-code-review/SKILL.md')
+    expect(archiveFiles).not.toContain(
+      `.agents/skills/${primarySkill.directoryName}/SKILL.md`,
+    )
   })
 
   it('duplicates guidance and skills in both target mode', async () => {
@@ -263,7 +275,7 @@ describe('downloadInitializrProjectFromBff', () => {
     const result = await downloadInitializrProjectFromBff({
       config: configFixture,
       selectedDependencyIds: ['web'],
-      selectedAiExtraIds: ['agents-md', 'skill-java-code-review'],
+      selectedAiExtraIds: ['agents-md', primarySkill.id],
       agentsMdPreferences: DEFAULT_AGENTS_MD_PREFERENCES,
       aiExtrasTarget: 'both',
     })
@@ -278,8 +290,12 @@ describe('downloadInitializrProjectFromBff', () => {
 
     expect(archiveFiles).toContain('AGENTS.md')
     expect(archiveFiles).toContain('CLAUDE.md')
-    expect(archiveFiles).toContain('.agents/skills/java-code-review/SKILL.md')
-    expect(archiveFiles).toContain('.claude/skills/java-code-review/SKILL.md')
+    expect(archiveFiles).toContain(
+      `.agents/skills/${primarySkill.directoryName}/SKILL.md`,
+    )
+    expect(archiveFiles).toContain(
+      `.claude/skills/${primarySkill.directoryName}/SKILL.md`,
+    )
   })
 })
 

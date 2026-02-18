@@ -1,0 +1,7 @@
+{
+  "id": "skill-spring-boot-patterns",
+  "label": "Spring Boot Patterns",
+  "description": "Apply Spring Boot architecture and implementation best practices for controllers, services, and data access.",
+  "directoryName": "spring-boot-patterns",
+  "sortOrder": 20
+}

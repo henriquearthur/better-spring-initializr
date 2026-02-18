@@ -1,4 +1,5 @@
 import {
+  AI_SKILL_OPTIONS,
   buildAgentsMdMarkdown,
   getAiSkillOption,
   isAiSkillExtraId,
@@ -10,14 +11,9 @@ import {
   type AgentsMdPreferences,
   type AiExtrasTarget,
   type AiSkillExtraId,
+  type AiSkillOption,
 } from '@/lib/ai-extras'
 import type { ProjectConfig } from '@/lib/project-config'
-
-import javaCodeReviewSkillMarkdown from './ai-extra-sources/claude-code-java/java-code-review/SKILL.md?raw'
-import jpaPatternsSkillMarkdown from './ai-extra-sources/claude-code-java/jpa-patterns/SKILL.md?raw'
-import securityAuditSkillMarkdown from './ai-extra-sources/claude-code-java/security-audit/SKILL.md?raw'
-import springBootPatternsSkillMarkdown from './ai-extra-sources/claude-code-java/spring-boot-patterns/SKILL.md?raw'
-import testQualitySkillMarkdown from './ai-extra-sources/claude-code-java/test-quality/SKILL.md?raw'
 
 export type AiExtraGeneratedFile = {
   path: string
@@ -31,13 +27,24 @@ type ResolveAiExtraFilesInput = {
   aiExtrasTarget: AiExtrasTarget | undefined
 }
 
-const AI_SKILL_MARKDOWN_BY_ID: Readonly<Record<AiSkillExtraId, string>> = {
-  'skill-java-code-review': javaCodeReviewSkillMarkdown,
-  'skill-spring-boot-patterns': springBootPatternsSkillMarkdown,
-  'skill-jpa-patterns': jpaPatternsSkillMarkdown,
-  'skill-test-quality': testQualitySkillMarkdown,
-  'skill-security-audit': securityAuditSkillMarkdown,
-}
+const SKILL_MARKDOWN_PATH_PATTERN = /\/([^/]+)\/SKILL\.md(?:\?raw)?$/
+
+const SKILL_MARKDOWN_MODULES = import.meta.glob(
+  './ai-extra-sources/claude-code-java/*/SKILL.md',
+  {
+    eager: true,
+    import: 'default',
+    query: '?raw',
+  },
+) as Record<string, unknown>
+
+const AI_SKILL_MARKDOWN_BY_DIRECTORY = loadAiSkillMarkdownByDirectoryFromModules(
+  SKILL_MARKDOWN_MODULES,
+)
+const AI_SKILL_MARKDOWN_BY_ID = buildAiSkillMarkdownById(
+  AI_SKILL_OPTIONS,
+  AI_SKILL_MARKDOWN_BY_DIRECTORY,
+)
 
 export function resolveAiExtraFiles(input: ResolveAiExtraFilesInput): AiExtraGeneratedFile[] {
   const selectedIds = normalizeSelectedAiExtraIds(input.selectedAiExtraIds)
@@ -68,7 +75,13 @@ export function resolveAiExtraFiles(input: ResolveAiExtraFilesInput): AiExtraGen
       continue
     }
 
-    const skillMarkdown = AI_SKILL_MARKDOWN_BY_ID[selectedId]
+    const skillMarkdown = AI_SKILL_MARKDOWN_BY_ID.get(selectedId)
+
+    if (!skillMarkdown) {
+      throw new Error(
+        `AI skill markdown not found for "${selectedId}" (directoryName "${skillOption.directoryName}").`,
+      )
+    }
 
     for (const skillsRootPath of resolveAiSkillsRootPaths(aiExtrasTarget)) {
       fileMap.set(`${skillsRootPath}/${skillOption.directoryName}/SKILL.md`, skillMarkdown)
@@ -78,4 +91,78 @@ export function resolveAiExtraFiles(input: ResolveAiExtraFilesInput): AiExtraGen
   return Array.from(fileMap.entries())
     .map(([path, content]) => ({ path, content }))
     .sort((left, right) => left.path.localeCompare(right.path))
+}
+
+export function loadAiSkillMarkdownByDirectoryFromModules(
+  skillMarkdownModules: Record<string, unknown>,
+): Map<string, string> {
+  const moduleEntries = Object.entries(skillMarkdownModules).sort(([leftPath], [rightPath]) =>
+    leftPath.localeCompare(rightPath),
+  )
+
+  if (moduleEntries.length === 0) {
+    throw new Error(
+      'AI skill markdown catalog is empty. Add SKILL.md files under src/server/lib/ai-extra-sources/claude-code-java/.',
+    )
+  }
+
+  const markdownByDirectory = new Map<string, string>()
+
+  for (const [filePath, value] of moduleEntries) {
+    const directoryName = extractSkillDirectoryNameFromModulePath(filePath)
+    const markdown = normalizeSkillMarkdown(value, filePath)
+
+    if (markdownByDirectory.has(directoryName)) {
+      throw new Error(
+        `Duplicate AI skill markdown directoryName "${directoryName}" in "${filePath}".`,
+      )
+    }
+
+    markdownByDirectory.set(directoryName, markdown)
+  }
+
+  return markdownByDirectory
+}
+
+export function buildAiSkillMarkdownById(
+  skillOptions: readonly AiSkillOption[],
+  markdownByDirectory: ReadonlyMap<string, string>,
+): Map<AiSkillExtraId, string> {
+  const markdownBySkillId = new Map<AiSkillExtraId, string>()
+
+  for (const skillOption of skillOptions) {
+    const markdown = markdownByDirectory.get(skillOption.directoryName)
+
+    if (!markdown) {
+      throw new Error(
+        `AI skill "${skillOption.id}" references directoryName "${skillOption.directoryName}" but no SKILL.md source was found.`,
+      )
+    }
+
+    markdownBySkillId.set(skillOption.id, markdown)
+  }
+
+  return markdownBySkillId
+}
+
+function extractSkillDirectoryNameFromModulePath(filePath: string): string {
+  const match = filePath.match(SKILL_MARKDOWN_PATH_PATTERN)
+
+  if (!match) {
+    throw new Error(`Unsupported AI skill markdown module path "${filePath}".`)
+  }
+
+  return match[1] ?? ''
+}
+
+function normalizeSkillMarkdown(value: unknown, context: string): string {
+  if (typeof value !== 'string') {
+    throw new Error(`${context} must resolve to markdown string content.`)
+  }
+
+  if (!value.trim()) {
+    throw new Error(`${context} resolved to empty markdown content.`)
+  }
+
+  return value
 }

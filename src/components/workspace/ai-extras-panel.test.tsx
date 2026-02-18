@@ -3,7 +3,15 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { AI_SKILL_OPTIONS } from '@/lib/ai-extras'
+
 import { AiExtrasPanel } from './ai-extras-panel'
+
+const primarySkill = AI_SKILL_OPTIONS[0]
+
+if (!primarySkill) {
+  throw new Error('Expected at least one AI skill in the catalog.')
+}
 
 afterEach(() => {
   cleanup()
@@ -43,7 +51,7 @@ describe('AiExtrasPanel', () => {
     fireEvent.click(screen.getByLabelText('Git workflow guidance'))
     fireEvent.click(screen.getByLabelText('Delivery workflow guidance'))
     fireEvent.click(screen.getByLabelText('Conventional commits'))
-    fireEvent.click(screen.getByLabelText('Java Code Review'))
+    fireEvent.click(screen.getByLabelText(primarySkill.label))
 
     expect(onToggleAgentsMdEnabled).toHaveBeenCalledTimes(1)
     expect(onToggleAgentsMdGuidance.mock.calls).toEqual([
@@ -53,7 +61,7 @@ describe('AiExtrasPanel', () => {
     expect(onToggleAgentsMdPreference.mock.calls).toEqual([
       ['includeConventionalCommitsGuidance'],
     ])
-    expect(onToggleAiSkill.mock.calls).toEqual([['skill-java-code-review']])
+    expect(onToggleAiSkill.mock.calls).toEqual([[primarySkill.id]])
     expect(onChangeAiExtrasTarget).not.toHaveBeenCalled()
   })
 
@@ -91,7 +99,7 @@ describe('AiExtrasPanel', () => {
     expect(onToggleAgentsMdGuidance).not.toHaveBeenCalled()
   })
 
-  it('changes output target through the segmented control', () => {
+  it('changes selected target through compact selector', () => {
     const onChangeAiExtrasTarget = vi.fn()
 
     render(
@@ -113,15 +121,15 @@ describe('AiExtrasPanel', () => {
       />,
     )
 
-    fireEvent.click(screen.getByLabelText('Output target .claude'))
+    fireEvent.click(screen.getByLabelText('Generate CLAUDE.md'))
 
     expect(onChangeAiExtrasTarget).toHaveBeenCalledWith('claude')
   })
 
-  it('shows claude paths when target is .claude', () => {
+  it('uses CLAUDE paths when target is claude', () => {
     render(
       <AiExtrasPanel
-        selectedAiExtraIds={['agents-md', 'skill-java-code-review']}
+        selectedAiExtraIds={['agents-md', primarySkill.id]}
         aiExtrasTarget="claude"
         agentsMdPreferences={{
           includeFeatureBranchesGuidance: true,
@@ -139,13 +147,37 @@ describe('AiExtrasPanel', () => {
     )
 
     expect(screen.getByLabelText('Include CLAUDE.md')).toBeTruthy()
-    expect(screen.getByText('.claude/skills/java-code-review/SKILL.md')).toBeTruthy()
+    expect(screen.getByText('.claude/skills')).toBeTruthy()
   })
 
-  it('shows duplicated paths when target is both', () => {
+  it('uses .agents paths for agents target', () => {
     render(
       <AiExtrasPanel
-        selectedAiExtraIds={['agents-md', 'skill-java-code-review']}
+        selectedAiExtraIds={['agents-md', primarySkill.id]}
+        aiExtrasTarget="agents"
+        agentsMdPreferences={{
+          includeFeatureBranchesGuidance: true,
+          includeConventionalCommitsGuidance: true,
+          includePullRequestsGuidance: true,
+          includeRunRelevantTestsGuidance: true,
+          includeTaskScopeDisciplineGuidance: true,
+        }}
+        onChangeAiExtrasTarget={() => undefined}
+        onToggleAgentsMdEnabled={() => undefined}
+        onToggleAgentsMdGuidance={() => undefined}
+        onToggleAgentsMdPreference={() => undefined}
+        onToggleAiSkill={() => undefined}
+      />,
+    )
+
+    expect(screen.getByLabelText('Include AGENTS.md')).toBeTruthy()
+    expect(screen.getByText('.agents/skills')).toBeTruthy()
+  })
+
+  it('shows combined paths when target is both', () => {
+    render(
+      <AiExtrasPanel
+        selectedAiExtraIds={['agents-md', primarySkill.id]}
         aiExtrasTarget="both"
         agentsMdPreferences={{
           includeFeatureBranchesGuidance: true,
@@ -163,7 +195,6 @@ describe('AiExtrasPanel', () => {
     )
 
     expect(screen.getByLabelText('Include AGENTS.md + CLAUDE.md')).toBeTruthy()
-    expect(screen.getByText('.agents/skills/java-code-review/SKILL.md')).toBeTruthy()
-    expect(screen.getByText('.claude/skills/java-code-review/SKILL.md')).toBeTruthy()
+    expect(screen.getByText('.agents/skills + .claude/skills')).toBeTruthy()
   })
 })

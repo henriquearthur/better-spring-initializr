@@ -3,15 +3,15 @@ import { BookMarked, GitBranch, Sparkles, Wrench } from 'lucide-react'
 import {
   AGENTS_MD_GUIDANCE_OPTIONS,
   AGENTS_MD_PREFERENCE_OPTIONS,
+  AI_EXTRAS_TARGET_OPTIONS,
   AI_SKILL_OPTIONS,
   resolveAiSkillsRootPaths,
-  resolveAiSkillPathHints,
   resolveAgentsMdFilePaths,
   getSelectedAiSkillExtraIds,
   isAgentsMdGuidanceEnabled,
+  type AiExtrasTarget,
   type AgentsMdGuidanceId,
   type AgentsMdPreferences,
-  type AiExtrasTarget,
   type AiSkillExtraId,
 } from '@/lib/ai-extras'
 
@@ -19,28 +19,6 @@ const GUIDANCE_SECTION_LABELS: Record<AgentsMdGuidanceId, string> = {
   'git-workflow': 'GIT GUIDELINES',
   'delivery-workflow': 'DELIVERY GUIDELINES',
 }
-
-const AI_EXTRAS_TARGET_OPTIONS: ReadonlyArray<{
-  id: AiExtrasTarget
-  label: string
-  description: string
-}> = [
-  {
-    id: 'agents',
-    label: '.agents',
-    description: 'Generate AGENTS.md and .agents/skills files.',
-  },
-  {
-    id: 'claude',
-    label: '.claude',
-    description: 'Generate CLAUDE.md and .claude/skills files.',
-  },
-  {
-    id: 'both',
-    label: 'Both',
-    description: 'Generate AGENTS.md + CLAUDE.md and duplicate skills in both directories.',
-  },
-] as const
 
 type AiExtrasPanelProps = {
   selectedAiExtraIds: string[]
@@ -69,9 +47,6 @@ export function AiExtrasPanel({
   const guidanceFilePaths = resolveAgentsMdFilePaths(aiExtrasTarget)
   const guidanceFileLabel = guidanceFilePaths.join(' + ')
   const skillsRootPaths = resolveAiSkillsRootPaths(aiExtrasTarget)
-  const selectedTarget =
-    AI_EXTRAS_TARGET_OPTIONS.find((targetOption) => targetOption.id === aiExtrasTarget) ??
-    AI_EXTRAS_TARGET_OPTIONS[0]
 
   const handleToggleChildPreference = (preferenceId: keyof AgentsMdPreferences) => {
     if (!agentsMdEnabled) {
@@ -100,13 +75,8 @@ export function AiExtrasPanel({
             Configure guidance and skills for generated projects.
           </p>
         </div>
-      </div>
-
-      <div className="ai-extras-target-panel">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-          Output target
-        </p>
-        <div className="ai-extras-target-group" role="radiogroup" aria-label="AI extras output target">
+        <div className="ai-extras-target-compact" role="radiogroup" aria-label="Guidance file target">
+          <span className="ai-extras-target-compact-label">File</span>
           {AI_EXTRAS_TARGET_OPTIONS.map((targetOption) => {
             const selected = targetOption.id === aiExtrasTarget
 
@@ -116,8 +86,8 @@ export function AiExtrasPanel({
                 type="button"
                 role="radio"
                 aria-checked={selected}
-                aria-label={`Output target ${targetOption.label}`}
-                className={`ai-extras-target-button ${selected ? 'ai-extras-target-button-selected' : ''}`}
+                aria-label={`Generate ${targetOption.label}`}
+                className={`ai-extras-target-chip ${selected ? 'ai-extras-target-chip-selected' : ''}`}
                 onClick={() => onChangeAiExtrasTarget(targetOption.id)}
               >
                 {targetOption.label}
@@ -125,7 +95,6 @@ export function AiExtrasPanel({
             )
           })}
         </div>
-        <p className="text-[11px] text-[var(--muted-foreground)]">{selectedTarget.description}</p>
       </div>
 
       <div className="ai-extras-detail-grid">
@@ -137,7 +106,7 @@ export function AiExtrasPanel({
             Guidance Files
           </p>
           <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
-            Enable {guidanceFileLabel} and choose which guideline modules to include.
+            File: <span className="font-mono">{guidanceFileLabel}</span>
           </p>
           <div className={`ai-extra-parent-option mt-2 ${agentsMdEnabled ? 'ai-extra-option-selected' : ''}`}>
             <div className="flex items-start justify-between gap-2">
@@ -226,7 +195,7 @@ export function AiExtrasPanel({
             Skills
           </p>
           <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
-            Select the skills to include in {skillsRootPaths.join(' + ')}.
+            Directory: <span className="font-mono">{skillsRootPaths.join(' + ')}</span>
           </p>
           <p className="mt-1 font-mono text-[11px] text-[var(--muted-foreground)]">
             {selectedSkillIds.length} selected
@@ -236,7 +205,6 @@ export function AiExtrasPanel({
             {AI_SKILL_OPTIONS.map((skill) => {
               const selected = selectedIdSet.has(skill.id)
               const skillInputId = `ai-skill-${skill.id}`
-              const skillPathHints = resolveAiSkillPathHints(skill.id, aiExtrasTarget)
 
               return (
                 <label
@@ -244,7 +212,7 @@ export function AiExtrasPanel({
                   htmlFor={skillInputId}
                   className={`ai-extra-parent-option ${selected ? 'ai-extra-option-selected' : ''}`}
                 >
-                  <div className="flex items-start gap-2.5">
+                  <div className="ai-extra-skill-row">
                     <input
                       id={skillInputId}
                       type="checkbox"
@@ -253,14 +221,9 @@ export function AiExtrasPanel({
                       className="mt-0.5 h-4 w-4 rounded border"
                       aria-label={skill.label}
                     />
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-semibold">{skill.label}</p>
+                    <div className="ai-extra-skill-content">
+                      <p className="ai-extra-skill-title">{skill.label}</p>
                       <p className="ai-extra-skill-description">{skill.description}</p>
-                      {skillPathHints.map((pathHint) => (
-                        <p key={pathHint} className="font-mono text-[11px] text-[var(--muted-foreground)]">
-                          {pathHint}
-                        </p>
-                      ))}
                     </div>
                   </div>
                 </label>

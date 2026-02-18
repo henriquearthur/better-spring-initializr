@@ -1,12 +1,17 @@
-export type AiSkillExtraId =
-  | 'skill-java-code-review'
-  | 'skill-spring-boot-patterns'
-  | 'skill-jpa-patterns'
-  | 'skill-test-quality'
-  | 'skill-security-audit'
+import {
+  AI_SKILL_CATALOG_SOURCES,
+  type AiSkillCatalogId,
+} from './ai-skill-catalog'
+
+export type AiSkillExtraId = AiSkillCatalogId
 export type AiExtraId = 'agents-md' | AiSkillExtraId
 
 export type AiExtrasTarget = 'agents' | 'claude' | 'both'
+
+export type AiExtrasTargetOption = {
+  id: AiExtrasTarget
+  label: string
+}
 
 export type AiExtraPanelOptionId = 'agents-md-guidance' | 'skills'
 
@@ -21,7 +26,7 @@ export type AiSkillOption = {
   label: string
   description: string
   directoryName: string
-  pathHint: string
+  sortOrder: number
 }
 
 export type AgentsMdPreferences = {
@@ -48,6 +53,20 @@ export type AgentsMdGuidanceOption = {
 }
 
 export const DEFAULT_AI_EXTRAS_TARGET: AiExtrasTarget = 'agents'
+export const AI_EXTRAS_TARGET_OPTIONS: readonly AiExtrasTargetOption[] = [
+  {
+    id: 'agents',
+    label: 'AGENTS.md',
+  },
+  {
+    id: 'claude',
+    label: 'CLAUDE.md',
+  },
+  {
+    id: 'both',
+    label: 'Both',
+  },
+] as const
 
 export const AI_EXTRA_PANEL_OPTIONS: readonly AiExtraPanelOption[] = [
   {
@@ -58,56 +77,26 @@ export const AI_EXTRA_PANEL_OPTIONS: readonly AiExtraPanelOption[] = [
   {
     id: 'skills',
     label: 'Skills',
-    description: 'Generate a curated Core Java skills catalog in .agents/skills.',
+    description: 'Generate a curated Core Java skills catalog in the selected skills directory.',
   },
 ] as const
 
-export const AI_SKILL_OPTIONS: readonly AiSkillOption[] = [
-  {
-    id: 'skill-java-code-review',
-    label: 'Java Code Review',
-    description:
-      'Run a systematic Java code review checklist focused on quality, safety, and correctness.',
-    directoryName: 'java-code-review',
-    pathHint: '.agents/skills/java-code-review/SKILL.md',
-  },
-  {
-    id: 'skill-spring-boot-patterns',
-    label: 'Spring Boot Patterns',
-    description:
-      'Apply Spring Boot architecture and implementation best practices for controllers, services, and data access.',
-    directoryName: 'spring-boot-patterns',
-    pathHint: '.agents/skills/spring-boot-patterns/SKILL.md',
-  },
-  {
-    id: 'skill-jpa-patterns',
-    label: 'JPA Patterns',
-    description:
-      'Use JPA and Hibernate patterns to avoid common pitfalls such as N+1 queries and lazy loading issues.',
-    directoryName: 'jpa-patterns',
-    pathHint: '.agents/skills/jpa-patterns/SKILL.md',
-  },
-  {
-    id: 'skill-test-quality',
-    label: 'Test Quality',
-    description:
-      'Write high-quality JUnit 5 tests with AssertJ and maintainable testing practices.',
-    directoryName: 'test-quality',
-    pathHint: '.agents/skills/test-quality/SKILL.md',
-  },
-  {
-    id: 'skill-security-audit',
-    label: 'Security Audit',
-    description:
-      'Review Java code against OWASP risks, secure coding practices, and vulnerability hotspots.',
-    directoryName: 'security-audit',
-    pathHint: '.agents/skills/security-audit/SKILL.md',
-  },
-] as const
+export const AI_SKILL_OPTIONS: readonly AiSkillOption[] = AI_SKILL_CATALOG_SOURCES.map(
+  (skillSource) => ({
+    id: skillSource.id,
+    label: skillSource.label,
+    description: skillSource.description,
+    directoryName: skillSource.directoryName,
+    sortOrder: skillSource.sortOrder,
+  }),
+)
 
 const AI_EXTRAS_TARGET_SET = new Set<AiExtrasTarget>(['agents', 'claude', 'both'])
-const AI_EXTRA_ID_SET = new Set<AiExtraId>(['agents-md', ...AI_SKILL_OPTIONS.map((option) => option.id)])
-const AI_SKILL_ID_SET = new Set<AiSkillExtraId>(AI_SKILL_OPTIONS.map((option) => option.id))
+const AI_EXTRA_ID_SET = new Set<string>([
+  'agents-md',
+  ...AI_SKILL_OPTIONS.map((option) => option.id),
+])
+const AI_SKILL_ID_SET = new Set<string>(AI_SKILL_OPTIONS.map((option) => option.id))
 const AI_SKILL_OPTION_BY_ID = new Map<AiSkillExtraId, AiSkillOption>(
   AI_SKILL_OPTIONS.map((option) => [option.id, option]),
 )
