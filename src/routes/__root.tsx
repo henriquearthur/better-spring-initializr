@@ -36,6 +36,11 @@ export const Route = createRootRoute({
       {
         title: 'Better Spring Initializr',
       },
+      {
+        name: 'description',
+        content:
+          'A better way to bootstrap Spring Boot projects with live preview, curated presets, and a smoother final handoff.',
+      },
     ],
     links: [
       {
